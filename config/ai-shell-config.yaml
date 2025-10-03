@@ -12,6 +12,7 @@ llm:
     completion: "codellama:13b" # Model for code completion
     anonymizer: "mistral:7b"    # Model for data anonymization
   ollama_host: "localhost:11434"
+  model_path: "/data0/models"   # Local model storage path
   timeout: 30                   # Seconds
   max_retries: 3
 
