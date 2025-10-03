@@ -1,0 +1,96 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "email": "alice@example.com",
+      "name": "Alice Johnson",
+      "created_at": "2024-01-15T10:30:00Z",
+      "active": true
+    },
+    {
+      "id": 2,
+      "email": "bob@example.com",
+      "name": "Bob Smith",
+      "created_at": "2024-02-01T14:20:00Z",
+      "active": true
+    },
+    {
+      "id": 3,
+      "email": "charlie@example.com",
+      "name": "Charlie Brown",
+      "created_at": "2024-01-20T09:15:00Z",
+      "active": false
+    }
+  ],
+  "orders": [
+    {
+      "id": 101,
+      "user_id": 1,
+      "amount": 299.99,
+      "status": "completed",
+      "created_at": "2024-02-10T16:45:00Z"
+    },
+    {
+      "id": 102,
+      "user_id": 2,
+      "amount": 149.50,
+      "status": "pending",
+      "created_at": "2024-02-15T11:30:00Z"
+    },
+    {
+      "id": 103,
+      "user_id": 1,
+      "amount": 89.99,
+      "status": "completed",
+      "created_at": "2024-02-12T08:20:00Z"
+    }
+  ],
+  "sqlQueries": {
+    "valid": [
+      "SELECT * FROM users WHERE active = true",
+      "SELECT COUNT(*) FROM orders WHERE status = 'completed'",
+      "INSERT INTO users (email, name) VALUES ('test@example.com', 'Test User')",
+      "UPDATE orders SET status = 'shipped' WHERE id = 101",
+      "DELETE FROM sessions WHERE created_at < NOW() - INTERVAL '30 days'"
+    ],
+    "invalid": [
+      "SELCT * FROM users",
+      "SELECT * FORM orders",
+      "UPDATE users SET active = true",
+      "DELETE FROM orders"
+    ]
+  },
+  "naturalLanguageQueries": [
+    {
+      "input": "show me all active users",
+      "expectedSQL": "SELECT * FROM users WHERE active = true",
+      "intent": "query"
+    },
+    {
+      "input": "count total orders",
+      "expectedSQL": "SELECT COUNT(*) FROM orders",
+      "intent": "query"
+    },
+    {
+      "input": "find orders from last week",
+      "expectedSQL": "SELECT * FROM orders WHERE created_at >= NOW() - INTERVAL '7 days'",
+      "intent": "query"
+    }
+  ],
+  "credentials": {
+    "postgresql": {
+      "host": "localhost",
+      "port": 5432,
+      "database": "testdb",
+      "user": "testuser",
+      "password": "testpass"
+    },
+    "oracle": {
+      "host": "localhost",
+      "port": 1521,
+      "service": "ORCL",
+      "user": "system",
+      "password": "oracle"
+    }
+  }
+}

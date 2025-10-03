@@ -1,0 +1,73 @@
+# AI-Shell Configuration File
+# This is the default configuration for AI-Shell
+
+system:
+  startup_animation: true
+  matrix_style: enhanced
+  log_level: INFO
+
+llm:
+  models:
+    intent: "llama2:7b"         # Model for intent classification
+    completion: "codellama:13b" # Model for code completion
+    anonymizer: "mistral:7b"    # Model for data anonymization
+  ollama_host: "localhost:11434"
+  timeout: 30                   # Seconds
+  max_retries: 3
+
+mcp:
+  oracle:
+    thin_mode: true
+    connection_pool_size: 5
+    connection_timeout: 10
+    query_timeout: 30
+  postgresql:
+    connection_pool_size: 5
+    connection_timeout: 10
+    query_timeout: 30
+
+ui:
+  framework: "textual"
+  theme: "cyberpunk"
+  panel_priority:
+    typing: "prompt"
+    idle: "balanced"
+  colors:
+    output: "green"
+    module: "cyan"
+    prompt: "white"
+    error: "red"
+
+security:
+  vault_backend: "keyring"
+  auto_redaction: true
+  sensitive_commands_require_confirmation: true
+  password_complexity:
+    min_length: 12
+    require_special: true
+    require_numbers: true
+
+performance:
+  async_workers: 4
+  cache_size: 1000
+  vector_db_dimension: 384
+  max_query_cache_ttl: 300  # Seconds
+  connection_pool_timeout: 5
+
+modules:
+  os_base:
+    enabled: true
+    default_shell: "/bin/bash"
+  ai_helper:
+    enabled: true
+    default_provider: "ollama"
+  vault:
+    enabled: true
+    auto_lock_timeout: 900  # 15 minutes
+  database:
+    enabled: true
+    auto_commit: false
+  web_interface:
+    enabled: false
+    port: 5000
+    ssl: true
