@@ -1,7 +1,7 @@
 """
 Oracle MCP Client Implementation
 
-Implements Oracle database connectivity using cx_Oracle in thin mode
+Implements Oracle database connectivity using python-oracledb in thin mode
 (no Oracle Instant Client required).
 """
 
@@ -15,7 +15,7 @@ class OracleClient(BaseMCPClient):
     """
     Oracle database client using thin mode connection
 
-    Uses oracledb (cx_Oracle) thin mode which doesn't require
+    Uses python-oracledb thin mode which doesn't require
     Oracle Instant Client installation.
     """
 

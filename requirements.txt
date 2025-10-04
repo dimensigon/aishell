@@ -7,7 +7,7 @@ click==8.1.7
 rich==13.7.0
 
 # Database Clients (Thin/Pure Python)
-cx_Oracle==8.3.0
+oracledb==2.0.0
 psycopg2-binary==2.9.9
 
 # LLM & Embeddings
