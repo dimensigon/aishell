@@ -216,9 +216,9 @@ Welcome to the AI-Shell documentation! This index provides quick access to all d
 ## 🔗 External Resources
 
 ### Community
-- **GitHub Repository**: [ai-shell](https://github.com/yourusername/ai-shell)
-- **Issues & Bug Reports**: [GitHub Issues](https://github.com/yourusername/ai-shell/issues)
-- **Discussions & Q&A**: [GitHub Discussions](https://github.com/yourusername/ai-shell/discussions)
+- **GitHub Repository**: [ai-shell](https://github.com/dimensigon/aishell)
+- **Issues & Bug Reports**: [GitHub Issues](https://github.com/dimensigon/aishell/issues)
+- **Discussions & Q&A**: [GitHub Discussions](https://github.com/dimensigon/aishell/discussions)
 - **Documentation Site**: [ai-shell.readthedocs.io](https://ai-shell.readthedocs.io)
 
 ### Technology References

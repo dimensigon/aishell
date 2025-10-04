@@ -1,0 +1,41 @@
+# AI-Shell Dependencies
+
+# Core UI Framework
+prompt-toolkit==3.0.43
+textual==0.47.1
+click==8.1.7
+rich==13.7.0
+
+# Database Clients (Thin/Pure Python)
+cx_Oracle==8.3.0
+psycopg2-binary==2.9.9
+
+# LLM & Embeddings
+ollama==0.1.7
+sentence-transformers==2.2.2
+transformers==4.36.2
+
+# Vector Database
+faiss-cpu==1.7.4
+
+# Security
+cryptography==41.0.7
+keyring==24.3.0
+
+# Configuration
+pyyaml==6.0.1
+
+# Async & Utilities
+aiofiles==23.2.1
+asyncio-mqtt==0.16.1
+
+# Testing
+pytest==8.3.5
+pytest-asyncio==0.26.0
+pytest-cov==6.1.1
+pytest-mock==3.14.0
+
+# Development
+black==23.12.1
+mypy==1.8.0
+flake8==7.0.0

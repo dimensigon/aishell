@@ -44,7 +44,7 @@ This document provides a comprehensive, milestone-driven implementation plan for
 ```bash
 git init
 git add .
-git commit -m "feat: initialize AI-Shell project structure
+git commit -m "feat: initialize AI-Shell project structure"
 
 - Create modular directory layout
 - Add .gitignore for Python/venv
@@ -100,7 +100,7 @@ def test_click_import():
 **Git Commit**:
 ```bash
 git add requirements.txt tests/test_dependencies.py
-git commit -m "feat: add core Python dependencies
+git commit -m "feat: add core Python dependencies"
 
 - Add prompt-toolkit 3.0.43 for terminal UI
 - Add textual 0.47.1 for modern TUI
@@ -139,7 +139,7 @@ def test_psycopg2_import():
 **Git Commit**:
 ```bash
 git add requirements.txt tests/test_db_clients.py
-git commit -m "feat: add database client dependencies
+git commit -m "feat: add database client dependencies"
 
 - Add cx_Oracle 8.3.0 with thin mode support
 - Add psycopg2-binary 2.9.9 for PostgreSQL
@@ -182,7 +182,7 @@ async def test_faiss_vector_db():
 **Git Commit**:
 ```bash
 git add requirements.txt tests/test_llm_dependencies.py
-git commit -m "feat: add LLM and vector database dependencies
+git commit -m "feat: add LLM and vector database dependencies"
 
 - Add ollama 0.1.7 for local LLM support
 - Add sentence-transformers for embeddings
@@ -222,7 +222,7 @@ def test_keyring_backend():
 **Git Commit**:
 ```bash
 git add requirements.txt tests/test_security_deps.py
-git commit -m "feat: add security and utility dependencies
+git commit -m "feat: add security and utility dependencies"
 
 - Add cryptography for encryption
 - Add keyring for OS credential storage
@@ -273,7 +273,7 @@ async def test_module_registration():
 **Git Commit**:
 ```bash
 git add core/ai_shell.py tests/test_core.py
-git commit -m "feat: implement core application structure
+git commit -m "feat: implement core application structure"
 
 - Add AIShellCore orchestrator class
 - Implement module registry system
@@ -337,7 +337,7 @@ async def test_event_priority():
 **Git Commit**:
 ```bash
 git add core/event_bus.py tests/test_event_bus.py
-git commit -m "feat: implement async event bus with priority queue
+git commit -m "feat: implement async event bus with priority queue"
 
 - Add AsyncEventBus class with pub/sub
 - Implement priority-based event processing
@@ -396,7 +396,7 @@ def test_env_variable_override():
 **Git Commit**:
 ```bash
 git add core/config.py tests/test_config.py config/ai-shell-config.yaml
-git commit -m "feat: implement configuration management system
+git commit -m "feat: implement configuration management system"
 
 - Add ConfigManager with YAML support
 - Support environment variable overrides
@@ -453,7 +453,7 @@ async def test_panel_layout():
 **Git Commit**:
 ```bash
 git add ui/app.py tests/test_ui_app.py
-git commit -m "feat: implement Textual UI foundation with 3-panel layout
+git commit -m "feat: implement Textual UI foundation with 3-panel layout"
 
 - Create AIShellApp with Textual framework
 - Implement Output, Module, Prompt panels
@@ -503,7 +503,7 @@ def test_panel_dimensions_idle():
 **Git Commit**:
 ```bash
 git add ui/panel_manager.py tests/test_panel_manager.py
-git commit -m "feat: implement dynamic panel sizing system
+git commit -m "feat: implement dynamic panel sizing system"
 
 - Add DynamicPanelManager class
 - Implement content-aware dimension calculation
@@ -560,7 +560,7 @@ async def test_line_numbering():
 **Git Commit**:
 ```bash
 git add ui/prompt_handler.py tests/test_prompt_handler.py
-git commit -m "feat: implement prompt input handler with multi-line support
+git commit -m "feat: implement prompt input handler with multi-line support"
 
 - Integrate prompt-toolkit for advanced input
 - Add multi-line continuation with backslash
@@ -606,7 +606,7 @@ def test_mcp_client_protocol():
 **Git Commit**:
 ```bash
 git add mcp_clients/base.py tests/test_mcp_protocol.py
-git commit -m "feat: define MCP client base protocol
+git commit -m "feat: define MCP client base protocol"
 
 - Add MCPClient protocol definition
 - Create abstract base class
@@ -657,7 +657,7 @@ async def test_oracle_connection_pool(oracle_test_credentials):
 **Git Commit**:
 ```bash
 git add mcp_clients/oracle_thin.py tests/test_oracle_mcp.py
-git commit -m "feat: implement Oracle MCP client with thin mode
+git commit -m "feat: implement Oracle MCP client with thin mode"
 
 - Add OracleMCPClient using cx_Oracle thin mode
 - Eliminate Oracle Instant Client dependency
@@ -703,7 +703,7 @@ async def test_postgresql_dict_cursor(postgres_test_credentials):
 **Git Commit**:
 ```bash
 git add mcp_clients/postgresql_pure.py tests/test_postgresql_mcp.py
-git commit -m "feat: implement PostgreSQL MCP client in pure Python
+git commit -m "feat: implement PostgreSQL MCP client in pure Python"
 
 - Add PostgreSQLMCPClient with psycopg2
 - Use RealDictCursor for dict-like results
@@ -752,7 +752,7 @@ async def test_connection_health_check():
 **Git Commit**:
 ```bash
 git add mcp_clients/manager.py tests/test_mcp_manager.py
-git commit -m "feat: implement MCP client connection manager
+git commit -m "feat: implement MCP client connection manager"
 
 - Add MCPClientManager for multi-connection support
 - Implement connection lifecycle management
@@ -802,7 +802,7 @@ async def test_ollama_health_check():
 **Git Commit**:
 ```bash
 git add core/llm_manager.py tests/test_llm_manager.py
-git commit -m "feat: implement local LLM manager with Ollama
+git commit -m "feat: implement local LLM manager with Ollama"
 
 - Add LocalLLMManager class
 - Integrate Ollama for local inference
@@ -856,7 +856,7 @@ async def test_sql_intent_analysis():
 **Git Commit**:
 ```bash
 git add core/llm_manager.py tests/test_intent_analysis.py
-git commit -m "feat: implement intent analysis system with local LLM
+git commit -m "feat: implement intent analysis system with local LLM"
 
 - Add analyze_intent method with context awareness
 - Implement intent classification (file_operation, database_query, etc)
@@ -915,7 +915,7 @@ def test_de_anonymization():
 **Git Commit**:
 ```bash
 git add core/llm_manager.py tests/test_anonymization.py
-git commit -m "feat: implement pseudo-anonymization for sensitive data
+git commit -m "feat: implement pseudo-anonymization for sensitive data"
 
 - Add pseudo_anonymize method with pattern detection
 - Support email, IP, username, password anonymization
@@ -970,7 +970,7 @@ async def test_embedding_cache():
 **Git Commit**:
 ```bash
 git add core/llm_manager.py tests/test_embeddings.py
-git commit -m "feat: integrate SentenceTransformer for text embeddings
+git commit -m "feat: integrate SentenceTransformer for text embeddings"
 
 - Add SentenceTransformer (all-MiniLM-L6-v2) integration
 - Implement async embedding generation
@@ -1041,7 +1041,7 @@ async def test_stale_request_skip():
 **Git Commit**:
 ```bash
 git add modules/panel_enricher.py tests/test_panel_enricher.py
-git commit -m "feat: implement async module panel enrichment system
+git commit -m "feat: implement async module panel enrichment system"
 
 - Add ModulePanelEnricher with background processing
 - Implement priority queue for update requests
@@ -1099,7 +1099,7 @@ async def test_database_context():
 **Git Commit**:
 ```bash
 git add modules/panel_enricher.py tests/test_context_gathering.py
-git commit -m "feat: implement intelligent context gathering system
+git commit -m "feat: implement intelligent context gathering system"
 
 - Add _gather_system_context based on intent
 - Implement MCP shell command execution
@@ -1169,7 +1169,7 @@ async def test_similarity_search():
 **Git Commit**:
 ```bash
 git add core/vector_store.py tests/test_vector_db.py
-git commit -m "feat: implement FAISS vector database for semantic search
+git commit -m "feat: implement FAISS vector database for semantic search"
 
 - Add VectorDatabase class with FAISS backend
 - Implement IndexFlatL2 for similarity search
@@ -1219,7 +1219,7 @@ async def test_load_postgresql_system_objects():
 **Git Commit**:
 ```bash
 git add core/vector_store.py tests/test_system_objects.py
-git commit -m "feat: implement system object indexing for databases
+git commit -m "feat: implement system object indexing for databases"
 
 - Add load_system_objects for Oracle and PostgreSQL
 - Index ALL_TABLES, V$SESSION, pg_catalog, etc.
@@ -1281,7 +1281,7 @@ async def test_semantic_command_completion():
 **Git Commit**:
 ```bash
 git add ui/completer.py tests/test_autocomplete.py
-git commit -m "feat: implement intelligent auto-completion system
+git commit -m "feat: implement intelligent auto-completion system"
 
 - Add IntelligentCompleter with prompt-toolkit
 - Implement context-aware SQL completion
@@ -1339,7 +1339,7 @@ def test_encryption_persistence():
 **Git Commit**:
 ```bash
 git add modules/vault.py tests/test_vault_encryption.py
-git commit -m "feat: implement secure vault with Fernet encryption
+git commit -m "feat: implement secure vault with Fernet encryption"
 
 - Add SecureVault class with cryptography.Fernet
 - Implement credential encryption/decryption
@@ -1414,7 +1414,7 @@ def test_custom_schema_credential():
 **Git Commit**:
 ```bash
 git add modules/vault.py tests/test_credential_types.py
-git commit -m "feat: implement multiple credential types
+git commit -m "feat: implement multiple credential types"
 
 - Add standard key-value credential type
 - Implement database credential (username, password, host, port)
@@ -1478,7 +1478,7 @@ def test_partial_match_no_redaction():
 **Git Commit**:
 ```bash
 git add modules/vault.py tests/test_auto_redaction.py
-git commit -m "feat: implement automatic secret redaction system
+git commit -m "feat: implement automatic secret redaction system"
 
 - Add auto_redact method with pattern matching
 - Create redaction pattern registry
@@ -1532,7 +1532,7 @@ async def test_execute_sql_basic(oracle_test_connection):
 **Git Commit**:
 ```bash
 git add modules/database.py tests/test_database_module.py
-git commit -m "feat: implement unified database module interface
+git commit -m "feat: implement unified database module interface"
 
 - Add DatabaseModule with multi-engine support
 - Implement connection management
@@ -1600,7 +1600,7 @@ async def test_critical_risk_drop():
 **Git Commit**:
 ```bash
 git add modules/risk_analyzer.py tests/test_risk_analyzer.py
-git commit -m "feat: implement SQL risk analyzer with severity levels
+git commit -m "feat: implement SQL risk analyzer with severity levels"
 
 - Add SQLRiskAnalyzer with keyword detection
 - Implement risk levels (LOW, MEDIUM, HIGH, CRITICAL)
@@ -1657,7 +1657,7 @@ async def test_schema_aware_translation():
 **Git Commit**:
 ```bash
 git add modules/nlp_to_sql.py tests/test_nlp_to_sql.py
-git commit -m "feat: implement natural language to SQL translation
+git commit -m "feat: implement natural language to SQL translation"
 
 - Add NLPToSQL with schema awareness
 - Implement local LLM-based translation
@@ -1715,7 +1715,7 @@ async def test_sql_history_search():
 **Git Commit**:
 ```bash
 git add modules/sql_history.py tests/test_sql_history.py
-git commit -m "feat: implement SQL-specific history manager
+git commit -m "feat: implement SQL-specific history manager"
 
 - Add SQLHistoryManager extending base history
 - Track query performance metrics
@@ -1785,7 +1785,7 @@ async def test_query_result_caching():
 **Git Commit**:
 ```bash
 git add modules/database.py modules/cache.py tests/test_performance.py
-git commit -m "feat: implement performance optimizations
+git commit -m "feat: implement performance optimizations"
 
 - Add connection pool size optimization
 - Implement query result caching with TTL
@@ -1841,7 +1841,7 @@ async def test_metrics_collection():
 **Git Commit**:
 ```bash
 git add core/monitor.py tests/test_monitoring.py
-git commit -m "feat: implement comprehensive system monitoring
+git commit -m "feat: implement comprehensive system monitoring"
 
 - Add SystemMonitor with health checks
 - Implement metrics collection (latency, query time, memory)
@@ -1911,7 +1911,7 @@ async def test_retry_with_backoff():
 **Git Commit**:
 ```bash
 git add mcp_clients/manager.py tests/test_error_recovery.py
-git commit -m "feat: implement error recovery and retry logic
+git commit -m "feat: implement error recovery and retry logic"
 
 - Add automatic reconnection on connection failure
 - Implement retry with exponential backoff
@@ -1936,7 +1936,7 @@ git commit -m "feat: implement error recovery and retry logic
 **Git Commit**:
 ```bash
 git add docs/README.md docs/INSTALLATION.md docs/CONFIGURATION.md docs/examples/
-git commit -m "docs: add comprehensive user documentation
+git commit -m "docs: add comprehensive user documentation"
 
 - Create detailed README with features
 - Add step-by-step installation guide
@@ -1957,7 +1957,7 @@ git commit -m "docs: add comprehensive user documentation
 **Git Commit**:
 ```bash
 git add docs/api/ docs/modules/
-git commit -m "docs: add complete API documentation
+git commit -m "docs: add complete API documentation"
 
 - Generate API docs for all modules
 - Document public methods and classes
@@ -1977,14 +1977,14 @@ git commit -m "docs: add complete API documentation
 **Git Commit**:
 ```bash
 git add CHANGELOG.md setup.py
-git commit -m "chore: prepare v1.0.0 release
+git commit -m "chore: prepare v1.0.0 release"
 
 - Add comprehensive CHANGELOG
 - Update setup.py with dependencies
 - Create distribution configuration
 - Finalize version 1.0.0"
 
-git tag -a v1.0.0 -m "AI-Shell version 1.0.0
+git tag -a v1.0.0 -m "AI-Shell version 1.0.0"
 
 Features:
 - Multi-database MCP integration (Oracle, PostgreSQL)
