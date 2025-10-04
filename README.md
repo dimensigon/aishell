@@ -24,8 +24,8 @@ AI-Shell (AI$) is an intelligent command-line interface that combines traditiona
 git clone https://github.com/dimensigon/aishell.git
 cd ai-shell
 
-# Create virtual environment (Python 3.11+ required)
-python3.11 -m venv venv
+# Create virtual environment (Python 3.9-3.14 supported)
+python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
@@ -34,6 +34,15 @@ pip install -r requirements.txt
 # Initialize configuration
 ai-shell --init
 ```
+
+### Python Version Support
+
+- ✅ Python 3.9
+- ✅ Python 3.10
+- ✅ Python 3.11
+- ✅ Python 3.12 (NEW - Full FAISS support)
+- ✅ Python 3.13 (NEW)
+- ✅ Python 3.14 (NEW)
 
 ### First Run
 

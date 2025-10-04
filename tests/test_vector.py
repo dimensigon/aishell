@@ -9,7 +9,8 @@ from src.vector.autocomplete import IntelligentCompleter, CompletionCandidate
 @pytest.fixture
 def vector_db():
     """Create vector database fixture."""
-    return VectorDatabase(dimension=384)
+    # Use mock implementation for consistent test behavior
+    return VectorDatabase(dimension=384, use_faiss=False)
 
 
 @pytest.fixture

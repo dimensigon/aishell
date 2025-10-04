@@ -1,9 +1,17 @@
-"""Vector database implementation with FAISS-like interface."""
+"""Vector database implementation with FAISS backend."""
 
 import numpy as np
 from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass
 import logging
+
+# Try to import real FAISS, fall back to mock if not available
+try:
+    import faiss
+    FAISS_AVAILABLE = True
+except ImportError:
+    FAISS_AVAILABLE = False
+    logging.warning("FAISS not available, using mock implementation")
 
 logger = logging.getLogger(__name__)
 
@@ -80,14 +88,26 @@ class MockFAISSIndex:
 class VectorDatabase:
     """Vector database for semantic search and indexing."""
 
-    def __init__(self, dimension: int = 384):
+    def __init__(self, dimension: int = 384, use_faiss: bool = True):
         """Initialize vector database.
 
         Args:
             dimension: Vector dimension for embeddings
+            use_faiss: Whether to use real FAISS (True) or mock (False)
         """
         self.dimension = dimension
-        self.index = MockFAISSIndex(dimension)
+        self.use_faiss = use_faiss and FAISS_AVAILABLE
+
+        if self.use_faiss:
+            # Use real FAISS with L2 distance (IndexFlatL2)
+            # FAISS 1.12.0 API is compatible with 1.7.4
+            self.index = faiss.IndexFlatL2(dimension)
+            logger.info(f"Initialized FAISS IndexFlatL2 with dimension {dimension}")
+        else:
+            # Use mock implementation for testing
+            self.index = MockFAISSIndex(dimension)
+            logger.info(f"Initialized Mock FAISS index with dimension {dimension}")
+
         self.entries: List[VectorEntry] = []
         self._id_to_idx: Dict[str, int] = {}
 
@@ -122,7 +142,15 @@ class VectorDatabase:
         idx = len(self.entries)
         self.entries.append(entry)
         self._id_to_idx[object_id] = idx
-        self.index.add(vector)
+
+        # Add to index - real FAISS expects 2D array with float32
+        if self.use_faiss:
+            # FAISS requires float32 2D array (n_vectors, dimension)
+            vec_2d = vector.reshape(1, -1).astype(np.float32)
+            self.index.add(vec_2d)
+        else:
+            # Mock implementation handles various formats
+            self.index.add(vector)
 
         logger.debug(f"Added {object_type} object: {object_id}")
 
@@ -147,7 +175,13 @@ class VectorDatabase:
         if not self.entries:
             return []
 
-        distances, indices = self.index.search(query_vector, k * 2)  # Get more for filtering
+        # Prepare query for FAISS - needs 2D float32 array
+        if self.use_faiss:
+            query_2d = query_vector.reshape(1, -1).astype(np.float32)
+        else:
+            query_2d = query_vector
+
+        distances, indices = self.index.search(query_2d, k * 2)  # Get more for filtering
 
         results = []
         for dist, idx in zip(distances[0], indices[0]):
@@ -160,10 +194,21 @@ class VectorDatabase:
             if object_type and entry.object_type != object_type:
                 continue
 
-            # Apply threshold (distance is 1 - similarity)
-            similarity = 1 - dist
-            if similarity < threshold:
-                continue
+            # Apply threshold
+            # For real FAISS with L2 distance, smaller is better
+            # For mock with cosine similarity, distance is 1 - similarity
+            if self.use_faiss:
+                # L2 distance threshold - adjust based on normalized vectors
+                # For normalized vectors, L2 distance ranges from 0 to 2
+                # Convert to similarity-like metric for threshold
+                similarity = 1.0 / (1.0 + dist)
+                if similarity < threshold:
+                    continue
+            else:
+                # Mock uses 1 - cosine_similarity
+                similarity = 1 - dist
+                if similarity < threshold:
+                    continue
 
             results.append((entry, float(dist)))
 
