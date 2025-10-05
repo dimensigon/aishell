@@ -1,5 +1,10 @@
 # AI-Shell Documentation
 
+![Python Version](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)
+![Test Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen)
+![License](https://img.shields.io/badge/license-MIT-green)
+![FAISS](https://img.shields.io/badge/FAISS-1.12.0-orange)
+
 ## Overview
 
 AI-Shell (AI$) is an intelligent command-line interface that combines traditional shell functionality with AI-powered assistance, database management, and multi-threaded asynchronous processing. Built with Python's `prompt-toolkit` and modern async architecture, it provides a context-aware terminal experience with modular extensibility.
@@ -14,8 +19,25 @@ AI-Shell (AI$) is an intelligent command-line interface that combines traditiona
 - **🔍 Intelligent Auto-completion**: Vector-based semantic search for commands and database objects
 - **📝 Enhanced History**: Queryable command history with exit codes and context
 - **🌐 Web Interface**: Optional Flask-based web UI for graphical interaction
+- **🏥 Health Check System**: Comprehensive async health monitoring with parallel checks
+- **🤖 Custom AI Agents**: Build autonomous agents with multi-step workflows
+- **🛠️ Tool Registry**: Centralized tool management with safety validation
+- **🔒 Safety & Approvals**: Multi-layer protection with risk assessment and approval workflows
+
+## 📚 Tutorials
+
+New to AI-Shell? Start with our comprehensive tutorial series:
+
+1. **[Health Check System](./tutorials/01-health-checks-tutorial.md)** - Master async health monitoring (30 min)
+2. **[Building Custom Agents](./tutorials/02-building-custom-agents.md)** - Create autonomous AI agents (60 min)
+3. **[Tool Registry System](./tutorials/03-tool-registry-guide.md)** - Manage and validate agent tools (45 min)
+4. **[Safety & Approvals](./tutorials/04-safety-and-approvals.md)** - Implement multi-layer protection (40 min)
+
+📖 **[View Complete Tutorial Index →](./tutorials/README.md)**
 
 ## Quick Start
+
+**New users**: Follow the **[Health Check Tutorial](./tutorials/01-health-checks-tutorial.md)** for a guided introduction!
 
 ### Installation
 
@@ -291,6 +313,100 @@ AI$ > ps aux | grep nginx  # Press Ctrl+A
 AI$ > edit app.py
 # Inside editor, type: #ai add error handling for database connections
 ```
+
+## Phase 11 & 12 Features
+
+### 🏥 Advanced Health Check System (Phase 11)
+
+AI-Shell now includes a comprehensive health monitoring system:
+
+- **Parallel Execution**: All checks run concurrently for speed
+- **Timeout Protection**: No single check can hang the system (< 2s)
+- **Async-First Design**: Non-blocking for high performance
+- **Built-in Checks**: LLM, Database, Filesystem, and Memory checks
+- **Custom Checks**: Easy extensibility for application-specific needs
+
+```python
+from core.health_check_manager import HealthCheckManager
+
+# Run all checks in parallel
+results = await health_manager.run_all_checks()
+# ✅ LLM: healthy (0.45s)
+# ✅ Database: healthy (0.23s)
+# ✅ Memory: healthy (0.12s)
+```
+
+📖 **[Health Check Tutorial →](./tutorials/01-health-checks-tutorial.md)**
+
+### 🤖 Custom AI Agents (Phase 11)
+
+Build autonomous agents with multi-step workflows:
+
+- **Intelligent Planning**: LLM-powered task decomposition
+- **Tool-Based Execution**: Use validated tools from registry
+- **Safety Controls**: Multi-layer approval workflows
+- **State Persistence**: Checkpoint and recovery for long tasks
+- **Error Recovery**: Automatic retry and rollback capabilities
+
+```python
+class DatabaseMaintenanceAgent(BaseAgent):
+    async def plan(self, task: str) -> List[ExecutionStep]:
+        # Agent decomposes task into steps
+        return steps
+
+    async def execute_step(self, step: ExecutionStep) -> StepResult:
+        # Execute with safety validation
+        return result
+```
+
+📖 **[Agent Building Tutorial →](./tutorials/02-building-custom-agents.md)**
+
+### 🛠️ Tool Registry System (Phase 11)
+
+Centralized tool management with validation:
+
+- **Parameter Validation**: JSON Schema-based validation
+- **Risk Assessment**: Five-level risk classification
+- **Capability Matching**: Ensure agents have required capabilities
+- **LLM Integration**: Generate tool descriptions for AI
+- **Audit Trails**: Complete execution logging
+- **Rate Limiting**: Prevent resource exhaustion
+
+```python
+@tool_registry.register(
+    category="database",
+    risk_level=RiskLevel.HIGH,
+    capabilities=["database_write"]
+)
+async def backup_database(target_db: str, backup_path: str):
+    # Tool automatically validated and logged
+    pass
+```
+
+📖 **[Tool Registry Guide →](./tutorials/03-tool-registry-guide.md)**
+
+### 🔒 Safety & Approval System (Phase 12)
+
+Multi-layer protection for autonomous operations:
+
+- **Risk Assessment**: Automatic operation risk evaluation
+- **Approval Workflows**: Human-in-the-loop for critical operations
+- **SQL Analysis**: Deep inspection of database queries
+- **Audit Logging**: Complete trail of all decisions
+- **Safety Constraints**: Configurable rules and policies
+
+```python
+# High-risk operations require approval
+result = await safety_controller.validate_and_execute(
+    operation="DROP TABLE users",
+    risk_level=RiskLevel.CRITICAL,
+    approval_required=True
+)
+# 🔒 CRITICAL operation requires approval
+# Type 'I approve' to continue: _
+```
+
+📖 **[Safety Tutorial →](./tutorials/04-safety-and-approvals.md)**
 
 ## Advanced Features
 
