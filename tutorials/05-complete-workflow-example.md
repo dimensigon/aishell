@@ -1195,7 +1195,296 @@ def _register_default_agents(self):
 
 ---
 
-## 6. Step 3: Backup Integration
+## 6. Step 3: UI Integration with Dynamic Panels
+
+### Overview
+
+Before integrating the backup agent, let's add Phase 11 UI components to visualize workflow progress and provide real-time feedback.
+
+### Implementation
+
+Create `src/ui/screens/maintenance_workflow_screen.py`:
+
+```python
+"""
+Maintenance Workflow Screen with Dynamic Panels
+
+Displays real-time workflow progress with adaptive UI components.
+"""
+
+from textual.app import ComposeResult
+from textual.screen import Screen
+from textual.widgets import Static, Header, Footer, ProgressBar
+from textual.containers import Container, Horizontal, Vertical
+from src.ui.widgets.command_preview import CommandPreviewWidget
+from src.ui.widgets.risk_indicator import RiskIndicatorWidget
+from src.ui.widgets.agent_status_panel import AgentStatusPanel
+
+
+class MaintenanceWorkflowScreen(Screen):
+    """Interactive workflow screen with adaptive panels"""
+
+    CSS = """
+    #workflow-container {
+        layout: vertical;
+        height: 100%;
+    }
+
+    #command-preview-panel {
+        height: 30%;
+        border: solid $primary;
+    }
+
+    #agent-status-panel {
+        height: 50%;
+        border: solid $accent;
+    }
+
+    #progress-panel {
+        height: 20%;
+        border: solid $success;
+    }
+    """
+
+    def __init__(self, workflow_config: dict):
+        super().__init__()
+        self.workflow_config = workflow_config
+        self.current_step = 0
+
+    def compose(self) -> ComposeResult:
+        """Build UI layout"""
+        yield Header(show_clock=True)
+
+        with Container(id="workflow-container"):
+            # Command Preview Panel (top 30%)
+            with Container(id="command-preview-panel"):
+                yield Static("Command Preview", classes="panel-title")
+                yield CommandPreviewWidget(id="command-preview")
+
+            # Agent Status Panel (middle 50%)
+            with Container(id="agent-status-panel"):
+                yield Static("Agent Workflow Status", classes="panel-title")
+                yield AgentStatusPanel(id="agent-status")
+
+            # Progress Panel (bottom 20%)
+            with Container(id="progress-panel"):
+                yield Static("Workflow Progress", classes="panel-title")
+                yield ProgressBar(id="workflow-progress", total=100)
+                yield Static("Ready to start", id="progress-text")
+
+        yield Footer()
+
+    async def update_command_preview(self, command: str, risk_level: str, risks: list):
+        """Update command preview with risk visualization"""
+        preview = self.query_one("#command-preview", CommandPreviewWidget)
+        await preview.set_command(command, risk_level, risks)
+
+    async def update_agent_status(self, agent_name: str, status: str, details: dict):
+        """Update agent execution status"""
+        panel = self.query_one("#agent-status", AgentStatusPanel)
+        await panel.update_agent(agent_name, status, details)
+
+    async def update_progress(self, current: int, total: int, message: str):
+        """Update overall workflow progress"""
+        progress_bar = self.query_one("#workflow-progress", ProgressBar)
+        progress_text = self.query_one("#progress-text", Static)
+
+        progress_bar.update(progress=(current / total) * 100)
+        progress_text.update(f"Step {current}/{total}: {message}")
+```
+
+### Command Preview Widget
+
+Create `src/ui/widgets/command_preview.py`:
+
+```python
+"""Command Preview Widget with Risk Visualization"""
+
+from textual.widgets import Static
+from textual.containers import Vertical
+from rich.table import Table
+
+
+class CommandPreviewWidget(Vertical):
+    """Preview command with risk assessment"""
+
+    async def set_command(self, command: str, risk_level: str, risks: list):
+        """Display command with risk information"""
+
+        # Create risk visualization table
+        risk_table = Table(title="Risk Assessment", show_header=True)
+        risk_table.add_column("Risk Level", style="bold")
+        risk_table.add_column("Score", justify="right")
+        risk_table.add_column("Details")
+
+        # Risk level styling
+        risk_colors = {
+            'safe': 'green',
+            'low': 'cyan',
+            'medium': 'yellow',
+            'high': 'orange',
+            'critical': 'red'
+        }
+
+        color = risk_colors.get(risk_level.lower(), 'white')
+
+        risk_table.add_row(
+            f"[{color}]{risk_level.upper()}[/{color}]",
+            self._calculate_risk_score(risk_level),
+            "\n".join(f"• {risk}" for risk in risks)
+        )
+
+        # Update widget
+        await self.update(
+            Static(f"Command: {command}", classes="command-text"),
+            Static(risk_table)
+        )
+
+    def _calculate_risk_score(self, risk_level: str) -> str:
+        """Convert risk level to numeric score"""
+        scores = {
+            'safe': '0.0/10',
+            'low': '2.5/10',
+            'medium': '5.0/10',
+            'high': '8.5/10',
+            'critical': '10.0/10'
+        }
+        return scores.get(risk_level.lower(), 'N/A')
+```
+
+### Agent Status Panel
+
+Create `src/ui/widgets/agent_status_panel.py`:
+
+```python
+"""Agent Status Panel - Real-time agent execution status"""
+
+from textual.widgets import DataTable
+from textual.containers import Container
+
+
+class AgentStatusPanel(Container):
+    """Display real-time status of all agents in workflow"""
+
+    def compose(self):
+        yield DataTable(id="agent-table")
+
+    async def on_mount(self):
+        """Initialize table"""
+        table = self.query_one("#agent-table", DataTable)
+
+        # Add columns
+        table.add_column("Agent", width=20)
+        table.add_column("Status", width=15)
+        table.add_column("Progress", width=30)
+        table.add_column("Duration", width=10)
+
+        # Store agent rows
+        self.agent_rows = {}
+
+    async def update_agent(self, agent_name: str, status: str, details: dict):
+        """Update or add agent status"""
+        table = self.query_one("#agent-table", DataTable)
+
+        # Status styling
+        status_styles = {
+            'pending': '⧗ Pending',
+            'running': '⧗ Running',
+            'completed': '✓ Completed',
+            'failed': '✗ Failed'
+        }
+
+        styled_status = status_styles.get(status, status)
+
+        # Progress visualization
+        progress = details.get('progress', 0)
+        progress_bar = self._create_progress_bar(progress)
+
+        duration = details.get('duration', '--')
+
+        if agent_name in self.agent_rows:
+            # Update existing row
+            row_key = self.agent_rows[agent_name]
+            table.update_cell(row_key, "Status", styled_status)
+            table.update_cell(row_key, "Progress", progress_bar)
+            table.update_cell(row_key, "Duration", f"{duration}s")
+        else:
+            # Add new row
+            row_key = table.add_row(
+                agent_name,
+                styled_status,
+                progress_bar,
+                f"{duration}s"
+            )
+            self.agent_rows[agent_name] = row_key
+
+    def _create_progress_bar(self, progress: int) -> str:
+        """Create text-based progress bar"""
+        filled = int(progress / 10)
+        empty = 10 - filled
+        return f"[{'█' * filled}{'░' * empty}] {progress}%"
+```
+
+### Integrating UI with Workflow
+
+Update `MaintenanceCoordinatorAgent` to use UI:
+
+```python
+class MaintenanceCoordinatorAgent(BaseAgent):
+
+    def __init__(self, config, llm_manager, tool_registry, state_manager, ui_screen=None):
+        super().__init__(config, llm_manager, tool_registry, state_manager)
+        self.ui_screen = ui_screen
+
+    async def run(self, task: TaskContext) -> TaskResult:
+        """Execute workflow with UI updates"""
+
+        plan = await self.plan(task)
+
+        total_steps = len(plan)
+        for i, step in enumerate(plan):
+            # Update UI: Show command preview
+            if self.ui_screen:
+                await self.ui_screen.update_command_preview(
+                    command=step['tool'],
+                    risk_level=self._assess_risk_level(step),
+                    risks=self._identify_risks(step)
+                )
+
+            # Validate safety
+            validation = self.validate_safety(step)
+
+            # Update UI: Show agent status
+            if self.ui_screen:
+                await self.ui_screen.update_agent_status(
+                    agent_name=step['tool'],
+                    status='running',
+                    details={'progress': 0, 'duration': 0}
+                )
+
+            # Execute step
+            result = await self.execute_step(step)
+
+            # Update UI: Update progress
+            if self.ui_screen:
+                await self.ui_screen.update_agent_status(
+                    agent_name=step['tool'],
+                    status='completed',
+                    details={'progress': 100, 'duration': result.get('duration', 0)}
+                )
+
+                await self.ui_screen.update_progress(
+                    current=i + 1,
+                    total=total_steps,
+                    message=f"Completed {step['tool']}"
+                )
+
+        return TaskResult(...)
+```
+
+---
+
+## 7. Step 4: Backup Integration
 
 ### Overview
 

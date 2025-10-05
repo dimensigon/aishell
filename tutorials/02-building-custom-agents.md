@@ -2414,15 +2414,325 @@ raise Exception(
 
 ---
 
+## 17. Multi-Agent Coordination (Phase 12)
+
+### Using CoordinatorAgent
+
+The `CoordinatorAgent` orchestrates multiple specialized agents for complex workflows:
+
+```python
+"""
+CoordinatorAgent - Orchestrates multi-agent workflows
+"""
+
+from typing import Dict, Any, List
+from src.agents.base import BaseAgent, AgentConfig, TaskContext
+from src.agents.coordinator import CoordinatorAgent
+
+# Create coordinator
+coordinator_config = AgentConfig(
+    agent_id="main_coordinator",
+    agent_type="coordinator",
+    capabilities=[AgentCapability.COORDINATOR],
+    llm_config={"model": "gpt-4", "temperature": 0.5},
+    safety_level="strict"
+)
+
+coordinator = CoordinatorAgent(
+    config=coordinator_config,
+    llm_manager=llm_manager,
+    tool_registry=tool_registry,
+    state_manager=state_manager,
+    agent_manager=agent_manager
+)
+
+# Define multi-agent workflow
+workflow_task = TaskContext(
+    task_id="maintenance_workflow_001",
+    task_description="Complete database maintenance with optimization",
+    input_data={
+        'workflow_steps': [
+            {
+                'agent_type': 'performance_analysis',
+                'task': 'Analyze database performance and identify bottlenecks',
+                'dependencies': []
+            },
+            {
+                'agent_type': 'backup',
+                'task': 'Create safety backup before optimizations',
+                'dependencies': []
+            },
+            {
+                'agent_type': 'optimizer',
+                'task': 'Apply recommended optimizations',
+                'dependencies': ['performance_analysis', 'backup']
+            },
+            {
+                'agent_type': 'validator',
+                'task': 'Verify optimization results',
+                'dependencies': ['optimizer']
+            }
+        ]
+    },
+    database_config={'database': 'production'}
+)
+
+# Execute coordinated workflow
+result = await coordinator.run(workflow_task)
+
+print(f"Workflow Status: {result.status}")
+print(f"Total Agents Used: {len(result.actions_taken)}")
+print(f"Overall Improvement: {result.output_data.get('improvement_pct')}%")
+```
+
+### MigrationAgent Example
+
+Use the built-in `MigrationAgent` for database migrations:
+
+```python
+from src.agents.database.migration import MigrationAgent
+
+# Configure migration agent
+migration_config = AgentConfig(
+    agent_id="migration_001",
+    agent_type="migration",
+    capabilities=[
+        AgentCapability.DATABASE_READ,
+        AgentCapability.DATABASE_WRITE,
+        AgentCapability.DATABASE_DDL,
+        AgentCapability.SCHEMA_ANALYZE
+    ],
+    llm_config={"model": "gpt-4", "temperature": 0.3},
+    safety_level="strict",
+    max_retries=3
+)
+
+migration_agent = MigrationAgent(
+    config=migration_config,
+    llm_manager=llm_manager,
+    tool_registry=tool_registry,
+    state_manager=state_manager
+)
+
+# Define migration task
+migration_task = TaskContext(
+    task_id="migrate_001",
+    task_description="Migrate users table from MySQL to PostgreSQL",
+    input_data={
+        'source_db': {
+            'type': 'mysql',
+            'connection_string': 'mysql://localhost/old_db'
+        },
+        'target_db': {
+            'type': 'postgresql',
+            'connection_string': 'postgresql://localhost/new_db'
+        },
+        'tables': ['users', 'user_profiles'],
+        'migration_mode': 'schema_and_data',
+        'batch_size': 1000,
+        'validate_after': True
+    }
+)
+
+# Execute migration
+result = await migration_agent.run(migration_task)
+
+# Migration creates checkpoints automatically
+if result.status == "failed":
+    # Resume from last checkpoint
+    recovered_result = await migration_agent.recover_from_checkpoint(
+        migration_task.task_id
+    )
+```
+
+### OptimizerAgent Example
+
+Use the `OptimizerAgent` for database optimizations:
+
+```python
+from src.agents.database.optimizer import OptimizerAgent
+
+# Configure optimizer
+optimizer_config = AgentConfig(
+    agent_id="optimizer_001",
+    agent_type="optimizer",
+    capabilities=[
+        AgentCapability.DATABASE_READ,
+        AgentCapability.SCHEMA_ANALYZE,
+        AgentCapability.INDEX_MANAGE,
+        AgentCapability.QUERY_OPTIMIZE
+    ],
+    llm_config={"model": "gpt-4", "temperature": 0.3},
+    safety_level="moderate"
+)
+
+optimizer_agent = OptimizerAgent(
+    config=optimizer_config,
+    llm_manager=llm_manager,
+    tool_registry=tool_registry,
+    state_manager=state_manager
+)
+
+# Define optimization task
+optimization_task = TaskContext(
+    task_id="optimize_001",
+    task_description="Optimize database performance",
+    input_data={
+        'optimization_targets': [
+            'slow_queries',
+            'missing_indexes',
+            'stale_statistics'
+        ],
+        'auto_apply_safe': True,  # Auto-apply low-risk optimizations
+        'min_improvement_threshold': 0.15  # Require 15% improvement
+    },
+    database_config={'database': 'production'}
+)
+
+# Execute optimization
+result = await optimizer_agent.run(optimization_task)
+
+# Review recommendations
+print(f"Optimizations Applied: {result.output_data['optimizations_applied']}")
+print(f"Performance Improvement: {result.output_data['improvement_pct']}%")
+print(f"Recommendations Requiring Approval:")
+for rec in result.output_data['pending_approvals']:
+    print(f"  - {rec['description']} (estimated: +{rec['estimated_impact']}%)")
+```
+
+### Multi-Agent Workflow Patterns
+
+**Pattern 1: Sequential Coordination**
+```python
+async def sequential_workflow(coordinator, agents):
+    """Execute agents in sequence, each using previous results"""
+
+    workflow = [
+        {'agent': 'analyzer', 'task': 'Analyze system'},
+        {'agent': 'planner', 'task': 'Create plan from analysis'},
+        {'agent': 'executor', 'task': 'Execute plan'},
+        {'agent': 'validator', 'task': 'Validate results'}
+    ]
+
+    results = []
+    context = {}
+
+    for step in workflow:
+        agent = agents[step['agent']]
+        task = TaskContext(
+            task_id=f"{step['agent']}_{time.time()}",
+            task_description=step['task'],
+            input_data=context
+        )
+
+        result = await agent.run(task)
+        results.append(result)
+
+        # Pass results to next agent
+        context.update(result.output_data)
+
+    return results
+```
+
+**Pattern 2: Parallel Execution**
+```python
+import asyncio
+
+async def parallel_workflow(agents, tasks):
+    """Execute multiple agents in parallel"""
+
+    # Run all agents concurrently
+    results = await asyncio.gather(*[
+        agent.run(task)
+        for agent, task in zip(agents, tasks)
+    ])
+
+    # Aggregate results
+    aggregated = {
+        'total_agents': len(results),
+        'successful': sum(1 for r in results if r.status == 'success'),
+        'failed': sum(1 for r in results if r.status == 'failed'),
+        'outputs': [r.output_data for r in results]
+    }
+
+    return aggregated
+```
+
+**Pattern 3: Conditional Coordination**
+```python
+async def conditional_workflow(coordinator, analysis_agent, backup_agent, optimizer_agent):
+    """Execute agents based on analysis results"""
+
+    # Step 1: Analyze
+    analysis_result = await analysis_agent.run(analysis_task)
+
+    # Step 2: Conditional execution based on analysis
+    if analysis_result.output_data['needs_optimization']:
+        # Create backup first
+        backup_result = await backup_agent.run(backup_task)
+
+        if backup_result.status == 'success':
+            # Then optimize
+            optimizer_result = await optimizer_agent.run(optimizer_task)
+            return optimizer_result
+        else:
+            raise Exception("Backup failed, cannot proceed with optimization")
+    else:
+        return {"message": "No optimization needed"}
+```
+
+### Agent Communication via Shared State
+
+Agents coordinate through state manager:
+
+```python
+# Agent A writes to shared state
+await state_manager.save_checkpoint(
+    "shared_workflow_001",
+    "agent_a_results",
+    {
+        'slow_queries': [...],
+        'recommended_indexes': [...],
+        'completion_status': 'ready_for_next_agent'
+    }
+)
+
+# Agent B reads from shared state
+checkpoint = await state_manager.get_checkpoint("shared_workflow_001_cp_agent_a_results")
+agent_a_data = checkpoint.checkpoint_data
+
+# Agent B uses Agent A's results
+for index in agent_a_data['recommended_indexes']:
+    await agent_b.create_index(index)
+```
+
+---
+
 ## Conclusion
 
-You now have a comprehensive understanding of building custom AI agents for AIShell. Remember:
+You now have a comprehensive understanding of building custom AI agents for AIShell, including:
+
+1. **Basic Agent Development** - Core patterns and lifecycle
+2. **Advanced Features** - Planning, execution, safety validation
+3. **Tool Integration** - Creating and using tools
+4. **State Management** - Checkpoints and recovery
+5. **Multi-Agent Coordination** - CoordinatorAgent and workflow patterns
+6. **Production Agents** - MigrationAgent, OptimizerAgent examples
+7. **Testing & Deployment** - Comprehensive testing strategies
+
+Remember:
 
 1. **Start simple** - Build basic functionality first
 2. **Test thoroughly** - Unit and integration tests are essential
 3. **Validate safety** - Always implement comprehensive safety checks
 4. **Handle errors** - Expect things to fail and handle gracefully
 5. **Document well** - Future you will thank present you
-6. **Iterate** - Continuously improve based on real-world usage
+6. **Coordinate effectively** - Use CoordinatorAgent for complex workflows
+7. **Iterate** - Continuously improve based on real-world usage
+
+**Next Steps:**
+- See [05-complete-workflow-example.md](./05-complete-workflow-example.md) for full workflow integration
+- Check [06-quick-reference.md](./06-quick-reference.md) for quick lookups
+- Review Phase 12 architecture docs for advanced patterns
 
 Happy agent building!

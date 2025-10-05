@@ -4,50 +4,79 @@
 
 ---
 
-## 1. Agent Development Cheat Sheet
+## 1. Agent Development Cheat Sheet (Phase 12)
 
 ### Basic Agent Structure
 ```python
-from src.core.base_agent import BaseAgent
-from src.core.tool_registry import ToolRegistry
+from src.agents.base import BaseAgent, AgentConfig, TaskContext, AgentCapability
 
 class MyAgent(BaseAgent):
-    def __init__(self, llm_config: dict, tool_registry: ToolRegistry):
-        super().__init__(name="my_agent", llm_config=llm_config)
-        self.tool_registry = tool_registry
+    def __init__(self, config: AgentConfig, llm_manager, tool_registry, state_manager):
+        super().__init__(config, llm_manager, tool_registry, state_manager)
 
-    async def process_task(self, task: str, context: dict) -> dict:
-        tools = self.tool_registry.get_tools_for_category("my_category")
-        result = await self._call_llm(task, tools, context)
-        return result
+    async def plan(self, task: TaskContext) -> List[Dict[str, Any]]:
+        """Create execution plan"""
+        return [
+            {'tool': 'step1', 'params': {...}, 'rationale': 'Why this step'},
+            {'tool': 'step2', 'params': {...}, 'rationale': 'Why this step'}
+        ]
+
+    async def execute_step(self, step: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute single step"""
+        tool = self.tool_registry.get_tool(step['tool'])
+        return await tool.execute(step['params'], context)
+
+    def validate_safety(self, step: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate step safety"""
+        return {
+            'requires_approval': False,
+            'safe': True,
+            'risk_level': 'safe',
+            'risks': [],
+            'mitigations': []
+        }
 ```
 
 ### Agent Configuration Quick Start
 ```python
-agent_config = {
-    "name": "my_agent",
-    "description": "Brief description",
-    "capabilities": ["cap1", "cap2"],
-    "max_retries": 3,
-    "timeout": 30,
-    "llm_config": {
-        "model": "gpt-4",
-        "temperature": 0.7,
-        "max_tokens": 2000
-    }
-}
+from src.agents.base import AgentConfig, AgentCapability
+
+agent_config = AgentConfig(
+    agent_id="my_agent_001",
+    agent_type="custom",
+    capabilities=[
+        AgentCapability.DATABASE_READ,
+        AgentCapability.SCHEMA_ANALYZE
+    ],
+    llm_config={"model": "gpt-4", "temperature": 0.7},
+    safety_level="moderate",  # 'strict', 'moderate', 'permissive'
+    max_retries=3,
+    timeout_seconds=300
+)
 ```
+
+### Phase 12 Agents Quick Reference
+
+| Agent Type | Purpose | Key Capabilities |
+|------------|---------|------------------|
+| `BackupAgent` | Database backups | DATABASE_READ, BACKUP_CREATE, FILE_WRITE |
+| `MigrationAgent` | Cross-DB migrations | DATABASE_READ, DATABASE_WRITE, DATABASE_DDL |
+| `OptimizerAgent` | Performance optimization | SCHEMA_ANALYZE, INDEX_MANAGE, QUERY_OPTIMIZE |
+| `CoordinatorAgent` | Multi-agent orchestration | COORDINATOR |
+| `PerformanceAnalysisAgent` | Performance analysis | DATABASE_READ, SCHEMA_ANALYZE, QUERY_OPTIMIZE |
 
 ### Common Agent Patterns
 
 | Pattern | Code Snippet | Use Case |
 |---------|--------------|----------|
-| **Tool Execution** | `result = await self.execute_tool("tool_name", params)` | Execute registered tools |
-| **Error Handling** | `try/except` with `self.logger.error()` | Graceful failure |
-| **State Save** | `await self.save_checkpoint(state)` | Persist progress |
-| **State Load** | `state = await self.load_checkpoint(checkpoint_id)` | Resume work |
-| **Tool Discovery** | `tools = self.tool_registry.get_tools_by_tag("search")` | Find relevant tools |
-| **Async Loop** | `async for item in stream: await process(item)` | Stream processing |
+| **Run Agent** | `result = await agent.run(task_context)` | Execute full workflow |
+| **Tool Execution** | `result = await tool.execute(params, context)` | Execute registered tools |
+| **Error Handling** | `try/except` with checkpoint save | Graceful failure with recovery |
+| **State Save** | `await state_manager.save_checkpoint(task_id, name, data)` | Persist progress |
+| **State Load** | `checkpoint = await state_manager.get_checkpoint(cp_id)` | Resume work |
+| **Tool Discovery** | `tools = tool_registry.find_tools(category=...)` | Find relevant tools |
+| **Coordination** | `coordinator.run(workflow_task)` | Multi-agent workflows |
+| **Variable Substitution** | `'${step_0.output.field}'` | Reference previous step outputs |
 
 ### Agent Lifecycle Hooks
 ```python
@@ -74,28 +103,47 @@ async def on_shutdown(self):
 
 ---
 
-## 2. Tool Registry Quick Reference
+## 2. Tool Registry Quick Reference (Phase 12)
 
-### Tool Registration One-Liners
+### Tool Registration with ToolDefinition
 ```python
-# Register a function as a tool
-@tool_registry.register(category="search", tags=["web", "api"])
-def search_web(query: str) -> dict:
-    return {"results": [...]}
+from src.agents.tools.registry import ToolRegistry, ToolDefinition, ToolCategory, ToolRiskLevel
+from src.agents.base import AgentCapability
 
-# Register with full metadata
-tool_registry.register_tool(
+# Define tool function
+async def my_tool(params: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
+    """Tool implementation"""
+    return {"result": "success"}
+
+# Register tool
+tool_registry.register_tool(ToolDefinition(
     name="my_tool",
-    function=my_function,
-    description="Tool description",
-    category="data_processing",
-    tags=["transform", "clean"],
-    risk_level="low",
-    requires_approval=False
-)
-
-# Bulk register from module
-tool_registry.register_from_module(my_tools_module, category="custom")
+    description="What this tool does",
+    category=ToolCategory.ANALYSIS,
+    risk_level=ToolRiskLevel.SAFE,
+    required_capabilities=[AgentCapability.DATABASE_READ],
+    parameters_schema={
+        "type": "object",
+        "properties": {
+            "param1": {"type": "string"},
+            "param2": {"type": "integer", "default": 10}
+        },
+        "required": ["param1"]
+    },
+    returns_schema={
+        "type": "object",
+        "properties": {
+            "result": {"type": "string"}
+        }
+    },
+    implementation=my_tool,
+    requires_approval=False,
+    max_execution_time=60,
+    examples=[{
+        "params": {"param1": "value"},
+        "expected_output": {"result": "success"}
+    }]
+))
 ```
 
 ### Tool Discovery Quick Lookups
@@ -116,16 +164,37 @@ tools = tool_registry.search_tools("file upload")
 metadata = tool_registry.get_tool_metadata("tool_name")
 ```
 
-### Tool Categories & Common Tags
+### Tool Categories & Risk Levels (Phase 12)
 
-| Category | Common Tags | Example Tools |
+| Category | Risk Levels | Example Tools |
 |----------|-------------|---------------|
-| `file_operations` | `read`, `write`, `delete` | read_file, write_file, delete_file |
-| `web_operations` | `http`, `api`, `scrape` | fetch_url, post_data, scrape_page |
-| `data_processing` | `transform`, `clean`, `validate` | parse_json, validate_schema |
-| `code_execution` | `python`, `shell`, `eval` | run_python, execute_shell |
-| `database` | `query`, `insert`, `update` | run_query, insert_record |
-| `external_api` | `api`, `service`, `integration` | call_api, webhook_trigger |
+| `ANALYSIS` | SAFE | analyze_slow_queries, identify_missing_indexes |
+| `DATABASE_READ` | SAFE | count_table_rows, get_table_schema |
+| `DATABASE_WRITE` | LOW-MEDIUM | update_table_statistics, insert_record |
+| `DATABASE_DDL` | HIGH | create_index, alter_table, drop_table |
+| `BACKUP` | LOW | backup_database_full, verify_backup |
+| `MIGRATION` | MEDIUM-HIGH | execute_migration, copy_table_data |
+| `OPTIMIZATION` | MEDIUM | rebuild_indexes, optimize_table |
+| `FILE_OPERATIONS` | LOW-MEDIUM | read_file, write_file |
+
+### Migration Tools (Phase 12)
+
+| Tool | Category | Risk | Purpose |
+|------|----------|------|---------|
+| `analyze_schema` | ANALYSIS | SAFE | Analyze source/target schemas |
+| `map_data_types` | ANALYSIS | SAFE | Map data types between databases |
+| `execute_migration` | MIGRATION | HIGH | Execute actual migration |
+| `validate_migration` | ANALYSIS | SAFE | Verify migration results |
+
+### Optimization Tools (Phase 12)
+
+| Tool | Category | Risk | Purpose |
+|------|----------|------|---------|
+| `analyze_slow_queries` | ANALYSIS | SAFE | Find slow queries |
+| `identify_missing_indexes` | ANALYSIS | SAFE | Recommend indexes |
+| `create_index` | DATABASE_DDL | MEDIUM | Create database index |
+| `optimize_table_statistics` | DATABASE_WRITE | LOW | Update table statistics |
+| `validate_optimization_results` | ANALYSIS | SAFE | Verify improvements |
 
 ---
 
@@ -637,6 +706,150 @@ class HealthMonitor:
 | ToolRegistry | `search_tools()` | list | Find tools by query |
 | SafetyManager | `check_operation()` | bool | Validate safety |
 | HealthMonitor | `run_check()` | HealthStatus | Execute health check |
+
+---
+
+## 11. UI Widgets Quick Reference (Phase 11)
+
+### Command Preview Widget
+```python
+from src.ui.widgets.command_preview import CommandPreviewWidget
+
+# Create widget
+preview = CommandPreviewWidget(id="command-preview")
+
+# Update with command and risk
+await preview.set_command(
+    command="DROP TABLE users",
+    risk_level="critical",
+    risks=["Permanent data loss", "No rollback possible"]
+)
+```
+
+### Agent Status Panel
+```python
+from src.ui.widgets.agent_status_panel import AgentStatusPanel
+
+# Create panel
+panel = AgentStatusPanel(id="agent-status")
+
+# Update agent status
+await panel.update_agent(
+    agent_name="BackupAgent",
+    status="running",
+    details={'progress': 45, 'duration': 12.5}
+)
+```
+
+### Dynamic Panel Layout
+```python
+from textual.containers import Container
+from textual.widgets import Static
+
+# Create adaptive panels
+with Container(id="main-container"):
+    with Container(id="output-panel", classes="adaptive-height-50"):
+        yield Static("Output here")
+    with Container(id="module-panel", classes="adaptive-height-30"):
+        yield Static("Module status")
+    with Container(id="prompt-panel", classes="adaptive-height-20"):
+        yield Static("Prompt")
+```
+
+### Smart Suggestions Widget
+```python
+from src.ui.widgets.suggestions import SmartSuggestionsWidget
+
+# Create suggestions widget
+suggestions = SmartSuggestionsWidget(id="suggestions")
+
+# Update with scored suggestions
+await suggestions.update_suggestions([
+    {'text': 'email = "user@example.com"', 'score': 0.95, 'reason': 'Most common pattern'},
+    {'text': 'created_at > "2025-01-01"', 'score': 0.87, 'reason': 'Recent queries'},
+    {'text': 'status = "active"', 'score': 0.82, 'reason': 'Frequent filter'}
+])
+```
+
+### UI Color Codes
+
+| Risk Level | Color | Usage |
+|------------|-------|-------|
+| Safe | `green` | Safe operations, success messages |
+| Low | `cyan` | Low-risk operations |
+| Medium | `yellow` | Moderate-risk operations |
+| High | `orange` | High-risk operations |
+| Critical | `red` | Destructive operations |
+
+---
+
+## 12. Multi-Agent Workflows (Phase 12)
+
+### CoordinatorAgent Usage
+```python
+from src.agents.coordinator import CoordinatorAgent
+
+# Create coordinator
+coordinator = CoordinatorAgent(config, llm_manager, tool_registry, state_manager, agent_manager)
+
+# Define workflow
+workflow = TaskContext(
+    task_id="workflow_001",
+    task_description="Multi-step maintenance",
+    input_data={
+        'workflow_steps': [
+            {'agent_type': 'performance_analysis', 'task': '...', 'dependencies': []},
+            {'agent_type': 'backup', 'task': '...', 'dependencies': []},
+            {'agent_type': 'optimizer', 'task': '...', 'dependencies': ['performance_analysis', 'backup']}
+        ]
+    }
+)
+
+# Execute
+result = await coordinator.run(workflow)
+```
+
+### Sequential Workflow Pattern
+```python
+# Step 1: Analysis
+analysis_result = await analysis_agent.run(analysis_task)
+
+# Step 2: Use analysis results in next step
+backup_task = TaskContext(
+    task_id="backup_001",
+    task_description="Backup before optimization",
+    input_data={
+        'tables': analysis_result.output_data['affected_tables']
+    }
+)
+backup_result = await backup_agent.run(backup_task)
+```
+
+### Parallel Workflow Pattern
+```python
+import asyncio
+
+# Run agents in parallel
+results = await asyncio.gather(
+    agent1.run(task1),
+    agent2.run(task2),
+    agent3.run(task3)
+)
+```
+
+### Agent Communication via State
+```python
+# Agent A saves results
+await state_manager.save_checkpoint(
+    "shared_workflow",
+    "agent_a_output",
+    {'slow_queries': [...], 'recommendations': [...]}
+)
+
+# Agent B reads Agent A's results
+checkpoint = await state_manager.get_checkpoint("shared_workflow_cp_agent_a_output")
+agent_a_results = checkpoint.checkpoint_data
+```
 
 ---
 

@@ -302,6 +302,164 @@ AI$ > #show me database commands I ran yesterday
 
 ---
 
+## UI Features (Phase 11)
+
+AIShell includes modern UI components for enhanced command-line experience:
+
+### Command Preview with Risk Visualization
+
+Before executing risky commands, AIShell shows an intelligent preview:
+
+```bash
+AI$ > rm -rf /important/data
+
+╔═══════════════════════════════════════════════════════════════╗
+║                   COMMAND RISK PREVIEW                        ║
+╠═══════════════════════════════════════════════════════════════╣
+║ Command: rm -rf /important/data                               ║
+║ Risk Level: ⚠️  HIGH (Score: 8.5/10)                          ║
+║                                                                ║
+║ Detected Risks:                                                ║
+║  • Recursive deletion (127 files, 2.3 GB)                     ║
+║  • No confirmation flag (-i)                                   ║
+║  • Affects production data directory                          ║
+║                                                                ║
+║ Safer Alternatives:                                            ║
+║  ✓ rm -ri /important/data  (interactive mode)                 ║
+║  ✓ mv /important/data /backups/  (move instead)              ║
+║                                                                ║
+║ Type "Understood and approved" to proceed                     ║
+╚═══════════════════════════════════════════════════════════════╝
+```
+
+### Smart Suggestions with Relevance Scores
+
+Get context-aware suggestions as you type:
+
+```bash
+AI$ > SELECT * FROM users WHERE
+
+Suggestions (relevance score):
+  1. email = 'user@example.com'        [95%] - Most common pattern
+  2. created_at > '2025-01-01'         [87%] - Recent queries
+  3. status = 'active'                 [82%] - Frequent filter
+  4. id IN (SELECT...)                 [65%] - Advanced pattern
+```
+
+### Adaptive Panel Layout
+
+Dynamic panels adjust based on your workflow:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Output Panel (50%)                                         │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ Command execution results displayed here            │   │
+│  │ Auto-resizes based on content                       │   │
+│  └─────────────────────────────────────────────────────┘   │
+├─────────────────────────────────────────────────────────────┤
+│  Module Status Panel (30%)                                  │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ • LLM: ✓ Connected (llama2:7b)                      │   │
+│  │ • Database: ✓ PostgreSQL (production)               │   │
+│  │ • Vault: ✓ 5 credentials loaded                     │   │
+│  └─────────────────────────────────────────────────────┘   │
+├─────────────────────────────────────────────────────────────┤
+│  Prompt Panel (20%)                                         │
+│  AI$ > █                                                    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Agent Workflows (Phase 12)
+
+AIShell's intelligent agents automate complex workflows:
+
+### Quick Agent Examples
+
+**Automated Database Backup:**
+```bash
+AI$ > agent backup --database production --destination /backups --verify
+
+╔═══════════════════════════════════════════════════════════════╗
+║              Backup Agent Workflow                            ║
+╠═══════════════════════════════════════════════════════════════╣
+║ Step 1: Analyzing database size... ✓ (42.5 GB)               ║
+║ Step 2: Checking backup space... ✓ (150 GB available)        ║
+║ Step 3: Creating backup... ⧗ (15% complete)                  ║
+║ Step 4: Verifying backup... [pending]                        ║
+║ Step 5: Cleanup old backups... [pending]                     ║
+╚═══════════════════════════════════════════════════════════════╝
+```
+
+**Database Migration Agent:**
+```bash
+AI$ > agent migrate --from mysql://old --to postgres://new --tables users,orders
+
+Migration Agent Planning:
+  1. Schema analysis (both databases)
+  2. Data type mapping (MySQL → PostgreSQL)
+  3. Safety backup creation
+  4. Incremental data transfer
+  5. Constraint verification
+  6. Rollback preparation
+
+Estimated time: 2 hours
+Proceed? (yes/no):
+```
+
+**Performance Optimization Agent:**
+```bash
+AI$ > agent optimize --database production --target query_speed
+
+Optimization Agent Analysis:
+  • Identified 15 slow queries
+  • Found 8 missing indexes
+  • Detected 23 tables with stale statistics
+
+Recommended Actions:
+  1. Create index on users(email) - Est. improvement: 45%
+  2. Update statistics for orders table - Est. improvement: 12%
+  3. Rewrite query #3 to use JOIN - Est. improvement: 67%
+
+Apply optimizations? (yes/no):
+```
+
+### Workflow Coordination Basics
+
+Agents can coordinate complex multi-step workflows:
+
+```python
+# Agents automatically coordinate through shared state
+# Example: Full maintenance workflow
+
+AI$ > agent coordinator --workflow database_maintenance
+
+Coordinator Agent Orchestrating:
+
+  Phase 1: Analysis
+    ├─ Performance Analysis Agent → Scanning queries...
+    ├─ Health Check Agent → Database status: HEALTHY
+    └─ Security Audit Agent → No vulnerabilities found
+
+  Phase 2: Safety Preparations
+    ├─ Backup Agent → Creating safety backup...
+    └─ Validation Agent → Backup verified ✓
+
+  Phase 3: Optimizations
+    ├─ Optimizer Agent → Creating 5 indexes...
+    ├─ Statistics Agent → Updating 23 tables...
+    └─ Cleanup Agent → Removing old logs...
+
+  Phase 4: Verification
+    └─ Validation Agent → Performance improved 34% ✓
+
+Workflow completed successfully in 12 minutes.
+```
+
+---
+
 ## Project Structure
 
 Understanding the codebase layout:
@@ -581,10 +739,11 @@ Congratulations! You've successfully installed and configured AIShell. Here's wh
 
 1. **✅ 00-getting-started.md** (You are here)
 2. **01-ai-powered-commands.md** - Natural language command processing
-3. **02-database-management.md** - Multi-database operations
+3. **[02-building-custom-agents.md](./02-building-custom-agents.md)** - Building agents with Phase 12 features
 4. **03-security-vault.md** - Secure credential management
-5. **04-custom-agents.md** - Building your own AI agents
-6. **05-advanced-features.md** - Vector search, performance tuning
+5. **04-ui-customization.md** - Customizing Phase 11 UI components
+6. **[05-complete-workflow-example.md](./05-complete-workflow-example.md)** - Full workflow with UI and agents
+7. **[06-quick-reference.md](./06-quick-reference.md)** - Quick lookup for all features
 
 ### Documentation
 
