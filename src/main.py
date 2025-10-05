@@ -61,17 +61,15 @@ class AIShell:
 
             # Initialize vault
             vault_key = self.config.get('security.vault_key', 'default-key-change-me')
-            self.vault = SecureVault(vault_key.encode())
+            self.vault = SecureVault(master_password=vault_key)
             logger.info("Vault initialized")
 
             # Initialize LLM manager
-            llm_config = {
-                'ollama_host': self.config.get('llm.ollama_host', 'localhost:11434'),
-                'models': self.config.get('llm.models', {}),
-                'model_path': self.config.get('llm.model_path', '/data0/models')
-            }
-            self.llm_manager = LocalLLMManager(llm_config)
-            await self.llm_manager.initialize()
+            model_path = self.config.get('llm.model_path', '/data0/models')
+            self.llm_manager = LocalLLMManager(model_path=model_path)
+            provider_type = self.config.get('llm.provider', 'ollama')
+            model_name = self.config.get('llm.models.intent', 'llama2')
+            self.llm_manager.initialize(provider_type=provider_type, model_name=model_name)
             logger.info("LLM manager initialized")
 
             # Initialize MCP client manager
@@ -90,22 +88,19 @@ class AIShell:
             logger.info("Monitoring started")
 
             # Initialize database module
+            db_path = self.config.get('database.path', None)
             self.db_module = DatabaseModule(
-                mcp_manager=self.mcp_manager,
-                llm_manager=self.llm_manager,
-                vault=self.vault,
-                config=self.config.config
+                db_path=db_path,
+                auto_confirm=self.config.get('database.auto_confirm', False)
             )
-            await self.db_module.initialize()
+            # Note: DatabaseModule doesn't have async initialize, already ready
             logger.info("Database module initialized")
 
-            # Initialize autocomplete
-            self.autocomplete = IntelligentCompleter(
-                embedding_model=self.llm_manager.embedding_model,
-                config=self.config.config
-            )
-            await self.autocomplete.initialize()
-            logger.info("Autocomplete initialized")
+            # Initialize autocomplete (requires VectorDatabase instance)
+            # Note: IntelligentCompleter requires VectorDatabase, skipping for now
+            # TODO: Initialize VectorDatabase first, then create IntelligentCompleter
+            self.autocomplete = None
+            logger.info("Autocomplete initialization skipped (requires VectorDatabase)")
 
             self._initialized = True
             logger.info("AI-Shell initialization complete")
@@ -128,13 +123,13 @@ class AIShell:
             if self.monitor:
                 await self.monitor.stop_monitoring()
 
-            # Shutdown database module
+            # Database module cleanup (no async shutdown method)
             if self.db_module:
-                await self.db_module.shutdown()
+                pass  # DatabaseModule doesn't have shutdown method
 
-            # Shutdown LLM manager
+            # LLM manager cleanup (no async shutdown needed)
             if self.llm_manager:
-                await self.llm_manager.shutdown()
+                self.llm_manager.initialized = False
 
             # Clear cache
             if self.cache:
