@@ -28,6 +28,7 @@ pyyaml==6.0.1
 # Async & Utilities
 aiofiles==23.2.1
 asyncio-mqtt==0.16.1
+psutil==5.9.8  # System monitoring and memory tracking
 
 # Testing
 pytest==8.3.5

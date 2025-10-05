@@ -21,6 +21,8 @@ class ToolCategory(Enum):
     FILE_SYSTEM = "file_system"
     BACKUP = "backup"
     ANALYSIS = "analysis"
+    MIGRATION = "migration"
+    OPTIMIZATION = "optimization"
 
 
 class ToolRiskLevel(Enum):
