@@ -1,0 +1,29 @@
+# Include documentation
+include README.md
+include LICENSE
+include CHANGELOG.md
+
+# Include configuration files
+recursive-include src *.yaml
+recursive-include src *.json
+recursive-include src *.txt
+
+# Include type information
+recursive-include src py.typed
+
+# Include tests for source distributions
+recursive-include tests *.py
+recursive-include tests *.yaml
+
+# Include tutorials and examples
+recursive-include tutorials *.md
+recursive-include examples *.py
+recursive-include examples *.yaml
+
+# Exclude compiled files and caches
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude __pycache__
+global-exclude .DS_Store
+global-exclude *.so
+global-exclude *.dylib
