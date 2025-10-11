@@ -18,7 +18,7 @@ class PostgreSQLClient(BaseMCPClient):
     Provides async interface to PostgreSQL database operations.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._cursor = None
 
@@ -58,8 +58,8 @@ class PostgreSQLClient(BaseMCPClient):
 
         return connection
 
-    async def _disconnect_impl(self):
-        """Close PostgreSQL connection"""
+    async def _disconnect_impl(self) -> None:
+        """Disconnect from PostgreSQL"""
         if self._cursor:
             loop = asyncio.get_event_loop()
             await loop.run_in_executor(None, self._cursor.close)
@@ -70,8 +70,7 @@ class PostgreSQLClient(BaseMCPClient):
             await loop.run_in_executor(None, self._connection.close)
 
     async def _execute_query_impl(self, query: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """
-        Execute PostgreSQL query
+        """Execute PostgreSQL query.
 
         Args:
             query: SQL query string
@@ -80,15 +79,17 @@ class PostgreSQLClient(BaseMCPClient):
         Returns:
             Dictionary with columns, rows, rowcount, and metadata
         """
+        if self._connection is None:
+            raise MCPClientError("No active connection", "NOT_CONNECTED")
+
         loop = asyncio.get_event_loop()
 
         # Create cursor with dictionary support
         if not self._cursor:
-            self._cursor = await loop.run_in_executor(
-                None,
-                self._connection.cursor,
-                psycopg2.extras.RealDictCursor
-            )
+            def create_cursor():
+                return self._connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+            self._cursor = await loop.run_in_executor(None, create_cursor)
 
         # Execute query
         if params:
@@ -96,21 +97,27 @@ class PostgreSQLClient(BaseMCPClient):
         else:
             await loop.run_in_executor(None, self._cursor.execute, query)
 
-        # Fetch results
+        # Fetch results (only for SELECT queries that return data)
         columns = [desc.name for desc in self._cursor.description] if self._cursor.description else []
 
-        # Fetch all rows
-        rows_dict = await loop.run_in_executor(None, self._cursor.fetchall)
-
-        # Convert RealDictRow to tuples
-        if rows_dict and columns:
-            rows = [tuple(row[col] for col in columns) for row in rows_dict]
-        else:
-            rows = []
+        # Only fetch rows if query returned results (SELECT statements)
+        rows = []
+        if self._cursor.description:
+            try:
+                rows_dict = await loop.run_in_executor(None, self._cursor.fetchall)
+                # Convert RealDictRow to tuples
+                if rows_dict and columns:
+                    rows = [tuple(row[col] for col in columns) for row in rows_dict]
+            except Exception:
+                # No results to fetch (DML/DDL statements)
+                pass
 
         rowcount = self._cursor.rowcount
 
         # Get metadata
+        if self._config is None:
+            raise MCPClientError("No active configuration", "NOT_CONFIGURED")
+
         metadata = {
             'database': self._config.database,
             'query_type': self._get_query_type(query)
@@ -126,17 +133,18 @@ class PostgreSQLClient(BaseMCPClient):
             'metadata': metadata
         }
 
-    async def _execute_ddl_impl(self, ddl: str):
-        """
-        Execute PostgreSQL DDL statement
+    async def _execute_ddl_impl(self, ddl: str) -> None:
+        """Method implementation."""
+        if self._connection is None:
+            raise MCPClientError("No active connection", "NOT_CONNECTED")
 
-        Args:
-            ddl: DDL statement string
-        """
         loop = asyncio.get_event_loop()
 
         if not self._cursor:
-            self._cursor = await loop.run_in_executor(None, self._connection.cursor)
+            def create_cursor():
+                return self._connection.cursor()
+
+            self._cursor = await loop.run_in_executor(None, create_cursor)
 
         await loop.run_in_executor(None, self._cursor.execute, ddl)
         await loop.run_in_executor(None, self._connection.commit)

@@ -1,7 +1,7 @@
 """SQL risk analyzer with severity level classification."""
 
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 import re
 
 
@@ -43,14 +43,14 @@ class SQLRiskAnalyzer:
         r'\bEXPLAIN\s+': RiskLevel.LOW,
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the SQL risk analyzer."""
         self.compiled_patterns = {
             re.compile(pattern, re.IGNORECASE): level
             for pattern, level in self.RISK_PATTERNS.items()
         }
 
-    def analyze(self, sql: str) -> Dict[str, any]:
+    def analyze(self, sql: str) -> Dict[str, Any]:
         """Analyze SQL query for risks.
 
         Args:
@@ -132,6 +132,32 @@ class SQLRiskAnalyzer:
 
         return warnings
 
+    # SECURITY: Enhanced SQL injection detection patterns
+    SQL_INJECTION_PATTERNS = [
+        (r'[\'\"]\s*OR\s+[\'\"]*\s*1\s*=\s*1', "Classic OR 1=1 injection"),
+        (r'[\'\"]\s*OR\s+[\'\"]*\s*[\w]+=[\w]+', "OR field=field injection"),
+        (r';\s*DROP\s+TABLE', "Stacked query - DROP TABLE"),
+        (r';\s*DROP\s+DATABASE', "Stacked query - DROP DATABASE"),
+        (r';\s*DELETE\s+FROM', "Stacked query - DELETE"),
+        (r';\s*TRUNCATE\s+TABLE', "Stacked query - TRUNCATE"),
+        (r'\bUNION\s+SELECT', "UNION-based injection"),
+        (r'/\*.*\*/', "SQL comment injection"),
+        (r'--\s*$', "Comment to end of line"),
+        (r'xp_cmdshell', "SQL Server command execution"),
+        (r'INTO\s+OUTFILE', "MySQL file write"),
+        (r'INTO\s+DUMPFILE', "MySQL file write"),
+        (r'LOAD_FILE\s*\(', "MySQL file read"),
+        (r'EXEC\s*\(', "Dynamic SQL execution"),
+        (r'EXECUTE\s+IMMEDIATE', "Dynamic SQL execution"),
+        (r'\bCHAR\s*\(\s*0x', "Hex encoding injection"),
+        (r'CONCAT\s*\(.*SELECT', "Concatenation-based injection"),
+        (r'0x[0-9a-f]+', "Hex-encoded payload"),
+        (r'\bSLEEP\s*\(', "Time-based blind injection"),
+        (r'\bBENCHMARK\s*\(', "Time-based blind injection"),
+        (r'\bWAITFOR\s+DELAY', "Time-based blind injection"),
+        (r'\bPG_SLEEP\s*\(', "PostgreSQL sleep injection"),
+    ]
+
     def _check_common_issues(self, sql: str) -> List[str]:
         """Check for common SQL issues.
 
@@ -143,9 +169,10 @@ class SQLRiskAnalyzer:
         """
         issues = []
 
-        # Check for SQL injection patterns (basic check)
-        if re.search(r'[\'\"]\s*OR\s+[\'\"]*\s*1\s*=\s*1', sql, re.IGNORECASE):
-            issues.append("Potential SQL injection pattern detected")
+        # SECURITY FIX: Enhanced SQL injection detection
+        for pattern, description in self.SQL_INJECTION_PATTERNS:
+            if re.search(pattern, sql, re.IGNORECASE):
+                issues.append(f"SECURITY: SQL injection pattern detected - {description}")
 
         # Check for missing semicolon at end
         if not sql.rstrip().endswith(';'):
@@ -161,7 +188,7 @@ class SQLRiskAnalyzer:
 
         return issues
 
-    def get_confirmation_message(self, analysis: Dict[str, any]) -> str:
+    def get_confirmation_message(self, analysis: Dict[str, Any]) -> str:
         """Generate confirmation message for risky operations.
 
         Args:

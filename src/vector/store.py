@@ -28,7 +28,7 @@ class VectorEntry:
 class MockFAISSIndex:
     """Mock FAISS index for testing without external dependencies."""
 
-    def __init__(self, dimension: int):
+    def __init__(self, dimension: int) -> None:
         """Initialize mock index.
 
         Args:
@@ -88,7 +88,7 @@ class MockFAISSIndex:
 class VectorDatabase:
     """Vector database for semantic search and indexing."""
 
-    def __init__(self, dimension: int = 384, use_faiss: bool = True):
+    def __init__(self, dimension: int = 384, use_faiss: bool = True) -> None:
         """Initialize vector database.
 
         Args:

@@ -6,6 +6,7 @@ from the current environment and scoring suggestions based on relevance.
 
 from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass, field
+from enum import Enum
 import asyncio
 import logging
 import os
@@ -20,6 +21,35 @@ except ImportError:
     from llm.embeddings import EmbeddingModel
 
 logger = logging.getLogger(__name__)
+
+
+class SuggestionType(Enum):
+    """Types of suggestions"""
+    TABLE = "table"
+    COLUMN = "column"
+    KEYWORD = "keyword"
+    FUNCTION = "function"
+    DATABASE = "database"
+    ALIAS = "alias"
+    VALUE = "value"
+
+
+@dataclass
+class Suggestion:
+    """A suggestion item
+
+    Attributes:
+        text: The suggestion text
+        type: Type of suggestion
+        score: Relevance score (0.0-1.0)
+        metadata: Additional metadata
+        description: Optional description
+    """
+    text: str
+    type: SuggestionType
+    score: float = 0.0
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    description: Optional[str] = None
 
 
 @dataclass
@@ -446,3 +476,6 @@ class ContextAwareSuggestionEngine:
         now = time.time()
         self._context_cache['database_objects'] = (objects, now)
         logger.debug(f"Database objects updated: {len(tables)} tables")
+
+# Alias for backward compatibility
+ContextSuggestionEngine = ContextAwareSuggestionEngine

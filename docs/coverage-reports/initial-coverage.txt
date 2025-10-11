@@ -1,0 +1,214 @@
+/usr/local/lib/python3.9/site-packages/pytest_asyncio/plugin.py:217: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the fixture caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to function scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+============================= test session starts ==============================
+platform linux -- Python 3.9.21, pytest-8.3.5, pluggy-1.5.0 -- /usr/bin/python
+cachedir: .pytest_cache
+rootdir: /home/claude/AIShell
+configfile: pyproject.toml
+plugins: anyio-4.11.0, xdist-3.8.0, pyfakefs-5.9.3, asyncio-0.26.0, mock-3.14.0, cov-6.1.1
+asyncio: mode=auto, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 468 items / 3 errors
+
+==================================== ERRORS ====================================
+______________ ERROR collecting tests/agents/test_agent_chain.py _______________
+ImportError while importing test module '/home/claude/AIShell/tests/agents/test_agent_chain.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.9/site-packages/_pytest/python.py:493: in importtestmodule
+    mod = import_path(
+/usr/local/lib/python3.9/site-packages/_pytest/pathlib.py:587: in import_path
+    importlib.import_module(module_name)
+/usr/lib64/python3.9/importlib/__init__.py:127: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1030: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1007: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:986: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:680: in _load_unlocked
+    ???
+/usr/local/lib/python3.9/site-packages/_pytest/assertion/rewrite.py:185: in exec_module
+    exec(co, module.__dict__)
+tests/agents/test_agent_chain.py:5: in <module>
+    from src.agents import AgentChain
+E   ImportError: cannot import name 'AgentChain' from 'src.agents' (/home/claude/AIShell/src/agents/__init__.py)
+___________ ERROR collecting tests/agents/test_parallel_executor.py ____________
+ImportError while importing test module '/home/claude/AIShell/tests/agents/test_parallel_executor.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.9/site-packages/_pytest/python.py:493: in importtestmodule
+    mod = import_path(
+/usr/local/lib/python3.9/site-packages/_pytest/pathlib.py:587: in import_path
+    importlib.import_module(module_name)
+/usr/lib64/python3.9/importlib/__init__.py:127: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1030: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1007: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:986: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:680: in _load_unlocked
+    ???
+/usr/local/lib/python3.9/site-packages/_pytest/assertion/rewrite.py:185: in exec_module
+    exec(co, module.__dict__)
+tests/agents/test_parallel_executor.py:5: in <module>
+    from src.agents import ParallelExecutor, ParallelTask, AggregationStrategy, TaskPriority
+E   ImportError: cannot import name 'ParallelExecutor' from 'src.agents' (/home/claude/AIShell/src/agents/__init__.py)
+_________ ERROR collecting tests/agents/test_workflow_orchestrator.py __________
+ImportError while importing test module '/home/claude/AIShell/tests/agents/test_workflow_orchestrator.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.9/site-packages/_pytest/python.py:493: in importtestmodule
+    mod = import_path(
+/usr/local/lib/python3.9/site-packages/_pytest/pathlib.py:587: in import_path
+    importlib.import_module(module_name)
+/usr/lib64/python3.9/importlib/__init__.py:127: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1030: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1007: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:986: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:680: in _load_unlocked
+    ???
+/usr/local/lib/python3.9/site-packages/_pytest/assertion/rewrite.py:185: in exec_module
+    exec(co, module.__dict__)
+tests/agents/test_workflow_orchestrator.py:5: in <module>
+    from src.agents import WorkflowOrchestrator, WorkflowStep
+E   ImportError: cannot import name 'WorkflowOrchestrator' from 'src.agents' (/home/claude/AIShell/src/agents/__init__.py)
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:228
+  <frozen importlib._bootstrap>:228: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:228
+  <frozen importlib._bootstrap>:228: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+<frozen importlib._bootstrap>:228
+  <frozen importlib._bootstrap>:228: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
+
+tests/ui/test_dynamic_panels.py:16
+  /home/claude/AIShell/tests/ui/test_dynamic_panels.py:16: PytestCollectionWarning: cannot collect test class 'TestApp' because it has a __init__ constructor (from: tests/ui/test_dynamic_panels.py)
+    class TestApp(App):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.9.21-final-0 ________________
+
+Name                                           Stmts   Miss  Cover   Missing
+----------------------------------------------------------------------------
+src/__init__.py                                    3      0   100%
+src/agents/__init__.py                             3      0   100%
+src/agents/agent_chain.py                        132    132     0%   8-287
+src/agents/base.py                               106     40    62%   217-224, 267, 305, 345, 380-434, 472, 507-514, 539-546
+src/agents/coordinator.py                         96     96     0%   18-613
+src/agents/database/__init__.py                    2      2     0%   13-15
+src/agents/database/backup.py                     90     90     0%   18-497
+src/agents/database/migration.py                  75     75     0%   55-645
+src/agents/database/optimizer.py                  98     98     0%   19-522
+src/agents/parallel_executor.py                  177    177     0%   8-368
+src/agents/safety/__init__.py                      2      2     0%   34-36
+src/agents/safety/controller.py                  135    135     0%   9-416
+src/agents/state/__init__.py                       2      2     0%   23-25
+src/agents/state/manager.py                      165    165     0%   8-772
+src/agents/tools/__init__.py                      19     13    32%   23-26, 47-50, 81-88, 102-104
+src/agents/tools/database_tools.py                87     87     0%   8-554
+src/agents/tools/migration_tools.py              166    166     0%   8-473
+src/agents/tools/optimizer_tools.py               81     81     0%   8-401
+src/agents/tools/registry.py                     145     94    35%   83-89, 101-107, 125-140, 157-159, 171-174, 186-189, 201, 210, 229-254, 266-274, 306-317, 339-351, 368-376, 388-415, 424-442
+src/agents/workflow_orchestrator.py              194    194     0%   8-345
+src/config/__init__.py                             2      0   100%
+src/config/settings.py                            22      4    82%   34, 52-54
+src/coordination/__init__.py                       4      4     0%   10-14
+src/coordination/distributed_lock.py             148    148     0%   8-378
+src/coordination/state_sync.py                   193    193     0%   7-455
+src/coordination/task_queue.py                   193    193     0%   8-464
+src/core/__init__.py                               4      0   100%
+src/core/ai_shell.py                              56     42    25%   36-43, 54-73, 86-95, 107-111, 126-129, 140-152
+src/core/config.py                                92     73    21%   40-44, 54-81, 85, 137-149, 153-165, 170-188, 201-210, 220-222, 234, 243-251, 255
+src/core/event_bus.py                             98     67    32%   51-55, 76-88, 92-98, 102-115, 125-126, 136-138, 150-164, 172-211, 215, 219
+src/core/health_checks.py                        140    140     0%   8-376
+src/database/__init__.py                           5      0   100%
+src/database/history.py                           58     43    26%   18-29, 37-45, 49-53, 74-91, 102, 113-114, 128, 139, 146-147, 155-172
+src/database/impact_estimator.py                 137    110    20%   62-72, 95-138, 150-169, 186-201, 213, 236-295, 311-348, 368-387, 399, 412
+src/database/module.py                            71     54    24%   28-38, 42-46, 64-142, 154-166, 177, 185, 196, 200-202, 206, 210
+src/database/nlp_to_sql.py                        29     21    28%   75, 93-119, 136-153, 164-165
+src/database/risk_analyzer.py                     65     49    25%   48, 62-76, 95-104, 116-133, 144-162, 173-190
+src/enterprise/__init__.py                         9      0   100%
+src/enterprise/audit/__init__.py                   4      0   100%
+src/enterprise/audit/audit_logger.py              87     55    37%   44-46, 61-62, 66-94, 111-150, 163-196, 200-212
+src/enterprise/audit/change_tracker.py            52     30    42%   36-37, 41-59, 75-100, 110-131
+src/enterprise/audit/compliance_reporter.py       46     23    50%   29, 39-46, 55-62, 79-86, 102-109, 127-134, 143, 150, 156, 162, 168, 174, 180
+src/enterprise/cloud/__init__.py                   5      0   100%
+src/enterprise/cloud/aws_integration.py           33     14    58%   42-43, 65-70, 91, 104, 124, 146, 164, 182, 187, 198
+src/enterprise/cloud/azure_integration.py         25      9    64%   36, 45-48, 58, 63, 73, 83, 92
+src/enterprise/cloud/cloud_backup.py              64     42    34%   53-56, 75-112, 131-166, 171, 183-185
+src/enterprise/cloud/gcp_integration.py           23      9    61%   34, 43-46, 55, 60, 69, 79, 88
+src/enterprise/rbac/__init__.py                    5      0   100%
+src/enterprise/rbac/permission_engine.py         144    115    20%   35, 40-44, 61, 87-121, 140-146, 157-164, 176-198, 219-232, 244-256, 263-264, 281-307, 324-371
+src/enterprise/rbac/policy_evaluator.py           32     12    62%   39-47, 51, 55-58
+src/enterprise/rbac/rbac_middleware.py            32     25    22%   9-25, 30-42, 49-50, 54-55
+src/enterprise/rbac/role_manager.py              156    109    30%   49-51, 56-57, 61, 83-85, 89-126, 133-209, 246-285, 289-300, 317-349, 353-363, 382-401, 425-438, 447-459, 476-496, 513-526, 530
+src/enterprise/tenancy/__init__.py                 5      0   100%
+src/enterprise/tenancy/resource_quota.py         151    104    31%   47-48, 52-54, 59-60, 64, 68-70, 74, 78-80, 102-104, 108-138, 164-188, 192-203, 231-249, 278-307, 311-314, 324-340, 344-364, 375-397, 406-431
+src/enterprise/tenancy/tenant_database.py        148    119    20%   36-37, 64-69, 86-116, 138-154, 173-190, 195-224, 228-260, 269-297, 309-328, 345-385, 389-420
+src/enterprise/tenancy/tenant_manager.py         175    117    33%   63-66, 71-73, 77-86, 90, 112-113, 117-152, 187-248, 252-263, 267-278, 295-333, 346-352, 375-398, 402-411, 415, 438-452, 456-469
+src/enterprise/tenancy/tenant_middleware.py      112     75    33%   31-32, 60-62, 78-85, 104-117, 134-147, 174-191, 201, 211, 216, 221, 226, 231-232, 241-248, 261-280, 293, 305-310, 329, 346-351
+src/llm/__init__.py                                5      0   100%
+src/llm/embeddings.py                             68     56    18%   18-21, 25-42, 46-53, 66-81, 94-101, 115-136, 140-141
+src/llm/manager.py                               146    118    19%   34-43, 56-81, 93-126, 135-158, 170-196, 209-217, 222-223, 235-239, 253-256, 269-285, 298-325, 329-338
+src/llm/providers.py                             102     77    25%   19-21, 26, 31, 36, 40, 48-50, 54-73, 77-87, 91-106, 110-122, 129-130, 134-153, 157-170, 175-177
+src/main.py                                      252    219    13%   46-57, 61-125, 129-155, 168-189, 202-216, 225-228, 237-244, 256-312, 324-334, 344-370, 375-411, 416-525, 529
+src/mcp_clients/__init__.py                        6      0   100%
+src/mcp_clients/base.py                          133     74    44%   27-29, 63, 78, 87, 103, 118, 127, 138-143, 148, 153, 157-159, 174-189, 198-210, 226-244, 259-267, 276-293, 300, 305, 310, 315, 320
+src/mcp_clients/cassandra_client.py              139    139     0%   8-372
+src/mcp_clients/dynamodb_client.py               200    200     0%   8-501
+src/mcp_clients/manager.py                        96     68    29%   43-45, 67-106, 121-133, 145-156, 165-175, 184, 205-217, 232-248, 252, 261-274
+src/mcp_clients/neo4j_client.py                  141    141     0%   8-468
+src/mcp_clients/oracle_client.py                  65     51    22%   23-24, 36-56, 60-67, 80-106, 120-126, 130, 134-147, 159-173, 194-196
+src/mcp_clients/postgresql_client.py              75     59    21%   22-23, 35-59, 63-70, 83-122, 136-142, 146, 150-163, 176-194, 219-227, 236-243
+src/modules/__init__.py                            2      0   100%
+src/modules/panel_enricher.py                    102     71    30%   40-46, 59-60, 77-84, 92-127, 143-159, 174-180, 184-193, 197-212, 223, 231-236, 244
+src/performance/__init__.py                        4      0   100%
+src/performance/cache.py                         136    104    24%   31-34, 38, 45-55, 59-63, 67-72, 85-111, 129-168, 172-179, 189-195, 204-218, 222-226, 235-239, 261-268, 285-298
+src/performance/monitor.py                       167    124    26%   36-39, 55-57, 64-76, 80-86, 90-100, 104-112, 121-140, 144-181, 190-202, 211-240, 256-274, 283-305, 322-337, 353-355
+src/performance/optimizer.py                     104     76    27%   27-28, 35-40, 52-66, 70-77, 81-87, 91-98, 103-110, 120-125, 134-151, 164-176, 188-201, 205-208, 212-213
+src/security/__init__.py                           4      0   100%
+src/security/redaction.py                         92     56    39%   45-46, 50-51, 67-76, 80-82, 86-89, 93-111, 115-120, 124, 128-134, 138-158
+src/security/vault.py                            163    108    34%   48-50, 55-56, 66-67, 72-73, 78-79, 94-110, 115-123, 127-129, 133-135, 139-152, 156-168, 179-207, 215-230, 238-241, 245-250, 259-272, 276-288, 296-308, 312-320, 324-328
+src/ui/__init__.py                                 4      0   100%
+src/ui/app.py                                     32     20    38%   22-27, 31-32, 36, 45-52, 62-63, 67, 71, 75, 79
+src/ui/containers/__init__.py                      2      0   100%
+src/ui/containers/dynamic_panel_container.py     149    115    23%   29-30, 96-117, 122-126, 130, 134-146, 167-237, 249-253, 257-301, 320-336, 346-359, 371-372, 384-385, 397-398, 410-412, 416-417
+src/ui/engines/__init__.py                         2      2     0%   8-13
+src/ui/engines/context_suggestion.py             145    145     0%   7-448
+src/ui/integration/__init__.py                     2      2     0%   7-9
+src/ui/integration/event_coordinator.py          137    137     0%   8-368
+src/ui/panel_manager.py                           34     21    38%   30-36, 48-88, 109, 113, 117
+src/ui/prompt_handler.py                          36     25    31%   22-23, 35-44, 56-60, 72, 84-97, 101-102, 106, 110-111
+src/ui/screens/__init__.py                         2      2     0%   7-9
+src/ui/screens/startup_screen.py                  61     61     0%   8-209
+src/ui/utils/__init__.py                           3      0   100%
+src/ui/utils/content_tracker.py                  115     80    30%   33-58, 95-98, 109-120, 132-166, 180-181, 193-194, 204-208, 217-221, 227-233, 241-257, 269, 278-282, 291
+src/ui/utils/memory_monitor.py                   178    133    25%   73-113, 125-139, 143-156, 164-188, 197-220, 229-233, 253-272, 280-303, 315-316, 332-343, 352-355, 364-367, 376-386, 396, 405, 413-436, 445, 460-467
+src/ui/widgets/__init__.py                         4      0   100%
+src/ui/widgets/command_preview.py                108     79    27%   134-139, 143-149, 153, 168-179, 190-218, 227-258, 268-272, 282-285, 289-291, 295-299, 308-317, 329-335, 345-347, 359, 363-365
+src/ui/widgets/risk_indicator.py                  52     34    35%   110-112, 117-118, 131-143, 153-157, 167-188, 199-232, 241, 250, 254
+src/ui/widgets/suggestion_list.py                128     91    29%   18-19, 97-102, 106, 118-142, 158-178, 189-198, 209-216, 227-232, 236-240, 244-248, 256-259, 267-270, 274-276, 284-312, 321, 330
+src/vector/__init__.py                             3      0   100%
+src/vector/autocomplete.py                       109     86    21%   31-34, 42-44, 64-95, 113-146, 162-207, 223-245, 256-276, 290-297, 306-307, 327-345
+src/vector/store.py                              125     99    21%   12-14, 37-39, 47-52, 64-85, 98-112, 129-155, 175-218, 229-232, 243-250, 263-304, 312-317
+----------------------------------------------------------------------------
+TOTAL                                           8036   6521    19%
+Coverage HTML written to dir htmlcov
+Coverage JSON written to file coverage.json
+=========================== short test summary info ============================
+ERROR tests/agents/test_agent_chain.py
+ERROR tests/agents/test_parallel_executor.py
+ERROR tests/agents/test_workflow_orchestrator.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 3 errors during collection !!!!!!!!!!!!!!!!!!!!
+======================== 4 warnings, 3 errors in 5.86s =========================

@@ -1,6 +1,6 @@
 """SQL history manager for tracking executed queries."""
 
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from datetime import datetime
 import json
 from pathlib import Path
@@ -9,7 +9,7 @@ from pathlib import Path
 class SQLHistoryManager:
     """Manages history of executed SQL queries."""
 
-    def __init__(self, history_file: Optional[str] = None):
+    def __init__(self, history_file: Optional[str] = None) -> None:
         """Initialize the history manager.
 
         Args:
@@ -26,9 +26,9 @@ class SQLHistoryManager:
         self.history_file.parent.mkdir(parents=True, exist_ok=True)
 
         # Load existing history
-        self.history = self._load_history()
+        self.history: List[Dict[str, Any]] = self._load_history()
 
-    def _load_history(self) -> List[Dict]:
+    def _load_history(self) -> List[Dict[str, Any]]:
         """Load history from file.
 
         Returns:
@@ -39,12 +39,13 @@ class SQLHistoryManager:
 
         try:
             with open(self.history_file, 'r') as f:
-                return json.load(f)
+                data: List[Dict[str, Any]] = json.load(f)
+                return data
         except (json.JSONDecodeError, IOError):
             # If file is corrupted, start fresh
             return []
 
-    def _save_history(self):
+    def _save_history(self) -> None:
         """Save history to file."""
         try:
             with open(self.history_file, 'w') as f:
@@ -60,7 +61,7 @@ class SQLHistoryManager:
         rows_affected: Optional[int] = None,
         error: Optional[str] = None,
         execution_time: Optional[float] = None,
-    ):
+    ) -> None:
         """Add a query to history.
 
         Args:
@@ -71,7 +72,7 @@ class SQLHistoryManager:
             error: Error message (if failed)
             execution_time: Execution time in seconds
         """
-        entry = {
+        entry: Dict[str, Any] = {
             'timestamp': datetime.now().isoformat(),
             'sql': sql,
             'risk_level': risk_level,
@@ -90,7 +91,7 @@ class SQLHistoryManager:
         self.history.append(entry)
         self._save_history()
 
-    def get_recent(self, limit: int = 10) -> List[Dict]:
+    def get_recent(self, limit: int = 10) -> List[Dict[str, Any]]:
         """Get recent history entries.
 
         Args:
@@ -101,7 +102,7 @@ class SQLHistoryManager:
         """
         return self.history[-limit:][::-1]  # Most recent first
 
-    def search(self, keyword: str) -> List[Dict]:
+    def search(self, keyword: str) -> List[Dict[str, Any]]:
         """Search history for queries containing keyword.
 
         Args:
@@ -116,7 +117,7 @@ class SQLHistoryManager:
             if keyword in entry['sql'].lower()
         ]
 
-    def get_by_risk_level(self, risk_level: str) -> List[Dict]:
+    def get_by_risk_level(self, risk_level: str) -> List[Dict[str, Any]]:
         """Get queries by risk level.
 
         Args:
@@ -130,7 +131,7 @@ class SQLHistoryManager:
             if entry['risk_level'] == risk_level
         ]
 
-    def get_failed_queries(self) -> List[Dict]:
+    def get_failed_queries(self) -> List[Dict[str, Any]]:
         """Get all failed queries.
 
         Returns:
@@ -141,12 +142,12 @@ class SQLHistoryManager:
             if not entry.get('success', False)
         ]
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear all history."""
         self.history = []
         self._save_history()
 
-    def get_statistics(self) -> Dict[str, any]:
+    def get_statistics(self) -> Dict[str, Any]:
         """Get statistics about query history.
 
         Returns:
@@ -164,7 +165,7 @@ class SQLHistoryManager:
         successful = sum(1 for e in self.history if e.get('success', False))
 
         # Risk level distribution
-        risk_dist = {}
+        risk_dist: Dict[str, int] = {}
         for entry in self.history:
             level = entry.get('risk_level', 'UNKNOWN')
             risk_dist[level] = risk_dist.get(level, 0) + 1

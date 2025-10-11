@@ -19,7 +19,7 @@ class OracleClient(BaseMCPClient):
     Oracle Instant Client installation.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._cursor = None
 
@@ -55,8 +55,8 @@ class OracleClient(BaseMCPClient):
 
         return connection
 
-    async def _disconnect_impl(self):
-        """Close Oracle connection"""
+    async def _disconnect_impl(self) -> None:
+        """Disconnect from Oracle database."""
         if self._cursor:
             loop = asyncio.get_event_loop()
             await loop.run_in_executor(None, self._cursor.close)
@@ -67,16 +67,10 @@ class OracleClient(BaseMCPClient):
             await loop.run_in_executor(None, self._connection.close)
 
     async def _execute_query_impl(self, query: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """
-        Execute Oracle query
+        """Execute Oracle query."""
+        if self._connection is None:
+            raise MCPClientError("No active connection", "NOT_CONNECTED")
 
-        Args:
-            query: SQL query string
-            params: Query parameters
-
-        Returns:
-            Dictionary with columns, rows, rowcount, and metadata
-        """
         loop = asyncio.get_event_loop()
 
         # Create cursor
@@ -95,6 +89,9 @@ class OracleClient(BaseMCPClient):
         rowcount = self._cursor.rowcount
 
         # Get metadata
+        if self._config is None:
+            raise MCPClientError("No active configuration", "NOT_CONFIGURED")
+
         metadata = {
             'database': self._config.database,
             'query_type': self._get_query_type(query)
@@ -110,13 +107,11 @@ class OracleClient(BaseMCPClient):
             'metadata': metadata
         }
 
-    async def _execute_ddl_impl(self, ddl: str):
-        """
-        Execute Oracle DDL statement
+    async def _execute_ddl_impl(self, ddl: str) -> None:
+        """Execute DDL statement on Oracle database."""
+        if self._connection is None:
+            raise MCPClientError("No active connection", "NOT_CONNECTED")
 
-        Args:
-            ddl: DDL statement string
-        """
         loop = asyncio.get_event_loop()
 
         if not self._cursor:

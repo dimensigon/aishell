@@ -2,10 +2,24 @@
 Prompt Input Handler
 
 Handles multi-line input with backslash continuation and line numbering.
+Includes rate limiting for command execution security.
 """
 
-from typing import List
+from typing import List, Optional
 import re
+import sys
+import os
+
+# Add src to path for security imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+try:
+    from src.security.rate_limiter import RateLimiter, RateLimitConfig, RateLimitExceeded
+    RATE_LIMITING_AVAILABLE = True
+except ImportError:
+    RATE_LIMITING_AVAILABLE = False
+    RateLimiter = None  # type: ignore
+    RateLimitConfig = None  # type: ignore
+    RateLimitExceeded = None  # type: ignore
 
 
 class PromptHandler:
@@ -18,9 +32,22 @@ class PromptHandler:
     - Input validation
     """
 
-    def __init__(self):
-        self.multiline_buffer = []
+    def __init__(self) -> None:
+        self.multiline_buffer: List[str] = []
         self.in_multiline = False
+
+        # SECURITY FIX: Initialize rate limiter
+        if RATE_LIMITING_AVAILABLE:
+            # Configure rate limits: 100 commands per minute, max 10 per 5 seconds
+            config = RateLimitConfig(
+                max_calls=100,
+                period_seconds=60,
+                burst_limit=10,
+                burst_period_seconds=5
+            )
+            self.rate_limiter: Optional[RateLimiter] = RateLimiter(config)
+        else:
+            self.rate_limiter: Optional[RateLimiter] = None
 
     async def process_multiline(self, lines: List[str]) -> str:
         """
@@ -31,7 +58,20 @@ class PromptHandler:
 
         Returns:
             Combined command string
+
+        Raises:
+            RateLimitExceeded: If rate limit is exceeded
         """
+        # SECURITY FIX: Check rate limit before processing
+        if self.rate_limiter:
+            try:
+                self.rate_limiter.check_rate_limit('command_execution', raise_on_limit=True)
+            except (RateLimitExceeded, Exception) as e:
+                if RATE_LIMITING_AVAILABLE and isinstance(e, RateLimitExceeded):
+                    raise
+                # If rate limiting not available, continue without it
+                pass
+
         result = []
 
         for line in lines:

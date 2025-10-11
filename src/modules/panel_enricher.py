@@ -31,7 +31,7 @@ class EnrichmentTask:
 class ModulePanelEnricher:
     """Async module for panel enrichment with priority queue."""
 
-    def __init__(self, max_workers: int = 4):
+    def __init__(self, max_workers: int = 4) -> None:
         """Initialize panel enricher.
 
         Args:
@@ -49,7 +49,7 @@ class ModulePanelEnricher:
             'errors': 0
         }
 
-    def register_context_provider(self, name: str, provider: Callable) -> None:
+    def register_context_provider(self, name: str, provider: Callable[..., Any]) -> None:
         """Register a context gathering provider.
 
         Args:
@@ -160,7 +160,7 @@ class ModulePanelEnricher:
 
     async def _safe_callback(
         self,
-        callback: Callable,
+        callback: Callable[..., Any],
         panel_id: str,
         result: Dict[str, Any]
     ) -> None:

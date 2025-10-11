@@ -17,6 +17,22 @@ from src.agents.tools.registry import ToolRiskLevel, ToolCategory
 from src.database.risk_analyzer import SQLRiskAnalyzer, RiskLevel
 
 
+class SafetyLevel(Enum):
+    """
+    Safety levels for agent operations
+
+    Levels:
+        LOW: Minimal safety checks
+        MEDIUM: Standard safety validation
+        HIGH: Strict safety enforcement
+        CRITICAL: Maximum safety with multiple approvals
+    """
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+
 class ApprovalRequirement(Enum):
     """
     Approval requirement levels for agent operations
@@ -31,6 +47,53 @@ class ApprovalRequirement(Enum):
     OPTIONAL = "optional"
     REQUIRED = "required"
     MULTI_PARTY = "multi_party"  # Requires multiple approvals
+
+
+class SafetyViolation(Exception):
+    """
+    Exception raised when a safety violation is detected
+
+    Attributes:
+        message: Description of the violation
+        risk_level: Risk level that triggered the violation
+        details: Additional context about the violation
+    """
+    def __init__(self, message: str, risk_level: str = "unknown", details: Optional[Dict[str, Any]] = None) -> None:
+        self.message = message
+        self.risk_level = risk_level
+        self.details = details or {}
+        super().__init__(self.message)
+
+
+class SafetyPolicy:
+    """
+    Safety policy configuration for agent operations
+
+    Attributes:
+        safety_level: Required safety level
+        require_approval_for: List of operations requiring approval
+        blocked_operations: List of completely blocked operations
+        allow_destructive: Whether destructive operations are allowed
+    """
+    def __init__(
+        self,
+        safety_level: SafetyLevel = SafetyLevel.MEDIUM,
+        require_approval_for: Optional[List[str]] = None,
+        blocked_operations: Optional[List[str]] = None,
+        allow_destructive: bool = False
+    ):
+        self.safety_level = safety_level
+        self.require_approval_for = require_approval_for or []
+        self.blocked_operations = blocked_operations or []
+        self.allow_destructive = allow_destructive
+
+    def is_operation_allowed(self, operation: str) -> bool:
+        """Check if an operation is allowed under this policy"""
+        return operation not in self.blocked_operations
+
+    def requires_approval(self, operation: str) -> bool:
+        """Check if an operation requires approval"""
+        return operation in self.require_approval_for
 
 
 class SafetyController:
@@ -56,7 +119,7 @@ class SafetyController:
         ...     approval = await controller.request_approval(step, validation)
     """
 
-    def __init__(self, risk_analyzer: SQLRiskAnalyzer):
+    def __init__(self, risk_analyzer: SQLRiskAnalyzer) -> None:
         """
         Initialize Safety Controller
 

@@ -152,7 +152,7 @@ class ToolRegistry:
     - LLM-friendly tool descriptions
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize empty tool registry"""
         self._tools: Dict[str, ToolDefinition] = {}
         self._execution_log: List[Dict[str, Any]] = []
@@ -424,13 +424,13 @@ Returns:
         total_tools = len(self._tools)
 
         # Count by category
-        by_category = {}
+        by_category: Dict[str, int] = {}
         for tool in self._tools.values():
             cat = tool.category.value
             by_category[cat] = by_category.get(cat, 0) + 1
 
         # Count by risk level
-        by_risk = {}
+        by_risk: Dict[str, int] = {}
         for tool in self._tools.values():
             risk = tool.risk_level.value
             by_risk[risk] = by_risk.get(risk, 0) + 1

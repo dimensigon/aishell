@@ -26,7 +26,7 @@ class AIShellCore:
     - Application configuration
     """
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: Optional[str] = None) -> None:
         """
         Initialize AI-Shell core.
 
@@ -150,3 +150,30 @@ class AIShellCore:
 
         self.initialized = False
         logger.info("AI-Shell Core shutdown complete")
+
+
+def handle_error(exception: Exception) -> Dict[str, Any]:
+    """
+    Handle exceptions and return structured error information.
+
+    Args:
+        exception: Exception to handle
+
+    Returns:
+        Dictionary with error details
+    """
+    import traceback
+
+    error_type = type(exception).__name__
+    error_message = str(exception)
+
+    # Get traceback info
+    tb_lines = traceback.format_exception(type(exception), exception, exception.__traceback__)
+    traceback_str = ''.join(tb_lines)
+
+    return {
+        'error': error_type,
+        'message': error_message,
+        'traceback': traceback_str,
+        'status': 'error'
+    }

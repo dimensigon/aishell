@@ -5,6 +5,7 @@ Manages LLM operations including intent analysis, anonymization, and embeddings.
 """
 
 from typing import Dict, Any, List, Optional, Tuple
+from dataclasses import dataclass
 import re
 import json
 import hashlib
@@ -26,11 +27,29 @@ class IntentType(Enum):
     UNKNOWN = "unknown"
 
 
+class ModelType(Enum):
+    """LLM model types"""
+    OLLAMA = "ollama"
+    TRANSFORMERS = "transformers"
+    OPENAI = "openai"
+    ANTHROPIC = "anthropic"
+
+
+@dataclass
+class LLMConfig:
+    """Configuration for LLM manager"""
+    provider_type: str = "ollama"
+    model_name: str = "llama2"
+    model_path: str = "/data0/models"
+    temperature: float = 0.7
+    max_tokens: int = 2048
+
+
 class LocalLLMManager:
     """Manages all LLM operations for AI-Shell"""
 
     def __init__(self, provider: Optional[LocalLLMProvider] = None,
-                 model_path: str = "/data0/models"):
+                 model_path: str = "/data0/models") -> None:
         self.model_path = model_path
         self.provider = provider
         self.embedding_model = EmbeddingModel(model_path=model_path)
@@ -336,3 +355,7 @@ Provide 3-5 specific optimization suggestions. Format as a JSON array of strings
         self.initialized = False
 
         logger.info("LLM Manager cleaned up")
+
+
+# Alias for backward compatibility with tests
+LLMManager = LocalLLMManager

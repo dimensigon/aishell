@@ -13,6 +13,7 @@ The BackupAgent supports:
 
 Classes:
     BackupAgent: Specialized agent for database backup operations
+    BackupManager: Simplified backup manager for enterprise features
 """
 
 from typing import Dict, Any, List, Optional
@@ -22,6 +23,9 @@ from ..base import (
     TaskContext,
     AgentCapability
 )
+
+# Import BackupManager for enterprise features
+from .backup_manager import BackupManager
 
 
 class BackupAgent(BaseAgent):

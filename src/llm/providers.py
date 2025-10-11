@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class LocalLLMProvider(ABC):
     """Base class for LLM providers"""
 
-    def __init__(self, model_name: str, model_path: str):
+    def __init__(self, model_name: str, model_path: str) -> None:
         self.model_name = model_name
         self.model_path = model_path
         self.initialized = False
@@ -35,7 +35,7 @@ class LocalLLMProvider(ABC):
         """Chat-style generation with message history"""
         pass
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Cleanup resources"""
         self.initialized = False
 
@@ -44,10 +44,10 @@ class OllamaProvider(LocalLLMProvider):
     """Ollama LLM Provider Implementation"""
 
     def __init__(self, model_name: str = "llama2", model_path: str = "/data0/models",
-                 base_url: str = "http://localhost:11434"):
+                 base_url: str = "http://localhost:11434") -> None:
         super().__init__(model_name, model_path)
         self.base_url = base_url
-        self.client = None
+        self.client: Optional[Any] = None
 
     def initialize(self) -> bool:
         """Initialize Ollama client"""
@@ -58,7 +58,8 @@ class OllamaProvider(LocalLLMProvider):
                 import ollama
                 self.client = ollama.Client(host=self.base_url)
                 # Test connection
-                self.client.list()
+                if self.client is not None:
+                    self.client.list()
                 self.initialized = True
                 logger.info(f"Ollama provider initialized with model: {self.model_name}")
                 return True
@@ -72,16 +73,16 @@ class OllamaProvider(LocalLLMProvider):
             logger.error(f"Failed to initialize Ollama: {e}")
             return False
 
-    def _create_mock_client(self):
+    def _create_mock_client(self) -> Any:
         """Create mock client for testing"""
         class MockOllamaClient:
-            def generate(self, model: str, prompt: str, **kwargs):
+            def generate(self, model: str, prompt: str, **kwargs: Any) -> Dict[str, Any]:
                 return {"response": f"Mock response for: {prompt[:50]}..."}
 
-            def chat(self, model: str, messages: List[Dict[str, str]], **kwargs):
+            def chat(self, model: str, messages: List[Dict[str, str]], **kwargs: Any) -> Dict[str, Any]:
                 return {"message": {"content": f"Mock chat response"}}
 
-            def list(self):
+            def list(self) -> Dict[str, List[Any]]:
                 return {"models": []}
 
         return MockOllamaClient()
@@ -92,6 +93,8 @@ class OllamaProvider(LocalLLMProvider):
             raise RuntimeError("Provider not initialized")
 
         try:
+            if self.client is None:
+                raise RuntimeError("Client is None")
             response = self.client.generate(
                 model=self.model_name,
                 prompt=prompt,
@@ -100,7 +103,7 @@ class OllamaProvider(LocalLLMProvider):
                     'temperature': temperature
                 }
             )
-            return response.get('response', '')
+            return str(response.get('response', ''))
         except Exception as e:
             logger.error(f"Generation failed: {e}")
             raise
@@ -111,12 +114,14 @@ class OllamaProvider(LocalLLMProvider):
             raise RuntimeError("Provider not initialized")
 
         try:
+            if self.client is None:
+                raise RuntimeError("Client is None")
             response = self.client.chat(
                 model=self.model_name,
                 messages=messages,
                 options={'num_predict': max_tokens}
             )
-            return response.get('message', {}).get('content', '')
+            return str(response.get('message', {}).get('content', ''))
         except Exception as e:
             logger.error(f"Chat failed: {e}")
             raise
@@ -125,9 +130,9 @@ class OllamaProvider(LocalLLMProvider):
 class LocalTransformersProvider(LocalLLMProvider):
     """Hugging Face Transformers Provider for local models"""
 
-    def __init__(self, model_name: str, model_path: str = "/data0/models"):
+    def __init__(self, model_name: str, model_path: str = "/data0/models") -> None:
         super().__init__(model_name, model_path)
-        self.pipeline = None
+        self.pipeline: Optional[Any] = None
 
     def initialize(self) -> bool:
         """Initialize transformers pipeline"""
@@ -158,13 +163,15 @@ class LocalTransformersProvider(LocalLLMProvider):
             raise RuntimeError("Provider not initialized")
 
         try:
+            if self.pipeline is None:
+                raise RuntimeError("Pipeline is None")
             result = self.pipeline(
                 prompt,
                 max_new_tokens=max_tokens,
                 temperature=temperature,
                 do_sample=True
             )[0]
-            return result['generated_text'][len(prompt):]
+            return str(result['generated_text'][len(prompt):])
         except Exception as e:
             logger.error(f"Generation failed: {e}")
             raise

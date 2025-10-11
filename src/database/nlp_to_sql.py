@@ -1,6 +1,6 @@
 """Natural Language to SQL converter."""
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 import re
 
 
@@ -29,6 +29,139 @@ class NLPToSQL:
             'pattern': r'find (\w+) where (\w+) (?:is |equals? |= )(.+)',
             'template': 'SELECT * FROM {table} WHERE {column} = {value};',
             'params': ['table', 'column', 'value'],
+        },
+
+        # JOIN patterns
+        {
+            'pattern': r'get (\w+) with their (\w+)',
+            'template': 'SELECT * FROM {table1} JOIN {table2} ON {table1}.{table2}_id = {table2}.id;',
+            'params': ['table1', 'table2'],
+        },
+        {
+            'pattern': r'show (\w+) and their (\w+)',
+            'template': 'SELECT * FROM {table1} JOIN {table2} ON {table1}.{table2}_id = {table2}.id;',
+            'params': ['table1', 'table2'],
+        },
+        {
+            'pattern': r'join (\w+) with (\w+)',
+            'template': 'SELECT * FROM {table1} JOIN {table2} ON {table1}.{table2}_id = {table2}.id;',
+            'params': ['table1', 'table2'],
+        },
+
+        # GROUP BY patterns
+        {
+            'pattern': r'(?:show|get) total (\w+) by (\w+) from (\w+)',
+            'template': 'SELECT {group_column}, SUM({sum_column}) as total FROM {table} GROUP BY {group_column};',
+            'params': ['sum_column', 'group_column', 'table'],
+        },
+        {
+            'pattern': r'count (\w+) by (\w+)',
+            'template': 'SELECT {group_column}, COUNT(*) as count FROM {table} GROUP BY {group_column};',
+            'params': ['table', 'group_column'],
+        },
+        {
+            'pattern': r'group (\w+) by (\w+)',
+            'template': 'SELECT {group_column}, COUNT(*) as count FROM {table} GROUP BY {group_column};',
+            'params': ['table', 'group_column'],
+        },
+
+        # Aggregate function patterns
+        {
+            'pattern': r'average (\w+) (?:of |from )?(\w+)',
+            'template': 'SELECT AVG({column}) as average FROM {table};',
+            'params': ['column', 'table'],
+        },
+        {
+            'pattern': r'(?:max|maximum) (\w+) (?:of |from )?(\w+)',
+            'template': 'SELECT MAX({column}) as maximum FROM {table};',
+            'params': ['column', 'table'],
+        },
+        {
+            'pattern': r'(?:min|minimum) (\w+) (?:of |from )?(\w+)',
+            'template': 'SELECT MIN({column}) as minimum FROM {table};',
+            'params': ['column', 'table'],
+        },
+        {
+            'pattern': r'sum (?:of )?(\w+) (?:from )?(\w+)',
+            'template': 'SELECT SUM({column}) as total FROM {table};',
+            'params': ['column', 'table'],
+        },
+
+        # ORDER BY patterns
+        {
+            'pattern': r'(?:list|show) (\w+) sorted by (\w+)',
+            'template': 'SELECT * FROM {table} ORDER BY {column};',
+            'params': ['table', 'column'],
+        },
+        {
+            'pattern': r'sort (\w+) by (\w+)',
+            'template': 'SELECT * FROM {table} ORDER BY {column};',
+            'params': ['table', 'column'],
+        },
+        {
+            'pattern': r'(?:list|show) (\w+) (?:in )?descending order by (\w+)',
+            'template': 'SELECT * FROM {table} ORDER BY {column} DESC;',
+            'params': ['table', 'column'],
+        },
+
+        # LIMIT patterns
+        {
+            'pattern': r'(?:show|get) top (\d+) (\w+)',
+            'template': 'SELECT * FROM {table} LIMIT {limit};',
+            'params': ['limit', 'table'],
+        },
+        {
+            'pattern': r'(?:show|get) first (\d+) (\w+)',
+            'template': 'SELECT * FROM {table} LIMIT {limit};',
+            'params': ['limit', 'table'],
+        },
+
+        # DISTINCT patterns
+        {
+            'pattern': r'(?:get|show) unique (\w+)',
+            'template': 'SELECT DISTINCT * FROM {table};',
+            'params': ['table'],
+        },
+        {
+            'pattern': r'(?:get|show) distinct (\w+) from (\w+)',
+            'template': 'SELECT DISTINCT {column} FROM {table};',
+            'params': ['column', 'table'],
+        },
+
+        # BETWEEN patterns
+        {
+            'pattern': r'get (\w+) where (\w+) between (.+) and (.+)',
+            'template': 'SELECT * FROM {table} WHERE {column} BETWEEN {start} AND {end};',
+            'params': ['table', 'column', 'start', 'end'],
+        },
+        {
+            'pattern': r'find (\w+) from (\w+) between (.+) and (.+)',
+            'template': 'SELECT * FROM {table} WHERE {column} BETWEEN {start} AND {end};',
+            'params': ['column', 'table', 'start', 'end'],
+        },
+
+        # LIKE patterns
+        {
+            'pattern': r'find (\w+) (?:with|where|containing) (\w+) (?:like|containing) (.+)',
+            'template': "SELECT * FROM {table} WHERE {column} LIKE '%{pattern}%';",
+            'params': ['table', 'column', 'pattern'],
+        },
+        {
+            'pattern': r'search (\w+) for (.+)',
+            'template': "SELECT * FROM {table} WHERE name LIKE '%{pattern}%';",
+            'params': ['table', 'pattern'],
+        },
+
+        # IN patterns
+        {
+            'pattern': r'get (\w+) in (?:categories?|groups?) (.+)',
+            'template': 'SELECT * FROM {table} WHERE category IN ({values});',
+            'params': ['table', 'values'],
+        },
+        {
+            'pattern': r'find (\w+) where (\w+) in (.+)',
+            'template': 'SELECT * FROM {table} WHERE {column} IN ({values});',
+            'params': ['table', 'column', 'values'],
         },
 
         # COUNT patterns
@@ -70,7 +203,7 @@ class NLPToSQL:
         },
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the NLP to SQL converter."""
         self.compiled_patterns = [
             {
@@ -81,7 +214,7 @@ class NLPToSQL:
             for p in self.PATTERNS
         ]
 
-    def convert(self, nlp_query: str) -> Dict[str, any]:
+    def convert(self, nlp_query: str) -> Dict[str, Any]:
         """Convert natural language query to SQL.
 
         Args:

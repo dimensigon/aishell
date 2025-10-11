@@ -127,16 +127,9 @@ class TestSecureVault:
     """Test secure vault functionality"""
 
     @pytest.fixture
-    def temp_vault(self):
+    def temp_vault(self, vault_factory):
         """Create temporary vault"""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            vault_path = Path(tmpdir) / 'test_vault.enc'
-            vault = SecureVault(
-                vault_path=str(vault_path),
-                master_password='test_master_password',
-                auto_redact=True
-            )
-            yield vault
+        return vault_factory()
 
     def test_vault_initialization(self, temp_vault):
         """Test vault initialization"""
@@ -210,13 +203,13 @@ class TestSecureVault:
         decrypted = temp_vault._decrypt(encrypted)
         assert decrypted == test_data
 
-    def test_vault_persistence(self):
+    def test_vault_persistence(self, vault_factory):
         """Test vault data persistence"""
         with tempfile.TemporaryDirectory() as tmpdir:
             vault_path = Path(tmpdir) / 'persist_vault.enc'
 
             # Create and populate vault
-            vault1 = SecureVault(
+            vault1 = vault_factory(
                 vault_path=str(vault_path),
                 master_password='test123',
                 auto_redact=False
@@ -228,7 +221,7 @@ class TestSecureVault:
             )
 
             # Load vault in new instance
-            vault2 = SecureVault(
+            vault2 = vault_factory(
                 vault_path=str(vault_path),
                 master_password='test123',
                 auto_redact=False
@@ -373,10 +366,10 @@ class TestSecureVault:
 class TestCredentialTypes:
     """Test different credential types"""
 
-    def test_oauth_credential(self):
+    def test_oauth_credential(self, vault_factory):
         """Test OAuth credential type"""
         with tempfile.TemporaryDirectory() as tmpdir:
-            vault = SecureVault(
+            vault = vault_factory(
                 vault_path=str(Path(tmpdir) / 'oauth_vault.enc'),
                 master_password='test123'
             )
@@ -396,10 +389,10 @@ class TestCredentialTypes:
             assert cred.type == CredentialType.OAUTH
             assert 'client_id' in cred.data
 
-    def test_ssh_credential(self):
+    def test_ssh_credential(self, vault_factory):
         """Test SSH credential type"""
         with tempfile.TemporaryDirectory() as tmpdir:
-            vault = SecureVault(
+            vault = vault_factory(
                 vault_path=str(Path(tmpdir) / 'ssh_vault.enc'),
                 master_password='test123'
             )
@@ -417,10 +410,10 @@ class TestCredentialTypes:
             cred = vault.get_credential(cred_id, redact=False)
             assert cred.type == CredentialType.SSH
 
-    def test_custom_credential(self):
+    def test_custom_credential(self, vault_factory):
         """Test custom credential type"""
         with tempfile.TemporaryDirectory() as tmpdir:
-            vault = SecureVault(
+            vault = vault_factory(
                 vault_path=str(Path(tmpdir) / 'custom_vault.enc'),
                 master_password='test123'
             )

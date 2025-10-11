@@ -20,6 +20,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 from .redaction import RedactionEngine
+from .path_validator import validate_vault_path
 
 
 class CredentialType(Enum):
@@ -43,7 +44,7 @@ class Credential:
     updated_at: str
     metadata: Optional[Dict[str, Any]] = None
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         result = asdict(self)
         result['type'] = self.type.value
@@ -89,9 +90,11 @@ class SecureVault:
         vault_path: Optional[str] = None,
         master_password: Optional[str] = None,
         auto_redact: bool = True,
-        use_keyring: bool = False
+        use_keyring: bool = False,
+        allow_insecure_path: bool = False
     ):
-        self.vault_path = Path(vault_path) if vault_path else Path.home() / '.ai-shell' / 'vault.enc'
+        # SECURITY FIX: Validate vault path to prevent path traversal
+        self.vault_path = validate_vault_path(vault_path, allow_insecure=allow_insecure_path)
         self.auto_redact = auto_redact
         self.use_keyring = use_keyring
         self.redaction_engine = RedactionEngine() if auto_redact else None
@@ -112,7 +115,20 @@ class SecureVault:
     def _initialize_encryption(self, master_password: str):
         """Initialize Fernet encryption with master password"""
         # Derive key from password using PBKDF2
-        salt = b'ai-shell-salt-v1'  # In production, use random salt stored separately
+        # SECURITY FIX: Generate unique cryptographic salt per vault
+        salt_file = self.vault_path.parent / '.vault_salt'
+
+        # Generate unique salt per vault if doesn't exist
+        if not salt_file.exists():
+            import secrets
+            salt = secrets.token_bytes(32)  # Cryptographically secure random salt
+            salt_file.parent.mkdir(parents=True, exist_ok=True)
+            salt_file.write_bytes(salt)
+            # SECURITY: Restrict salt file permissions to owner only
+            salt_file.chmod(0o600)
+        else:
+            salt = salt_file.read_bytes()
+
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
@@ -164,8 +180,14 @@ class SecureVault:
         json_data = json.dumps(vault_data, indent=2)
         encrypted_data = self._encrypt(json_data)
 
+        # SECURITY FIX: Set proper directory and file permissions
         self.vault_path.parent.mkdir(parents=True, exist_ok=True)
+        # Set directory permissions to 0o700 (owner only)
+        self.vault_path.parent.chmod(0o700)
+
         self.vault_path.write_bytes(encrypted_data)
+        # SECURITY: Set file permissions to 0o600 (owner read/write only)
+        self.vault_path.chmod(0o600)
 
     def store_credential(
         self,
@@ -307,7 +329,7 @@ class SecureVault:
 
         return results
 
-    def export_credential(self, credential_id: str, include_sensitive: bool = False) -> Dict:
+    def export_credential(self, credential_id: str, include_sensitive: bool = False) -> Dict[str, Any]:
         """Export a credential as a dictionary"""
         credential = self.credentials.get(credential_id)
         if not credential:

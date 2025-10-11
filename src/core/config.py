@@ -30,7 +30,7 @@ class ConfigManager:
         Path.cwd() / 'ai-shell-config.yaml'
     ]
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: Optional[str] = None) -> None:
         """
         Initialize configuration manager.
 
@@ -74,8 +74,9 @@ class ConfigManager:
             self.config = self._get_default_config()
 
         # Apply env overrides AFTER loading
-        for path, value in env_overrides.items():
-            self._set_nested_value(list(path), value)
+        for path_tuple, value in env_overrides.items():
+            path_list = list(path_tuple) if isinstance(path_tuple, tuple) else [path_tuple]
+            self._set_nested_value(path_list, value)
 
         self.loaded = True
         logger.info("Configuration loaded successfully")

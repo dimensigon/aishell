@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 class AIShell:
     """Main AI-Shell application."""
 
-    def __init__(self, config_path: Optional[str] = None, db_path: Optional[str] = None):
+    def __init__(self, config_path: Optional[str] = None, db_path: Optional[str] = None) -> None:
         """
         Initialize AI-Shell.
 
@@ -56,8 +56,8 @@ class AIShell:
         self.cache = None
         self._initialized = False
 
-    async def initialize(self):
-        """Initialize all components."""
+    async def initialize(self) -> None:
+        """Method implementation."""
         if self._initialized:
             logger.warning("AI-Shell already initialized")
             return
@@ -124,8 +124,8 @@ class AIShell:
             logger.error(f"Initialization failed: {e}")
             raise
 
-    async def shutdown(self):
-        """Shutdown all components."""
+    async def shutdown(self) -> None:
+        """Shutdown AI-Shell application and cleanup resources."""
         logger.info("Shutting down AI-Shell...")
 
         try:
@@ -155,16 +155,7 @@ class AIShell:
             logger.error(f"Shutdown error: {e}")
 
     async def execute_query(self, query: str, connection_id: Optional[str] = None) -> dict:
-        """
-        Execute a database query.
-
-        Args:
-            query: SQL query to execute
-            connection_id: Optional connection identifier
-
-        Returns:
-            Query execution result
-        """
+        """Execute a database query and return results."""
         if not self._initialized:
             raise RuntimeError("AI-Shell not initialized. Call initialize() first.")
 
@@ -251,8 +242,8 @@ class AIShell:
             'system': monitor_metrics
         }
 
-    async def interactive_mode(self):
-        """Run interactive shell mode."""
+    async def interactive_mode(self) -> None:
+        """Method implementation."""
         if not self._initialized:
             await self.initialize()
 

@@ -18,7 +18,7 @@ class AIShellApp:
     - Async command execution
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.output_lines: List[str] = []
         self.module_info: str = "Ready | Module: OS-Base | Path: /"
         self.prompt_text: str = ""

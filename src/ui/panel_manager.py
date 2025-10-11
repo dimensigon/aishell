@@ -26,14 +26,14 @@ class DynamicPanelManager:
     - Priority-based allocation
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.panel_weights = {
             'output': 0.5,
             'module': 0.3,
             'prompt': 0.2
         }
         self.active_typing = False
-        self.content_sizes = {}
+        self.content_sizes: Dict[str, int] = {}
 
     def calculate_dimensions(self, terminal_height: int) -> Dict[str, PanelDimensions]:
         """
@@ -106,7 +106,8 @@ class DynamicPanelManager:
     def _calculate_prompt_lines(self) -> int:
         """Calculate required prompt lines"""
         # Placeholder - will be enhanced with actual prompt content
-        return self.content_sizes.get('prompt', 1)
+        prompt_size = self.content_sizes.get('prompt', 1)
+        return int(prompt_size)
 
     def set_typing_state(self, is_typing: bool) -> None:
         """Update typing state"""

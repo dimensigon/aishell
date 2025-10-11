@@ -23,7 +23,7 @@ class ConnectionState(Enum):
 
 class MCPClientError(Exception):
     """Base exception for MCP client errors"""
-    def __init__(self, message: str, error_code: Optional[str] = None):
+    def __init__(self, message: str, error_code: Optional[str] = None) -> None:
         self.message = message
         self.error_code = error_code
         super().__init__(self.message)
@@ -134,7 +134,7 @@ class BaseMCPClient(ABC):
     Provides common functionality for all database clients.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._state = ConnectionState.DISCONNECTED
         self._connection = None
         self._config: Optional[ConnectionConfig] = None
@@ -285,7 +285,7 @@ class BaseMCPClient(ABC):
                 # Simple ping query
                 result = await self.execute_query(self._get_ping_query())
                 health['ping_successful'] = True
-                health['ping_time'] = result.execution_time
+                health['ping_time'] = float(result.execution_time)
             except Exception as e:
                 health['ping_successful'] = False
                 health['ping_error'] = str(e)
@@ -300,7 +300,7 @@ class BaseMCPClient(ABC):
         pass
 
     @abstractmethod
-    async def _disconnect_impl(self):
+    async def _disconnect_impl(self) -> None:
         """Implementation-specific disconnection logic"""
         pass
 
@@ -310,7 +310,7 @@ class BaseMCPClient(ABC):
         pass
 
     @abstractmethod
-    async def _execute_ddl_impl(self, ddl: str):
+    async def _execute_ddl_impl(self, ddl: str) -> None:
         """Implementation-specific DDL execution"""
         pass
 

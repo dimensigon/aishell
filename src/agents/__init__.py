@@ -25,6 +25,14 @@ from src.agents.base import (
     TaskContext,
     TaskResult,
 )
+from src.agents.agent_chain import AgentChain
+from src.agents.parallel_executor import (
+    ParallelExecutor,
+    ParallelTask,
+    AggregationStrategy,
+    TaskStatus,
+)
+from src.agents.workflow_orchestrator import WorkflowOrchestrator, WorkflowStep
 
 __all__ = [
     "BaseAgent",
@@ -33,6 +41,13 @@ __all__ = [
     "AgentConfig",
     "TaskContext",
     "TaskResult",
+    "AgentChain",
+    "ParallelExecutor",
+    "ParallelTask",
+    "AggregationStrategy",
+    "TaskStatus",
+    "WorkflowOrchestrator",
+    "WorkflowStep",
 ]
 
 __version__ = "1.0.0"

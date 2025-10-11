@@ -6,7 +6,7 @@ and other sensitive information in logs and outputs.
 """
 
 import re
-from typing import List, Dict, Pattern, Optional
+from typing import List, Dict, Pattern, Optional, Any, Match
 from dataclasses import dataclass
 from enum import Enum
 
@@ -31,7 +31,7 @@ class RedactionPattern(Enum):
 class RedactionRule:
     """A single redaction rule"""
     name: str
-    pattern: Pattern
+    pattern: Pattern[str]
     replacement: str = '[REDACTED]'
     preserve_length: bool = False
     preserve_prefix: int = 0
@@ -41,11 +41,11 @@ class RedactionRule:
 class RedactionEngine:
     """Engine for auto-redacting sensitive data"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.rules: List[RedactionRule] = []
         self._load_default_patterns()
 
-    def _load_default_patterns(self):
+    def _load_default_patterns(self) -> None:
         """Load default redaction patterns"""
         for pattern in RedactionPattern:
             self.add_pattern(
@@ -62,9 +62,9 @@ class RedactionEngine:
         preserve_length: bool = False,
         preserve_prefix: int = 0,
         preserve_suffix: int = 0
-    ):
+    ) -> None:
         """Add a custom redaction pattern"""
-        compiled_pattern = re.compile(pattern)
+        compiled_pattern: Pattern[str] = re.compile(pattern)
         rule = RedactionRule(
             name=name,
             pattern=compiled_pattern,
@@ -90,8 +90,8 @@ class RedactionEngine:
 
     def _apply_rule(self, text: str, rule: RedactionRule) -> str:
         """Apply a single redaction rule"""
-        def replace_match(match):
-            matched_text = match.group(0)
+        def replace_match(match: Match[str]) -> str:
+            matched_text: str = match.group(0)
 
             if rule.preserve_length:
                 # Preserve original length with asterisks
@@ -108,7 +108,8 @@ class RedactionEngine:
             else:
                 return rule.replacement
 
-        return rule.pattern.sub(replace_match, text)
+        result: str = rule.pattern.sub(replace_match, text)
+        return result
 
     def detect_patterns(self, text: str) -> Dict[str, List[str]]:
         """Detect which patterns match in the text"""
@@ -133,14 +134,14 @@ class RedactionEngine:
                 summary[rule.name] = original_matches - redacted_matches
         return summary
 
-    def redact_dict(self, data: Dict, keys_to_redact: Optional[List[str]] = None) -> Dict:
+    def redact_dict(self, data: Dict[Any, Any], keys_to_redact: Optional[List[str]] = None) -> Dict[Any, Any]:
         """Redact sensitive values in a dictionary"""
         if keys_to_redact is None:
             keys_to_redact = ['password', 'secret', 'token', 'key', 'api_key', 'apikey']
 
-        result = {}
+        result: Dict[Any, Any] = {}
         for key, value in data.items():
-            if any(k.lower() in key.lower() for k in keys_to_redact):
+            if any(k.lower() in str(key).lower() for k in keys_to_redact):
                 result[key] = '[REDACTED]'
             elif isinstance(value, str):
                 result[key] = self.redact(value)
@@ -156,3 +157,36 @@ class RedactionEngine:
             else:
                 result[key] = value
         return result
+
+
+class RedactionService:
+    """Service for redacting sensitive data from various sources."""
+
+    def __init__(self):
+        self.engine = RedactionEngine()
+
+    def redact_error(self, error_message: str) -> str:
+        """
+        Redact sensitive data from error messages.
+
+        Args:
+            error_message: Error message that may contain sensitive data
+
+        Returns:
+            Redacted error message
+        """
+        # Apply standard redaction
+        redacted = self.engine.redact(error_message)
+
+        # Additional patterns for error messages
+        # Redact email addresses
+        redacted = re.sub(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', '[REDACTED_EMAIL]', redacted)
+
+        # Redact URLs with credentials
+        redacted = re.sub(r'://[^@\s]+:[^@\s]+@', '://[REDACTED]:[REDACTED]@', redacted)
+
+        # Redact key/token-like patterns
+        redacted = re.sub(r'\bkey[_-]?[=:]\s*[^\s,;]+', 'key=[REDACTED]', redacted, flags=re.IGNORECASE)
+        redacted = re.sub(r'\btoken[_-]?[=:]\s*[^\s,;]+', 'token=[REDACTED]', redacted, flags=re.IGNORECASE)
+
+        return redacted

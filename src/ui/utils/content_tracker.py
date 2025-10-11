@@ -90,7 +90,7 @@ class ContentSizeTracker:
     HIGH_GROWTH_RATE = 10  # lines/second
     STABLE_THRESHOLD = 5  # updates with no change
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the content size tracker."""
         self.metrics: Dict[str, ContentMetrics] = {}
         self.callbacks: List[Callable[[str, int], None]] = []

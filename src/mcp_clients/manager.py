@@ -5,12 +5,13 @@ Manages multiple database connections with pooling and lifecycle management.
 """
 
 import asyncio
-from typing import Dict, Optional, List, Type
+from typing import Dict, Optional, List, Type, Any
 from dataclasses import dataclass
 from datetime import datetime
 from .base import BaseMCPClient, ConnectionConfig, MCPClientError, ConnectionState
 from .oracle_client import OracleClient
 from .postgresql_client import PostgreSQLClient
+from .mysql_client import MySQLClient
 
 
 @dataclass
@@ -37,9 +38,10 @@ class ConnectionManager:
     CLIENT_REGISTRY: Dict[str, Type[BaseMCPClient]] = {
         'oracle': OracleClient,
         'postgresql': PostgreSQLClient,
+        'mysql': MySQLClient,
     }
 
-    def __init__(self, max_connections: int = 10):
+    def __init__(self, max_connections: int = 10) -> None:
         self._connections: Dict[str, ConnectionInfo] = {}
         self._max_connections = max_connections
         self._lock = asyncio.Lock()
@@ -55,7 +57,7 @@ class ConnectionManager:
 
         Args:
             connection_id: Unique identifier for connection
-            client_type: Type of client ('oracle', 'postgresql')
+            client_type: Type of client ('oracle', 'postgresql', 'mysql')
             config: Connection configuration
 
         Returns:
@@ -174,7 +176,7 @@ class ConnectionManager:
             self._connections.clear()
             return count
 
-    def list_connections(self) -> List[Dict[str, any]]:
+    def list_connections(self) -> List[Dict[str, Any]]:
         """
         List all active connections
 
@@ -195,7 +197,7 @@ class ConnectionManager:
             for info in self._connections.values()
         ]
 
-    async def health_check_all(self) -> Dict[str, Dict[str, any]]:
+    async def health_check_all(self) -> Dict[str, Dict[str, Any]]:
         """
         Perform health check on all connections
 
@@ -251,7 +253,7 @@ class ConnectionManager:
         """Get total number of connections"""
         return len(self._connections)
 
-    def get_stats(self) -> Dict[str, any]:
+    def get_stats(self) -> Dict[str, Any]:
         """
         Get manager statistics
 
@@ -259,8 +261,8 @@ class ConnectionManager:
             Statistics dictionary
         """
         total = len(self._connections)
-        by_type = {}
-        by_state = {}
+        by_type: Dict[str, int] = {}
+        by_state: Dict[str, int] = {}
 
         for conn_info in self._connections.values():
             # Count by type

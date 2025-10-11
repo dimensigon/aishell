@@ -66,7 +66,7 @@ class AsyncEventBus:
     - Critical event guarantees
     """
 
-    def __init__(self, max_queue_size: int = 1000):
+    def __init__(self, max_queue_size: int = 1000) -> None:
         """
         Initialize event bus.
 
@@ -114,7 +114,7 @@ class AsyncEventBus:
 
         logger.info("Event bus stopped")
 
-    def subscribe(self, event_type: str, handler: Callable) -> None:
+    def subscribe(self, event_type: str, handler: Callable[..., Any]) -> None:
         """
         Subscribe to an event type.
 
@@ -125,7 +125,7 @@ class AsyncEventBus:
         self.subscribers[event_type].append(handler)
         logger.debug(f"Subscribed to '{event_type}' (total: {len(self.subscribers[event_type])})")
 
-    def unsubscribe(self, event_type: str, handler: Callable) -> None:
+    def unsubscribe(self, event_type: str, handler: Callable[..., Any]) -> None:
         """
         Unsubscribe from an event type.
 

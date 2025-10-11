@@ -22,7 +22,7 @@ class CompletionCandidate:
 class IntelligentCompleter:
     """Intelligent autocomplete using vector similarity and patterns."""
 
-    def __init__(self, vector_db: VectorDatabase):
+    def __init__(self, vector_db: VectorDatabase) -> None:
         """Initialize completer.
 
         Args:

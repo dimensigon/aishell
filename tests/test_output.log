@@ -1,0 +1,203 @@
+/usr/local/lib/python3.9/site-packages/pytest_asyncio/plugin.py:217: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the fixture caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to function scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+============================= test session starts ==============================
+platform linux -- Python 3.9.21, pytest-8.3.5, pluggy-1.5.0 -- /usr/bin/python
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/claude/AIShell
+configfile: pyproject.toml
+plugins: anyio-4.11.0, xdist-3.8.0, pyfakefs-5.9.3, hypothesis-6.140.3, asyncio-0.26.0, mock-3.14.0, cov-6.1.1
+asyncio: mode=auto, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 1695 items
+
+tests/agents/database/test_backup_coverage.py::TestBackupAgentFullBackupPlanning::test_plan_full_backup PASSED [  0%]
+tests/agents/database/test_backup_coverage.py::TestBackupAgentFullBackupPlanning::test_full_backup_includes_compression PASSED [  0%]
+tests/agents/database/test_backup_coverage.py::TestBackupAgentFullBackupPlanning::test_full_backup_without_compression PASSED [  0%]
+tests/agents/database/test_backup_coverage.py::TestBackupAgentIncrementalBackupPlanning::test_plan_incremental_backup PASSED [  0%]
+tests/agents/database/test_backup_coverage.py::TestBackupAgentIncrementalBackupPlanning::test_incremental_backup_includes_base PASSED [  0%]
+tests/agents/database/test_backup_coverage.py::TestBackupAgentRestorePlanning::test_plan_restore PASSED [  0%]
+tests/agents/database/test_backup_coverage.py::TestBackupAgentRestorePlanning::test_restore_validates_before_executing PASSED [  0%]
+tests/agents/database/test_backup_coverage.py::TestBackupAgentRestorePlanning::test_restore_with_overwrite_false PASSED [  0%]
+tests/agents/database/test_backup_coverage.py::TestBackupAgentCleanupPlanning::test_cleanup_added_to_full_backup PASSED [  0%]
+tests/agents/database/test_backup_coverage.py::TestBackupAgentCleanupPlanning::test_cleanup_not_added_by_default PASSED [  0%]
+tests/agents/database/test_backup_coverage.py::TestBackupAgentExecuteStep::test_execute_step_calls_tool PASSED [  0%]
+tests/agents/database/test_backup_coverage.py::TestBackupAgentExecuteStep::test_execute_step_tool_not_found PASSED [  0%]
+tests/agents/database/test_backup_coverage.py::TestBackupAgentSafetyValidation::test_validate_safe_tools PASSED [  0%]
+tests/agents/database/test_backup_coverage.py::TestBackupAgentSafetyValidation::test_validate_backup_creation_low_risk PASSED [  0%]
+tests/agents/database/test_backup_coverage.py::TestBackupAgentSafetyValidation::test_validate_restore_high_risk PASSED [  0%]
+tests/agents/database/test_backup_coverage.py::TestBackupAgentSafetyValidation::test_validate_cleanup_medium_risk PASSED [  0%]
+tests/agents/database/test_backup_coverage.py::TestBackupAgentSafetyValidation::test_validate_cleanup_aggressive_retention PASSED [  1%]
+tests/agents/database/test_backup_coverage.py::TestBackupAgentSafetyValidation::test_validate_cleanup_strict_mode FAILED [  1%]
+
+=================================== FAILURES ===================================
+______ TestBackupAgentSafetyValidation.test_validate_cleanup_strict_mode _______
+tests/agents/database/test_backup_coverage.py:406: in test_validate_cleanup_strict_mode
+    assert validation['requires_approval'] is True
+E   assert False is True
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:228
+  <frozen importlib._bootstrap>:228: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:228
+  <frozen importlib._bootstrap>:228: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+<frozen importlib._bootstrap>:228
+  <frozen importlib._bootstrap>:228: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
+
+tests/ui/test_dynamic_panels.py:16
+  /home/claude/AIShell/tests/ui/test_dynamic_panels.py:16: PytestCollectionWarning: cannot collect test class 'TestApp' because it has a __init__ constructor (from: tests/ui/test_dynamic_panels.py)
+    class TestApp(App):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.9.21-final-0 ________________
+
+Name                                           Stmts   Miss  Cover   Missing
+----------------------------------------------------------------------------
+src/__init__.py                                    3      0   100%
+src/agents/__init__.py                             6      0   100%
+src/agents/agent_chain.py                        132     89    33%   39, 57-59, 63-66, 78-84, 107-116, 132, 136, 155-263, 267-279, 283-287
+src/agents/base.py                               113     35    69%   224, 245, 297, 335, 375, 410-464, 502, 537-544, 569-576
+src/agents/coordinator.py                         45     45     0%   3-100
+src/agents/coordinator_mocks.py                   78     78     0%   8-164
+src/agents/database/__init__.py                    2      0   100%
+src/agents/database/backup.py                     91     30    67%   417, 424-429, 457-501
+src/agents/database/backup_manager.py             31     21    32%   18, 36-57, 73-80, 96-98, 109-115
+src/agents/database/migration.py                  75     65    13%   205-214, 230-298, 313-377, 392-440, 477-497, 546-631, 645
+src/agents/database/optimizer.py                  98     87    11%   84, 128-137, 157-187, 204-247, 264-294, 326-343, 380-431, 467-522
+src/agents/parallel_executor.py                  177    114    36%   58, 82, 86-89, 93, 111-117, 124-126, 130-132, 150-158, 167-204, 219-364, 368
+src/agents/safety/__init__.py                      2      0   100%
+src/agents/safety/controller.py                  156    125    20%   62-65, 85-88, 92, 96, 129-130, 166-257, 273-301, 341-361, 384-444, 467-475, 479
+src/agents/state/__init__.py                       0      0   100%
+src/agents/state/manager.py                       32     32     0%   3-46
+src/agents/state/manager_mock.py                  14     14     0%   7-32
+src/agents/test_agent.py                           9      9     0%   7-24
+src/agents/tools/__init__.py                      19     13    32%   23-26, 47-50, 81-88, 102-104
+src/agents/tools/database_tools.py                87     87     0%   8-554
+src/agents/tools/migration_tools.py              166    166     0%   8-473
+src/agents/tools/optimizer_tools.py               81     81     0%   8-401
+src/agents/tools/registry.py                     145     94    35%   83-89, 101-107, 125-140, 157-159, 171-174, 186-189, 201, 210, 229-254, 266-274, 306-317, 339-351, 368-376, 388-415, 424-442
+src/agents/workflow_orchestrator.py              194    140    28%   66, 70-71, 81-88, 92-97, 101-103, 107, 112-141, 146-168, 176-220, 237-327, 331-345
+src/config/__init__.py                             2      0   100%
+src/config/settings.py                            22      4    82%   34, 52-54
+src/coordination/__init__.py                       4      0   100%
+src/coordination/distributed_lock.py             148    116    22%   55-64, 76-114, 123-156, 168-198, 202-207, 211-228, 233-240, 253-255, 276-285, 302-305, 314-321, 325-328, 340-369
+src/coordination/state_sync.py                   207    158    24%   76-97, 104-120, 124-130, 149-199, 218-234, 238-274, 278-295, 299-316, 320-321, 325-338, 342-371, 375-407, 417-442, 450-452, 461-468, 472-475
+src/coordination/task_queue.py                   193    146    24%   59-62, 67-70, 99-112, 127-148, 163-222, 235-275, 294-357, 361-380, 389-427, 439-464
+src/core/__init__.py                               4      0   100%
+src/core/ai_shell.py                              63     48    24%   36-43, 54-73, 86-95, 107-111, 126-129, 140-152, 165-174
+src/core/config.py                                93     74    20%   40-44, 54-82, 86, 138-150, 154-166, 171-189, 202-211, 221-223, 235, 244-252, 256
+src/core/degraded_mode.py                          7      7     0%   7-43
+src/core/event_bus.py                             98     67    32%   51-55, 76-88, 92-98, 102-115, 125-126, 136-138, 150-164, 172-211, 215, 219
+src/core/health_checks.py                        166    166     0%   8-460
+src/core/tenancy.py                              151    151     0%   7-270
+src/database/__init__.py                           5      0   100%
+src/database/ha.py                               102    102     0%   7-315
+src/database/helpers.py                           24     24     0%   7-101
+src/database/history.py                           59     44    25%   18-29, 37-46, 50-54, 75-92, 103, 114-115, 129, 140, 147-148, 156-173
+src/database/impact_estimator.py                 137    110    20%   62-72, 95-138, 150-169, 186-201, 213, 236-295, 311-348, 368-387, 399, 412
+src/database/module.py                            71     54    24%   28-38, 42-46, 64-142, 154-166, 177, 185, 196, 200-202, 206, 210
+src/database/nlp_to_sql.py                        29     21    28%   75, 93-119, 136-153, 164-165
+src/database/pool.py                              68     68     0%   3-107
+src/database/risk_analyzer.py                     67     50    25%   48, 62-76, 95-104, 116-133, 170-189, 200-217
+src/enterprise/__init__.py                         9      0   100%
+src/enterprise/audit/__init__.py                   4      0   100%
+src/enterprise/audit/audit_logger.py              88     56    36%   44-46, 61-62, 66-94, 111-150, 163-196, 200-213
+src/enterprise/audit/change_tracker.py            52     30    42%   36-37, 41-59, 75-100, 110-131
+src/enterprise/audit/compliance_reporter.py       46     23    50%   29, 39-46, 55-62, 79-86, 102-109, 127-134, 143, 150, 156, 162, 168, 174, 180
+src/enterprise/cloud/__init__.py                   5      0   100%
+src/enterprise/cloud/aws_integration.py           33     14    58%   42-43, 65-70, 91, 104, 124, 146, 164, 182, 187, 198
+src/enterprise/cloud/azure_integration.py         25      9    64%   36, 45-48, 58, 63, 73, 83, 92
+src/enterprise/cloud/cloud_backup.py              64     42    34%   53-56, 75-112, 131-166, 171, 183-185
+src/enterprise/cloud/gcp_integration.py           23      9    61%   34, 43-46, 55, 60, 69, 79, 88
+src/enterprise/rbac/__init__.py                    5      0   100%
+src/enterprise/rbac/permission_engine.py         144    115    20%   35, 40-44, 61, 87-121, 140-146, 157-164, 176-198, 219-232, 244-256, 263-264, 281-307, 324-371
+src/enterprise/rbac/policy_evaluator.py           32     12    62%   39-47, 51, 55-58
+src/enterprise/rbac/rbac_middleware.py            33     26    21%   9-25, 30-42, 49-50, 54-56
+src/enterprise/rbac/role_manager.py              157    110    30%   49-51, 56-57, 61, 83-85, 89-126, 133-210, 247-286, 290-301, 318-350, 354-364, 383-402, 426-439, 448-460, 477-497, 514-527, 531
+src/enterprise/tenancy/__init__.py                 5      0   100%
+src/enterprise/tenancy/resource_quota.py         154    107    31%   47-48, 52-54, 59-60, 64, 68-70, 74, 78-80, 102-104, 108-138, 164-188, 192-213, 232-256, 285-314, 318-321, 331-347, 351-371, 382-404, 413-438
+src/enterprise/tenancy/tenant_database.py        149    120    19%   36-37, 64-69, 86-116, 138-154, 173-190, 195-224, 228-260, 269-297, 309-328, 345-387, 391-422
+src/enterprise/tenancy/tenant_manager.py         175    117    33%   63-66, 71-73, 77-86, 90, 112-113, 117-152, 187-248, 252-263, 267-278, 295-333, 346-352, 375-398, 402-411, 415, 438-452, 456-469
+src/enterprise/tenancy/tenant_middleware.py      115     77    33%   34-35, 63-65, 81-88, 107-120, 137-150, 177-194, 204, 214, 219, 224, 229, 234-235, 244-251, 264-283, 296, 308-314, 333, 350-356
+src/llm/__init__.py                                5      0   100%
+src/llm/embeddings.py                             68     56    18%   18-21, 25-42, 46-53, 66-81, 94-101, 115-136, 140-141
+src/llm/manager.py                               160    118    26%   53-62, 75-100, 112-145, 154-177, 189-215, 228-236, 241-242, 254-258, 272-275, 288-304, 317-344, 348-357
+src/llm/providers.py                             109     84    23%   19-21, 26, 31, 36, 40, 48-50, 54-74, 78-88, 92-109, 113-127, 134-135, 139-158, 162-177, 182-184
+src/main.py                                      252    219    13%   46-57, 61-125, 129-155, 159-180, 193-207, 216-219, 228-235, 247-303, 315-325, 335-361, 366-402, 407-516, 520
+src/mcp_clients/__init__.py                        6      0   100%
+src/mcp_clients/base.py                          133     74    44%   27-29, 63, 78, 87, 103, 118, 127, 138-143, 148, 153, 157-159, 174-189, 198-210, 226-244, 259-267, 276-293, 300, 305, 310, 315, 320
+src/mcp_clients/base_exports.py                    2      2     0%   6-22
+src/mcp_clients/cassandra_client.py              140    119    15%   50-62, 69-100, 104-110, 129-143, 160-174, 186-200, 219-220, 234-259, 275-283, 287-289, 293-298, 302-307, 317-324, 339-350, 366-368, 372-373
+src/mcp_clients/dynamodb_client.py               200    179    10%   47-56, 63-92, 97-99, 118-134, 153-173, 198-222, 241-257, 284-315, 336-362, 381-405, 428-448, 452-462, 466-477, 481-490, 494-496, 500-501
+src/mcp_clients/manager.py                        96     68    29%   43-45, 67-106, 121-133, 145-156, 165-175, 184, 205-217, 232-248, 252, 261-274
+src/mcp_clients/manager_extended.py               20     20     0%   5-48
+src/mcp_clients/neo4j_client.py                  143    120    16%   48-57, 61-82, 86-88, 107-125, 144-162, 181-199, 216-225, 244-253, 274-286, 307-320, 349-367, 388-403, 421-424, 430-436, 440-446, 453-459, 463-465, 469-470
+src/mcp_clients/oracle_client.py                  71     57    20%   23-24, 36-56, 60-67, 71-103, 112-121, 125, 129-142, 154-168, 189-191
+src/mcp_clients/postgresql_client.py              81     65    20%   22-23, 35-59, 63-70, 82-127, 136-145, 149, 153-166, 179-197, 222-230, 239-246
+src/mcp_clients/postgresql_extended.py            60     60     0%   5-196
+src/mcp_clients/retry.py                         245    245     0%   7-532
+src/modules/__init__.py                            2      0   100%
+src/modules/panel_enricher.py                    102     71    30%   40-46, 59-60, 77-84, 92-127, 143-159, 174-180, 184-193, 197-212, 223, 231-236, 244
+src/performance/__init__.py                        5      0   100%
+src/performance/cache.py                         217    175    19%   31-34, 38, 47-62, 66-70, 74-79, 92-118, 136-175, 179-186, 190-196, 200-214, 218-222, 231-235, 257-264, 281-294, 300, 305, 309-344, 348-368, 372-377, 381-394, 398-401, 415-441, 445, 449-451
+src/performance/cache_extended.py                 53     53     0%   5-144
+src/performance/monitor.py                        63     41    35%   35-44, 48-57, 61-71, 81, 93-105, 109-122, 130-143, 147-163
+src/performance/optimizer.py                     105     77    27%   27-28, 35-40, 52-66, 70-77, 81-87, 91-98, 103-110, 114-120, 129-146, 159-171, 183-196, 200-203, 207-208
+src/plugins/__init__.py                            9      9     0%   6-23
+src/plugins/config.py                             79     79     0%   3-190
+src/plugins/dependencies.py                      113    113     0%   3-235
+src/plugins/discovery.py                          59     59     0%   3-126
+src/plugins/hooks.py                              54     54     0%   3-156
+src/plugins/loader.py                             56     56     0%   3-133
+src/plugins/manager.py                             2      2     0%   4-6
+src/plugins/plugin_manager.py                    232    232     0%   7-552
+src/plugins/sandbox.py                            66     66     0%   3-184
+src/plugins/security.py                           60     60     0%   3-175
+src/security/__init__.py                          39     10    74%   23-24, 29-30, 35-36, 41-42, 47-48
+src/security/audit.py                            105    105     0%   7-354
+src/security/command_sanitizer.py                 50     33    34%   85-119, 132-136, 152-171, 181
+src/security/compliance.py                        69     69     0%   7-309
+src/security/encryption.py                        54     54     0%   7-159
+src/security/error_handler.py                     84     62    26%   63-74, 91-97, 113-133, 158-171, 193-231, 240-254
+src/security/path_validator.py                    40     33    18%   31-52, 69-90, 109-120
+src/security/pii.py                               58     58     0%   7-158
+src/security/rate_limiter.py                      96     66    31%   56-57, 78-132, 141-150, 162-185, 203-206, 220-221, 239-241, 260-276
+src/security/rbac.py                             109    109     0%   7-208
+src/security/redaction.py                        103     64    38%   45-46, 50-51, 67-76, 80-82, 86-89, 93-112, 116-121, 125, 129-135, 139-159, 166, 179-192
+src/security/sanitization.py                      29     29     0%   7-90
+src/security/sql_guard.py                         67     67     0%   7-223
+src/security/temp_file_handler.py                 64     46    28%   46-85, 111-133, 164-175, 189-199, 215-221
+src/security/validation.py                        27     27     0%   7-88
+src/security/vault.py                            173    117    32%   49-51, 56-57, 67-68, 73-74, 79-80, 97-113, 119-139, 143-145, 149-151, 155-168, 172-190, 201-229, 237-252, 260-263, 267-272, 281-294, 298-310, 318-330, 334-342, 346-350
+src/ui/__init__.py                                 4      0   100%
+src/ui/app.py                                     32     20    38%   22-27, 31-32, 36, 45-52, 62-63, 67, 71, 75, 79
+src/ui/containers/__init__.py                      2      0   100%
+src/ui/containers/dynamic_panel_container.py     149    115    23%   29-30, 96-117, 122-126, 130, 134-146, 167-237, 249-253, 257-301, 320-336, 346-359, 371-372, 384-385, 397-398, 410-412, 416-417
+src/ui/engines/__init__.py                         2      0   100%
+src/ui/engines/context_suggestion.py             162    111    31%   19-21, 105-110, 128-177, 193-227, 245-279, 297-311, 322-329, 347-381, 397-408, 416-420, 432, 443-447, 455-459, 472-478
+src/ui/integration/__init__.py                     2      2     0%   7-9
+src/ui/integration/event_coordinator.py          137    137     0%   8-368
+src/ui/panel_manager.py                           35     22    37%   30-36, 48-88, 109-110, 114, 118
+src/ui/prompt_handler.py                          58     41    29%   18-22, 36-50, 66-84, 96-100, 112, 124-137, 141-142, 146, 150-151
+src/ui/screens/__init__.py                         2      2     0%   7-9
+src/ui/screens/startup_screen.py                  61     61     0%   8-209
+src/ui/utils/__init__.py                           3      0   100%
+src/ui/utils/content_tracker.py                  115     80    30%   33-58, 95-98, 109-120, 132-166, 180-181, 193-194, 204-208, 217-221, 227-233, 241-257, 269, 278-282, 291
+src/ui/utils/memory_monitor.py                   178    133    25%   73-113, 125-139, 143-156, 164-188, 197-220, 229-233, 253-272, 280-303, 315-316, 332-343, 352-355, 364-367, 376-386, 396, 405, 413-436, 445, 460-467
+src/ui/widgets/__init__.py                         4      0   100%
+src/ui/widgets/command_preview.py                108     79    27%   134-139, 143-149, 153, 168-179, 190-218, 227-258, 268-272, 282-285, 289-291, 295-299, 308-317, 329-335, 345-347, 359, 363-365
+src/ui/widgets/risk_indicator.py                  52     34    35%   110-112, 117-118, 131-143, 153-157, 167-188, 199-232, 241, 250, 254
+src/ui/widgets/suggestion_list.py                128     91    29%   18-19, 97-102, 106, 118-142, 158-178, 189-198, 209-216, 227-232, 236-240, 244-248, 256-259, 267-270, 274-276, 284-312, 321, 330
+src/vector/__init__.py                             3      0   100%
+src/vector/autocomplete.py                       109     86    21%   31-34, 42-44, 64-95, 113-146, 162-207, 223-245, 256-276, 290-297, 306-307, 327-345
+src/vector/store.py                              125     99    21%   12-14, 37-39, 47-52, 64-85, 98-112, 129-155, 175-218, 229-232, 243-250, 263-304, 312-317
+----------------------------------------------------------------------------
+TOTAL                                          10500   8297    21%
+Coverage JSON written to file tests/coverage_report.json
+=========================== short test summary info ============================
+FAILED tests/agents/database/test_backup_coverage.py::TestBackupAgentSafetyValidation::test_validate_cleanup_strict_mode - assert False is True
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+=================== 1 failed, 17 passed, 4 warnings in 6.45s ===================

@@ -204,17 +204,47 @@ class BaseAgent(ABC):
                 return {'requires_approval': False, 'safe': True}
     """
 
-    def __init__(self, config: AgentConfig, llm_manager, tool_registry, state_manager):
+    def __init__(self, agent_id: Optional[str] = None, config: Optional[Dict[str, Any]] = None,
+                 llm_manager=None, tool_registry=None, state_manager=None) -> None:
         """
         Initialize the base agent
 
         Args:
-            config: Agent configuration
+            agent_id: Unique agent identifier (for simple initialization)
+            config: Agent configuration (can be dict or AgentConfig)
             llm_manager: LLM manager instance for reasoning
             tool_registry: Tool registry instance for tool access
             state_manager: State manager instance for checkpointing
         """
-        self.config = config
+        # Support both simple and complex initialization
+        if isinstance(config, AgentConfig):
+            self.config = config
+        elif isinstance(config, dict):
+            # Create simple config from dict
+            self.config = type('SimpleConfig', (), {
+                'agent_id': agent_id or config.get('agent_id', 'agent'),
+                'agent_type': config.get('agent_type', 'base'),
+                'capabilities': config.get('capabilities', []),
+                'llm_config': config.get('llm_config', {}),
+                'safety_level': config.get('safety_level', 'moderate'),
+                'max_retries': config.get('max_retries', 3),
+                'timeout_seconds': config.get('timeout_seconds', 300)
+            })()
+        elif agent_id:
+            # Create minimal config from agent_id
+            self.config = type('SimpleConfig', (), {
+                'agent_id': agent_id,
+                'agent_type': 'base',
+                'capabilities': [],
+                'llm_config': {},
+                'safety_level': 'moderate',
+                'max_retries': 3,
+                'timeout_seconds': 300
+            })()
+        else:
+            raise ValueError("Must provide either agent_id or config")
+
+        self.agent_id = self.config.agent_id
         self.llm_manager = llm_manager
         self.tool_registry = tool_registry
         self.state_manager = state_manager

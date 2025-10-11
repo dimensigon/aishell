@@ -31,7 +31,7 @@ class OptimizationMetrics:
 class PerformanceOptimizer:
     """Optimizes database operations and resource usage."""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         self.config = config or {}
         self.query_stats: Dict[str, List[float]] = defaultdict(list)
         self.slow_query_threshold = self.config.get('slow_query_threshold', 1.0)
@@ -109,16 +109,11 @@ class PerformanceOptimizer:
 
         return pattern
 
-    async def record_execution(self, query: str, execution_time: float):
-        """
-        Record query execution metrics.
-
-        Args:
-            query: Executed query
-            execution_time: Execution time in seconds
-        """
+    async def record_execution(self, query: str, execution_time: float) -> None:
+        """Method implementation."""
         async with self._optimization_lock:
             pattern = self._extract_pattern(query)
+            self._query_patterns.add(pattern)
             self.query_stats[pattern].append(execution_time)
 
             if execution_time > self.slow_query_threshold:
@@ -200,8 +195,8 @@ class PerformanceOptimizer:
 
         return {'min_size': min_size, 'max_size': max_size}
 
-    async def reset_stats(self):
-        """Reset optimization statistics."""
+    async def reset_stats(self) -> None:
+        """Method implementation."""
         async with self._optimization_lock:
             self.query_stats.clear()
             self._query_patterns.clear()
