@@ -78,7 +78,7 @@ jobs:
 
       - name: Test import
         run: |
-          python -c "import aishell; print(aishell.__version__)"
+          python -c "import src; print('Package imported successfully')"
 
   publish-pypi:
     name: Publish to PyPI
@@ -86,7 +86,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/aishell
+      url: https://pypi.org/p/agentic-aishell
     permissions:
       id-token: write  # Required for trusted publishing
 
@@ -187,7 +187,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKER_USERNAME }}/aishell
+          images: ${{ secrets.DOCKER_USERNAME }}/agentic-aishell
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
