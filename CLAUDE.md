@@ -336,9 +336,8 @@ Message 4: Write "file.js"
 
 ## Support
 
-- Documentation: https://github.com/ruvnet/claude-flow
-- Issues: https://github.com/ruvnet/claude-flow/issues
-- Flow-Nexus Platform: https://flow-nexus.ruv.io (registration required for cloud features)
+- Documentation: https://github.com/dimensigon/claude-flow
+- Issues: https://github.com/dimensigon/claude-flow/issues
 
 ---
 

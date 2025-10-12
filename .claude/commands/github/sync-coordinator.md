@@ -84,7 +84,7 @@ mcp__claude-flow__memory_usage {
 ```javascript
 // Coordinate feature implementation across packages
 mcp__github__push_files {
-  owner: "ruvnet",
+  owner: "dimensigon",
   repo: "ruv-FANN",
   branch: "feature/github-commands",
   files: [

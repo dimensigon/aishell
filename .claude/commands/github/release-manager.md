@@ -33,7 +33,7 @@ mcp__claude-flow__agent_spawn { type: "analyst", name: "Deployment Analyst" }
 
 // Create release preparation branch
 mcp__github__create_branch {
-  owner: "ruvnet",
+  owner: "dimensigon",
   repo: "ruv-FANN",
   branch: "release/v1.0.72",
   from_branch: "main"
@@ -51,7 +51,7 @@ mcp__claude-flow__task_orchestrate {
 ```javascript
 // Update versions across packages
 mcp__github__push_files {
-  owner: "ruvnet",
+  owner: "dimensigon",
   repo: "ruv-FANN", 
   branch: "release/v1.0.72",
   files: [
@@ -111,7 +111,7 @@ Bash("cd /workspaces/ruv-FANN/ruv-swarm/npm && npm run lint")
 
 // Create release PR with validation results
 mcp__github__create_pull_request {
-  owner: "ruvnet",
+  owner: "dimensigon",
   repo: "ruv-FANN",
   title: "Release v1.0.72: GitHub Integration and Swarm Enhancements",
   head: "release/v1.0.72", 
