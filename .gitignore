@@ -71,3 +71,9 @@ logs/
 # OS files
 .DS_Store
 Thumbs.db
+docs/.venv/
+*.pyc
+__pycache__/
+.coverage
+coverage.json
+.pytest_cache/

@@ -105,7 +105,7 @@ class AgentConfig:
     agent_type: str
     capabilities: List[AgentCapability]
     llm_config: Dict[str, Any]
-    safety_level: str  # strict, moderate, permissive
+    safety_level: str = "moderate"  # strict, moderate, permissive
     max_retries: int = 3
     timeout_seconds: int = 300
 

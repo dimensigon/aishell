@@ -7,7 +7,7 @@ Tests dynamic sizing, content adaptation, and panel management.
 import pytest
 import asyncio
 from unittest.mock import Mock, AsyncMock, patch
-from textual.widgets import Widget
+from textual.widget import Widget
 
 from src.ui.containers.dynamic_panel_container import (
     DynamicPanelContainer,
