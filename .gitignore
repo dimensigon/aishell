@@ -77,3 +77,4 @@ __pycache__/
 .coverage
 coverage.json
 .pytest_cache/
+htmlcov/

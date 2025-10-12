@@ -1,4 +1,4 @@
-# AI-Shell Documentation
+# Agentic AI-Shell Documentation
 
 ![Python Version](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)
 ![Test Coverage](https://img.shields.io/badge/coverage-22.60%25-yellow)
@@ -9,7 +9,7 @@
 
 ## Overview
 
-AI-Shell (AI$) is an intelligent command-line interface that combines traditional shell functionality with AI-powered assistance, database management, and multi-threaded asynchronous processing. Built with Python's `prompt-toolkit` and modern async architecture, it provides a context-aware terminal experience with modular extensibility.
+Agentic AI-Shell (AI$) is an intelligent command-line interface that combines traditional shell functionality with agentic AI-powered assistance, database management, and multi-threaded asynchronous processing. Built with Python's `prompt-toolkit` and modern async architecture, it provides a context-aware terminal experience with modular extensibility and autonomous agent capabilities.
 
 ### Key Features
 
@@ -571,3 +571,23 @@ AI-Shell is released under the MIT License. See [LICENSE](../LICENSE) for detail
 **Version**: 1.0.0
 **Last Updated**: 2025-10-03
 **Authors**: AI-Shell Development Team
+
+## 📦 PyPI Installation
+
+Install the latest stable version from PyPI:
+
+```bash
+pip install agentic-aishell
+```
+
+Or install with all optional dependencies:
+
+```bash
+pip install agentic-aishell[all]
+```
+
+Development installation:
+
+```bash
+pip install agentic-aishell[dev]
+```

@@ -1,11 +1,18 @@
 # Changelog
 
-All notable changes to the AIShell project will be documented in this file.
+All notable changes to the Agentic AIShell project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [2.0.0] - 2025-10-12
+
+### Changed
+- **Package Renamed**: `aishell` → `agentic-aishell` for PyPI publishing
+  - New PyPI package name: `agentic-aishell`
+  - Maintains backward compatibility with `aishell` and `ai-shell` CLI commands
+  - Primary CLI command is now `agentic-aishell`
+- **Version Bump**: 1.0.0 → 2.0.0 to reflect major package rename
 
 ### Added - Testing Infrastructure
 
