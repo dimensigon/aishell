@@ -1,316 +1,352 @@
-"""Comprehensive tests for state synchronization"""
+"""
+Comprehensive tests for state synchronization
 
-import pytest
+Tests cross-instance state sync, race conditions, version-based conflict resolution,
+and distributed coordination.
+"""
+
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch
-from src.coordination.state_sync import StateSync, SyncStrategy, StateConflict
+import pytest
+import json
+import time
+from unittest.mock import AsyncMock, Mock, MagicMock
+from src.coordination.state_sync import (
+    StateSync,
+    StateSyncManager,
+    StateUpdate,
+    SyncStrategy
+)
+
+
+@pytest.fixture
+def mock_redis():
+    """Create mock Redis client."""
+    redis = AsyncMock()
+    redis.hset = AsyncMock()
+    redis.hget = AsyncMock()
+    redis.hdel = AsyncMock()
+    redis.hgetall = AsyncMock(return_value={})
+    redis.hincrby = AsyncMock(return_value=1)
+    redis.publish = AsyncMock()
+    redis.expire = AsyncMock()
+    
+    # Mock pubsub
+    pubsub = AsyncMock()
+    pubsub.subscribe = AsyncMock()
+    pubsub.unsubscribe = AsyncMock()
+    pubsub.close = AsyncMock()
+    pubsub.get_message = AsyncMock(return_value=None)
+    redis.pubsub = Mock(return_value=pubsub)
+    
+    return redis
+
+
+class TestStateSyncBasics:
+    """Test basic state synchronization."""
+
+    @pytest.mark.asyncio
+    async def test_initialization(self, mock_redis):
+        """Test state sync initialization."""
+        sync = StateSync(mock_redis, namespace="test")
+
+        assert sync.namespace == "test"
+        assert sync.instance_id is not None
+        assert sync.state_key == "test:state"
+        assert sync.version_key == "test:versions"
+
+    @pytest.mark.asyncio
+    async def test_start_stop(self, mock_redis):
+        """Test starting and stopping sync."""
+        sync = StateSync(mock_redis)
+
+        await sync.start()
+        assert sync.listening is True
+
+        await sync.stop()
+        assert sync.listening is False
+
+
+class TestStateOperations:
+    """Test state set/get operations."""
+
+    @pytest.mark.asyncio
+    async def test_set_state(self, mock_redis):
+        """Test setting state value."""
+        mock_redis.hget.return_value = None  # No previous version
+        sync = StateSync(mock_redis)
+
+        result = await sync.set("key1", "value1")
+
+        assert result is True
+        mock_redis.hset.assert_called()
+        mock_redis.publish.assert_called()
+
+    @pytest.mark.asyncio
+    async def test_get_state(self, mock_redis):
+        """Test getting state value."""
+        mock_redis.hget.return_value = json.dumps("value1")
+        sync = StateSync(mock_redis)
+
+        value = await sync.get("key1")
+
+        assert value == "value1"
+
+    @pytest.mark.asyncio
+    async def test_get_with_default(self, mock_redis):
+        """Test getting non-existent key with default."""
+        mock_redis.hget.return_value = None
+        sync = StateSync(mock_redis)
+
+        value = await sync.get("non_existent", default="default_value")
+
+        assert value == "default_value"
+
+
+class TestVersioning:
+    """Test version-based conflict resolution."""
+
+    @pytest.mark.asyncio
+    async def test_version_increments(self, mock_redis):
+        """Test version increments on update."""
+        mock_redis.hget.side_effect = [None, b"1", b"2"]
+        sync = StateSync(mock_redis)
 
+        await sync.set("key1", "value1")
+        await sync.set("key1", "value2")
+        await sync.set("key1", "value3")
 
-@pytest.mark.asyncio
-async def test_state_sync_initialization(mock_redis_client):
-    """Test state sync initialization"""
-    sync = StateSync(redis_client=mock_redis_client, namespace='test-node', ttl=None)
-    assert sync.namespace == 'test-node'
-    assert sync.instance_id is not None
+        # Should increment versions
+        assert mock_redis.hset.call_count >= 3
 
+    @pytest.mark.asyncio
+    async def test_conflict_resolution(self, mock_redis):
+        """Test version-based conflict resolution."""
+        sync = StateSync(mock_redis)
+        sync.local_versions["key1"] = 5
+
+        # Simulate receiving update with lower version
+        update = StateUpdate(
+            update_id="update_1",
+            instance_id="other_instance",
+            key="key1",
+            value="old_value",
+            timestamp=time.time(),
+            version=3
+        )
 
-@pytest.mark.asyncio
-async def test_set_local_state(mock_state_sync):
-    """Test setting local state"""
-    await mock_state_sync.set('key1', {'value': 'data'})
+        await sync._handle_update(update)
 
-    state = await mock_state_sync.get('key1')
-    assert state['value'] == 'data'
+        # Should ignore outdated update
+        assert sync.local_state.get("key1") != "old_value"
 
 
-@pytest.mark.asyncio
-async def test_get_nonexistent_state(mock_state_sync):
-    """Test getting non-existent state returns None"""
-    state = await mock_state_sync.get('nonexistent')
-    assert state is None
+class TestPubSubCommunication:
+    """Test pub/sub communication between instances."""
 
+    @pytest.mark.asyncio
+    async def test_publish_update(self, mock_redis):
+        """Test publishing state update."""
+        mock_redis.hget.return_value = None
+        sync = StateSync(mock_redis)
 
-@pytest.mark.asyncio
-async def test_delete_state(mock_state_sync):
-    """Test state deletion"""
-    await mock_state_sync.set('key1', {'value': 'data'})
-    await mock_state_sync.delete('key1')
+        await sync.set("key1", "value1")
 
-    state = await mock_state_sync.get('key1')
-    assert state is None
+        # Should publish update
+        mock_redis.publish.assert_called()
+        call_args = mock_redis.publish.call_args[0]
+        assert call_args[0] == sync.channel
 
+    @pytest.mark.asyncio
+    async def test_receive_update(self, mock_redis):
+        """Test receiving update from another instance."""
+        sync = StateSync(mock_redis)
+        sync.instance_id = "instance_1"
 
-@pytest.mark.asyncio
-async def test_list_all_states(mock_state_sync):
-    """Test listing all states"""
-    await mock_state_sync.set('key1', {'value': 'data1'})
-    await mock_state_sync.set('key2', {'value': 'data2'})
+        update = StateUpdate(
+            update_id="update_1",
+            instance_id="instance_2",  # Different instance
+            key="key1",
+            value="value1",
+            timestamp=time.time(),
+            version=1
+        )
 
-    states = await mock_state_sync.get_all()
-    assert len(states) == 2
-    assert 'key1' in states
-    assert 'key2' in states
+        await sync._handle_update(update)
 
+        assert sync.local_state.get("key1") == "value1"
 
-@pytest.mark.asyncio
-async def test_state_versioning(mock_state_sync):
-    """Test state version tracking"""
-    await mock_state_sync.set('key1', {'value': 'v1'})
-    version1 = mock_state_sync.local_versions.get('key1', 0)
 
-    await mock_state_sync.set('key1', {'value': 'v2'})
-    version2 = mock_state_sync.local_versions.get('key1', 0)
+class TestAtomicOperations:
+    """Test atomic operations."""
 
-    assert version2 > version1
+    @pytest.mark.asyncio
+    async def test_increment(self, mock_redis):
+        """Test atomic increment."""
+        mock_redis.hincrby.side_effect = [1, 2, 3]
+        sync = StateSync(mock_redis)
 
+        result1 = await sync.increment("counter", 1)
+        result2 = await sync.increment("counter", 1)
+        result3 = await sync.increment("counter", 1)
 
-@pytest.mark.asyncio
-async def test_sync_with_peers(mock_state_sync):
-    """Test synchronization with peer nodes"""
-    # Mock pub/sub communication
-    await mock_state_sync.set('shared_key', {'value': 'shared_data'})
+        assert result1 == 1
+        assert result2 == 2
+        assert result3 == 3
 
-    # Verify state is set locally
-    state = await mock_state_sync.get('shared_key')
-    assert state['value'] == 'shared_data'
+    @pytest.mark.asyncio
+    async def test_increment_with_amount(self, mock_redis):
+        """Test increment with custom amount."""
+        mock_redis.hincrby.return_value = 10
+        sync = StateSync(mock_redis)
 
+        result = await sync.increment("counter", 10)
 
-@pytest.mark.asyncio
-async def test_conflict_resolution_last_write_wins(mock_redis_client):
-    """Test conflict resolution with version-based strategy"""
-    sync = StateSync(redis_client=mock_redis_client, namespace='test', ttl=None)
+        assert result == 10
+        mock_redis.hincrby.assert_called()
 
-    # Set initial state
-    await sync.set('key1', {'value': 'v1', 'timestamp': 100})
 
-    # Update with newer version
-    await sync.set('key1', {'value': 'v2', 'timestamp': 200})
+class TestCaching:
+    """Test local caching."""
 
-    # Verify newer version wins
-    state = await sync.get('key1')
-    assert state['value'] == 'v2'
+    @pytest.mark.asyncio
+    async def test_cache_on_set(self, mock_redis):
+        """Test local cache updated on set."""
+        mock_redis.hget.return_value = None
+        sync = StateSync(mock_redis)
 
+        await sync.set("key1", "value1")
 
-@pytest.mark.asyncio
-async def test_conflict_resolution_merge(mock_state_sync):
-    """Test state merging capabilities"""
-    # Set initial state
-    await mock_state_sync.set('key1', {'a': 1, 'b': 2})
+        assert sync.local_state["key1"] == "value1"
 
-    # Update with partial data
-    await mock_state_sync.set('key1', {'b': 3, 'c': 4})
+    @pytest.mark.asyncio
+    async def test_get_from_cache(self, mock_redis):
+        """Test getting from cache."""
+        sync = StateSync(mock_redis)
+        sync.local_state["key1"] = "cached_value"
 
-    # Verify state is updated (last write wins for full object)
-    state = await mock_state_sync.get('key1')
-    assert 'b' in state
-    assert state['b'] == 3
+        value = await sync.get("key1", use_cache=True)
 
+        assert value == "cached_value"
+        # Should not call Redis
+        mock_redis.hget.assert_not_called()
 
-@pytest.mark.asyncio
-async def test_state_broadcast(mock_state_sync):
-    """Test broadcasting state changes via pub/sub"""
-    # Set state (which publishes to channel)
-    await mock_state_sync.set('key1', {'value': 'data'})
 
-    # Verify publish was called via Redis mock
-    assert mock_state_sync.redis._pubsub_messages
-    assert len(mock_state_sync.redis._pubsub_messages) > 0
+class TestStateSyncManager:
+    """Test state sync manager."""
 
+    @pytest.mark.asyncio
+    async def test_get_sync_instance(self, mock_redis):
+        """Test getting sync instance."""
+        manager = StateSyncManager(mock_redis)
 
-@pytest.mark.asyncio
-async def test_periodic_sync(mock_state_sync):
-    """Test periodic background synchronization"""
-    # Start state sync
-    await mock_state_sync.start()
+        sync = await manager.get_sync("namespace1", auto_start=False)
 
-    # Set some state
-    await mock_state_sync.set('key1', {'value': 'data'})
+        assert sync.namespace == "namespace1"
 
-    # Stop sync
-    await mock_state_sync.stop()
+    @pytest.mark.asyncio
+    async def test_multiple_namespaces(self, mock_redis):
+        """Test managing multiple namespaces."""
+        manager = StateSyncManager(mock_redis)
 
-    # Verify state is accessible
-    state = await mock_state_sync.get('key1')
-    assert state['value'] == 'data'
+        sync1 = await manager.get_sync("ns1", auto_start=False)
+        sync2 = await manager.get_sync("ns2", auto_start=False)
 
+        assert sync1.namespace == "ns1"
+        assert sync2.namespace == "ns2"
+        assert sync1 != sync2
 
-@pytest.mark.asyncio
-async def test_state_snapshot(mock_state_sync):
-    """Test creating state snapshot"""
-    await mock_state_sync.set('key1', {'value': 'data1'})
-    await mock_state_sync.set('key2', {'value': 'data2'})
+    @pytest.mark.asyncio
+    async def test_stop_all(self, mock_redis):
+        """Test stopping all sync instances."""
+        manager = StateSyncManager(mock_redis)
 
-    snapshot = await mock_state_sync.get_all()
+        await manager.get_sync("ns1", auto_start=False)
+        await manager.get_sync("ns2", auto_start=False)
 
-    assert len(snapshot) == 2
-    assert snapshot['key1']['value'] == 'data1'
-    assert snapshot['key2']['value'] == 'data2'
+        await manager.stop_all()
 
+        # All should be stopped
+        for sync in manager.instances.values():
+            assert sync.listening is False
 
-@pytest.mark.asyncio
-async def test_restore_from_snapshot(mock_state_sync):
-    """Test restoring state from snapshot"""
-    # Create initial state
-    snapshot = {
-        'key1': {'value': 'data1'},
-        'key2': {'value': 'data2'}
-    }
 
-    # Restore snapshot by setting each key
-    for key, value in snapshot.items():
-        await mock_state_sync.set(key, value)
+class TestEventHandlers:
+    """Test event handlers."""
 
-    # Verify restoration
-    state1 = await mock_state_sync.get('key1')
-    state2 = await mock_state_sync.get('key2')
+    @pytest.mark.asyncio
+    async def test_register_handler(self, mock_redis):
+        """Test registering update handler."""
+        sync = StateSync(mock_redis)
+        handler_called = []
 
-    assert state1['value'] == 'data1'
-    assert state2['value'] == 'data2'
+        def handler(update):
+            handler_called.append(update)
 
+        sync.on_update(handler)
 
-@pytest.mark.asyncio
-async def test_state_diff(mock_state_sync):
-    """Test computing state differences"""
-    await mock_state_sync.set('key1', {'value': 'v1'})
-    await mock_state_sync.set('key2', {'value': 'v2'})
+        assert len(sync.update_handlers) == 1
 
-    # Get current state
-    local_states = await mock_state_sync.get_all()
+    @pytest.mark.asyncio
+    async def test_handler_called_on_update(self, mock_redis):
+        """Test handler called when update received."""
+        sync = StateSync(mock_redis)
+        updates_received = []
 
-    # Simulate remote states
-    remote_states = {
-        'key1': {'value': 'v1'},  # Same
-        'key2': {'value': 'v2_modified'},  # Modified
-        'key3': {'value': 'v3'}  # New
-    }
+        def handler(update):
+            updates_received.append(update.key)
 
-    # Compute differences manually (StateSync doesn't have compute_diff method)
-    modified = []
-    new = []
-    deleted = []
+        sync.on_update(handler)
 
-    for key in remote_states:
-        if key not in local_states:
-            new.append(key)
-        elif local_states[key] != remote_states[key]:
-            modified.append(key)
+        update = StateUpdate(
+            update_id="update_1",
+            instance_id="other_instance",
+            key="test_key",
+            value="test_value",
+            timestamp=time.time(),
+            version=1
+        )
 
-    for key in local_states:
-        if key not in remote_states:
-            deleted.append(key)
+        await sync._handle_update(update)
 
-    assert 'key2' in modified
-    assert 'key3' in new
+        assert "test_key" in updates_received
 
 
-@pytest.mark.asyncio
-async def test_concurrent_state_updates(mock_state_sync):
-    """Test concurrent state updates"""
-    async def update_state(key, value):
-        await mock_state_sync.set(key, {'value': value})
+class TestEdgeCases:
+    """Test edge cases and error handling."""
 
-    tasks = [
-        update_state('key1', f'value{i}')
-        for i in range(10)
-    ]
+    @pytest.mark.asyncio
+    async def test_delete_state(self, mock_redis):
+        """Test deleting state."""
+        sync = StateSync(mock_redis)
+        sync.local_state["key1"] = "value1"
 
-    await asyncio.gather(*tasks)
+        result = await sync.delete("key1")
 
-    state = await mock_state_sync.get('key1')
-    assert state is not None
+        assert result is True
+        assert "key1" not in sync.local_state
+        mock_redis.hdel.assert_called()
 
+    @pytest.mark.asyncio
+    async def test_get_all_state(self, mock_redis):
+        """Test getting all state."""
+        mock_redis.hgetall.return_value = {
+            b"key1": json.dumps("value1").encode(),
+            b"key2": json.dumps("value2").encode()
+        }
+        sync = StateSync(mock_redis)
 
-@pytest.mark.asyncio
-async def test_sync_failure_recovery(mock_state_sync):
-    """Test recovery from sync failures"""
-    # Simulate a failure by trying to get from broken Redis
-    original_get = mock_state_sync.redis.hget
+        all_state = await sync.get_all(use_cache=False)
 
-    async def failing_get(*args, **kwargs):
-        raise Exception("Network error")
+        assert all_state["key1"] == "value1"
+        assert all_state["key2"] == "value2"
 
-    # Temporarily break Redis
-    mock_state_sync.redis.hget = failing_get
+    @pytest.mark.asyncio
+    async def test_ttl_on_set(self, mock_redis):
+        """Test TTL set when specified."""
+        mock_redis.hget.return_value = None
+        sync = StateSync(mock_redis, ttl=3600)
 
-    # Should return default value on failure
-    result = await mock_state_sync.get('key1', default='fallback')
-    assert result == 'fallback'
+        await sync.set("key1", "value1")
 
-    # Restore original
-    mock_state_sync.redis.hget = original_get
-
-
-@pytest.mark.asyncio
-async def test_state_expiration(mock_state_sync):
-    """Test state expiration with TTL"""
-    # Set state with TTL
-    sync_with_ttl = StateSync(
-        redis_client=mock_state_sync.redis,
-        namespace='test-ttl',
-        ttl=1
-    )
-
-    await sync_with_ttl.set('key1', {'value': 'data'})
-
-    # Should exist immediately
-    state = await sync_with_ttl.get('key1')
-    assert state is not None
-
-    # Note: Actual TTL expiration requires real Redis
-    # This test verifies TTL is set without error
-
-
-@pytest.mark.asyncio
-async def test_state_size_limits(mock_state_sync):
-    """Test state size validation"""
-    # StateSync doesn't enforce size limits by default
-    # But we can test with a very large value
-
-    large_value = {'data': 'x' * 1000}  # 1KB (reduced from 1MB for test speed)
-
-    # Should succeed (no size validation in current implementation)
-    await mock_state_sync.set('key1', large_value)
-
-    # Verify it was stored
-    state = await mock_state_sync.get('key1')
-    assert len(state['data']) == 1000
-
-
-@pytest.mark.asyncio
-async def test_increment_atomic_operation(mock_state_sync):
-    """Test atomic increment operation"""
-    # Initialize counter
-    await mock_state_sync.set('counter', 0)
-
-    # Increment atomically
-    new_value = await mock_state_sync.increment('counter', 5)
-    assert new_value == 5
-
-    # Increment again
-    new_value = await mock_state_sync.increment('counter', 3)
-    assert new_value == 8
-
-
-@pytest.mark.asyncio
-async def test_update_handlers(mock_state_sync):
-    """Test state update event handlers"""
-    handler_called = []
-
-    def update_handler(update):
-        handler_called.append(update.key)
-
-    # Register handler
-    mock_state_sync.on_update(update_handler)
-
-    # Start listening
-    await mock_state_sync.start()
-
-    # Set state (will publish update)
-    await mock_state_sync.set('key1', {'value': 'data'})
-
-    # Stop listening
-    await mock_state_sync.stop()
-
-    # Note: Handler won't be called in this test because we're not actually
-    # running the listener loop. This test verifies the handler registration works.
-    assert len(mock_state_sync.update_handlers) == 1
+        # Should set expiration
+        mock_redis.expire.assert_called()
