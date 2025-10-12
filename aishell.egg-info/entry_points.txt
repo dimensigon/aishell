@@ -1,3 +1,0 @@
-[console_scripts]
-ai-shell = src.main:main
-aishell = src.main:main
