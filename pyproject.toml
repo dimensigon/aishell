@@ -54,7 +54,7 @@ dependencies = [
     # Database drivers
     "asyncpg==0.29.0",
     "aiomysql==0.2.0",
-    "python-oracledb==2.5.0",
+    "oracledb==2.0.0",
     "motor==3.3.2",
     "redis==5.0.1",
 
