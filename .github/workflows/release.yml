@@ -97,17 +97,9 @@ jobs:
           name: dist-packages
           path: dist/
 
-      - name: Publish to PyPI (Trusted Publishing)
-        if: ${{ !secrets.PYPI_API_TOKEN }}
+      - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          skip-existing: true
-
-      - name: Publish to PyPI (API Token)
-        if: ${{ secrets.PYPI_API_TOKEN }}
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
           skip-existing: true
 
   publish-test-pypi:

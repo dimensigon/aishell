@@ -26,7 +26,7 @@ transformers==4.53.0  # Security: Updated from 4.36.2 to fix CVE vulnerabilities
 faiss-cpu==1.12.0
 
 # Security
-cryptography==43.0.1  # Security: Updated from 41.0.7 to fix high severity CVEs
+cryptography==44.0.1  # Security: Updated from 41.0.7 to fix high severity CVEs
 keyring==24.3.0
 
 # Configuration
