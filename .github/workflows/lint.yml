@@ -94,7 +94,7 @@ jobs:
           isort .
 
       - name: Commit changes
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v6
         with:
           commit_message: "style: Auto-format code with Black and isort"
           commit_user_name: github-actions[bot]
