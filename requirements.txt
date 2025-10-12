@@ -12,7 +12,7 @@ psycopg2-binary==2.9.9
 
 # MongoDB Support (v1.2.0)
 motor==3.3.2
-pymongo==4.6.1
+pymongo==4.6.3  # Security: Updated from 4.6.1 to fix medium severity CVE
 
 # Redis Support (v1.2.0)
 redis[asyncio]==5.0.1
@@ -20,13 +20,13 @@ redis[asyncio]==5.0.1
 # LLM & Embeddings
 ollama==0.1.7
 sentence-transformers==2.2.2
-transformers==4.36.2
+transformers==4.53.0  # Security: Updated from 4.36.2 to fix CVE vulnerabilities
 
 # Vector Database
 faiss-cpu==1.12.0
 
 # Security
-cryptography==41.0.7
+cryptography==43.0.1  # Security: Updated from 41.0.7 to fix high severity CVEs
 keyring==24.3.0
 
 # Configuration
@@ -44,7 +44,7 @@ pytest-cov==6.1.1
 pytest-mock==3.14.0
 
 # Development
-black==23.12.1
+black==24.3.0  # Security: Updated from 23.12.1 to fix medium severity CVE
 mypy==1.8.0
 flake8==7.0.0
 
@@ -60,3 +60,8 @@ flake8==7.0.0
 # strawberry-graphql[fastapi]>=0.216.0  # Uncomment for GraphQL API
 # fastapi>=0.109.0  # Required for GraphQL server
 # uvicorn[standard]>=0.27.0  # Required for GraphQL server
+
+# Security Updates (v2.0.0)
+python-jose[cryptography]==3.4.0  # Security: Added to fix critical CVE
+python-multipart==0.0.18  # Security: Added to fix high severity CVE
+python-socketio==5.14.0  # Security: Added to fix medium severity CVE
