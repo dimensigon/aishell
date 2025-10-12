@@ -178,14 +178,14 @@ test = [
 
 [project.urls]
 Homepage = "https://github.com/dimensigon/aishell"
-Documentation = "https://ai-shell.readthedocs.io"
+Documentation = "https://agentic-aishell.readthedocs.io"
 Repository = "https://github.com/dimensigon/aishell.git"
 "Bug Tracker" = "https://github.com/dimensigon/aishell/issues"
 Changelog = "https://github.com/dimensigon/aishell/blob/main/CHANGELOG.md"
 
 [project.scripts]
 aishell = "aishell:main"
-ai-shell = "aishell:main"
+agentic-aishell = "src.main:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -279,7 +279,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/dimensigon/aishell",
     project_urls={
-        "Documentation": "https://ai-shell.readthedocs.io",
+        "Documentation": "https://agentic-aishell.readthedocs.io",
         "Bug Tracker": "https://github.com/dimensigon/aishell/issues",
         "Source Code": "https://github.com/dimensigon/aishell",
         "Changelog": "https://github.com/dimensigon/aishell/blob/main/CHANGELOG.md",
@@ -648,7 +648,7 @@ Uploading aishell-1.0.0.tar.gz
 100% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 143.2/143.2 kB • 00:00 • 112.5 kB/s
 
 View at:
-https://test.pypi.org/project/aishell/1.0.0/
+https://test.pypi.org/project/agentic-aishell/1.0.0/
 ```
 
 ### 2. Install from TestPyPI
@@ -747,14 +747,14 @@ Uploading aishell-1.0.0.tar.gz
 100% ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 143.2/143.2 kB • 00:01 • 97.8 kB/s
 
 View at:
-https://pypi.org/project/aishell/1.0.0/
+https://pypi.org/project/agentic-aishell/1.0.0/
 ```
 
 ### 3. Verify Package Page
 
 **Visit the PyPI page:**
 
-https://pypi.org/project/aishell/
+https://pypi.org/project/agentic-aishell/
 
 **Verify:**
 - [ ] Package name and version are correct
@@ -768,7 +768,7 @@ https://pypi.org/project/aishell/
 
 ```bash
 # Install from PyPI
-pip install aishell
+pip install agentic-aishell
 
 # Verify version
 python3 -c "import aishell; print(aishell.__version__)"
@@ -802,7 +802,7 @@ aishell --help
 ### From PyPI (Recommended)
 
 ```bash
-pip install aishell
+pip install agentic-aishell
 ```
 
 ### From Source
@@ -844,7 +844,7 @@ First production release of AIShell! 🎉
 ### Installation
 
 ```bash
-pip install aishell
+pip install agentic-aishell
 ```
 
 ### Documentation
@@ -898,7 +898,7 @@ We're excited to announce the first production release of AIShell - an AI-powere
 - 🛠️ Custom agent framework
 
 Install now:
-pip install aishell
+pip install agentic-aishell
 
 Docs: https://ai-shell.readthedocs.io
 GitHub: https://github.com/dimensigon/aishell
@@ -1300,10 +1300,10 @@ rm -rf test-env/
 python3 -m twine upload dist/*
 
 # Verify on PyPI
-# Visit: https://pypi.org/project/aishell/1.0.0/
+# Visit: https://pypi.org/project/agentic-aishell/1.0.0/
 
 # Test installation from PyPI
-pip install aishell
+pip install agentic-aishell
 python3 -c "import aishell; print(aishell.__version__)"
 
 # ============================================
@@ -1412,14 +1412,14 @@ test = [
 
 [project.urls]
 Homepage = "https://github.com/dimensigon/aishell"
-Documentation = "https://ai-shell.readthedocs.io"
+Documentation = "https://agentic-aishell.readthedocs.io"
 Repository = "https://github.com/dimensigon/aishell.git"
 "Bug Tracker" = "https://github.com/dimensigon/aishell/issues"
 Changelog = "https://github.com/dimensigon/aishell/blob/main/CHANGELOG.md"
 
 [project.scripts]
 aishell = "aishell:main"
-ai-shell = "aishell:main"
+agentic-aishell = "src.main:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

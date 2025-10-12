@@ -40,7 +40,7 @@ AI-Shell Enterprise Edition provides comprehensive multi-tenancy, advanced RBAC,
 
 ```bash
 # Install AI-Shell with enterprise features
-pip install aishell[enterprise]
+pip install agentic-aishell[enterprise]
 
 # Or install from source
 git clone https://github.com/yourusername/AIShell.git

@@ -7,7 +7,7 @@
 ```bash
 # Initialize project structure
 mkdir -p ai-shell/{core,modules,mcp_clients,ui,tests,config}
-cd ai-shell
+cd AIShell
 
 # Create virtual environment with Python 3.11+
 python3.11 -m venv venv

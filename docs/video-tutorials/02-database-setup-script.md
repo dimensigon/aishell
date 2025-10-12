@@ -74,7 +74,7 @@ ai> config database add production
 ? Save password? Yes (encrypted)
 ? SSL Mode: require
 
-✓ Configuration saved to ~/.ai-shell/databases.yaml
+✓ Configuration saved to ~/.agentic-aishell/databases.yaml
 
 # Connect using saved config
 ai> connect production
@@ -347,7 +347,7 @@ ai> connect production-secure \
 ai> config audit enable
 
 ? Log level: INFO
-? Log destination: ~/.ai-shell/logs/audit.log
+? Log destination: ~/.agentic-aishell/logs/audit.log
 ? Rotate logs: Daily
 ? Retention: 90 days
 

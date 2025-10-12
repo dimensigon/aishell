@@ -68,7 +68,7 @@ pip install asyncio aiofiles
 
 ### Oracle MCP Client
 
-Edit `~/.ai-shell/config.yaml`:
+Edit `~/.agentic-aishell/config.yaml`:
 
 ```yaml
 mcp:
@@ -147,7 +147,7 @@ SSL mode (disable/prefer/require): prefer
 
 ### Direct Configuration File
 
-Edit `~/.ai-shell/connections.yaml`:
+Edit `~/.agentic-aishell/connections.yaml`:
 
 ```yaml
 connections:
@@ -492,7 +492,7 @@ mcp:
 # Enable audit trail
 security:
   audit_log: true
-  audit_path: ~/.ai-shell/audit.log
+  audit_path: ~/.agentic-aishell/audit.log
   audit_events:
     - connect
     - disconnect

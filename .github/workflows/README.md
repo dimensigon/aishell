@@ -217,6 +217,6 @@ Before creating a release:
 
 ## Support
 
-- **PyPI Package**: [https://pypi.org/project/aishell/](https://pypi.org/project/aishell/)
+- **PyPI Package**: [https://pypi.org/project/agentic-aishell/](https://pypi.org/project/agentic-aishell/)
 - **Documentation**: [https://github.com/dimensigon/aishell](https://github.com/dimensigon/aishell)
 - **Issues**: [https://github.com/dimensigon/aishell/issues](https://github.com/dimensigon/aishell/issues)

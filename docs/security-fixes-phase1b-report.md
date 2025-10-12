@@ -274,10 +274,10 @@ class SecureTempFile:
 
 **Secure Files Created:**
 ```
-~/.ai-shell/                      (0o700 drwx------)
-~/.ai-shell/.vault_salt           (0o600 -rw-------)
-~/.ai-shell/vault.enc             (0o600 -rw-------)
-~/.ai-shell/config.yaml           (0o600 -rw-------)
+~/.agentic-aishell/                      (0o700 drwx------)
+~/.agentic-aishell/.vault_salt           (0o600 -rw-------)
+~/.agentic-aishell/vault.enc             (0o600 -rw-------)
+~/.agentic-aishell/config.yaml           (0o600 -rw-------)
 ```
 
 **All sensitive files now have owner-only permissions ✅**
@@ -445,7 +445,7 @@ export RATE_LIMIT_PERIOD=60
 ### File Permissions Check
 ```bash
 # Verify secure permissions
-ls -la ~/.ai-shell/
+ls -la ~/.agentic-aishell/
 # Should show:
 # drwx------ .ai-shell
 # -rw------- .vault_salt

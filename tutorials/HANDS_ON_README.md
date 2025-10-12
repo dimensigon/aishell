@@ -197,7 +197,7 @@ Available Sections:
 
 ```bash
 # Start AI-Shell
-ai-shell
+agentic-aishell
 
 # Connect to database
 ai-shell --db postgresql://user:pass@host:port/dbname

@@ -387,7 +387,7 @@ async def test_autocomplete_performance():
 ### New Config Section
 
 ```yaml
-# ~/.ai-shell/config.yaml
+# ~/.agentic-aishell/config.yaml
 
 ui:
   framework: textual

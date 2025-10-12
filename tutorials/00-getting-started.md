@@ -132,10 +132,10 @@ pip list | grep -E "textual|faiss|ollama|oracledb"
 ```bash
 # Copy default configuration
 mkdir -p ~/.ai-shell
-cp config/ai-shell-config.yaml ~/.ai-shell/config.yaml
+cp config/ai-shell-config.yaml ~/.agentic-aishell/config.yaml
 
 # View configuration
-cat ~/.ai-shell/config.yaml
+cat ~/.agentic-aishell/config.yaml
 ```
 
 ---
@@ -526,7 +526,7 @@ AIShell/
 
 ### Main Configuration File
 
-AIShell uses YAML for configuration. The main file is `~/.ai-shell/config.yaml`:
+AIShell uses YAML for configuration. The main file is `~/.agentic-aishell/config.yaml`:
 
 ```yaml
 # System Settings
@@ -606,7 +606,7 @@ modules:
 
 AIShell searches for configuration in this order:
 
-1. `~/.ai-shell/config.yaml` (user config)
+1. `~/.agentic-aishell/config.yaml` (user config)
 2. `./config/ai-shell-config.yaml` (project default)
 3. Environment variable: `AISHELL_CONFIG`
 
@@ -615,10 +615,10 @@ AIShell searches for configuration in this order:
 ```bash
 # Copy default config to user directory
 mkdir -p ~/.ai-shell
-cp config/ai-shell-config.yaml ~/.ai-shell/config.yaml
+cp config/ai-shell-config.yaml ~/.agentic-aishell/config.yaml
 
 # Edit with your favorite editor
-nano ~/.ai-shell/config.yaml
+nano ~/.agentic-aishell/config.yaml
 
 # Or use AIShell's config command
 AI$ > config set llm.models.intent "llama3:8b"
@@ -883,7 +883,7 @@ AI$ > config set performance.vector_db_dimension 256
 
 If you encounter issues not listed here:
 
-1. **Check Logs**: `~/.ai-shell/logs/aishell.log`
+1. **Check Logs**: `~/.agentic-aishell/logs/aishell.log`
 2. **Enable Debug Mode**: `AI$ > config set system.log_level DEBUG`
 3. **Run Diagnostics**: `AI$ > diagnose`
 4. **GitHub Issues**: Search existing issues or create new one

@@ -1656,7 +1656,7 @@ tests/ui/
 ### D. Configuration Extensions
 
 ```yaml
-# ~/.ai-shell/config.yaml additions
+# ~/.agentic-aishell/config.yaml additions
 
 ui:
   framework: textual

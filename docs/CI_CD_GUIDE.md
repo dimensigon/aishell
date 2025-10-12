@@ -458,7 +458,7 @@ jobs:
   deploy:
     environment:
       name: production
-      url: https://pypi.org/project/aishell
+      url: https://pypi.org/project/agentic-aishell
 ```
 
 ## Resources

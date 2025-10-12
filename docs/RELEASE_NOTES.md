@@ -20,7 +20,7 @@ Version 2.0.0 represents a major milestone in AI-Shell's evolution, introducing 
 #### Configuration Schema Changes
 - New configuration format for agent safety controls
 - Updated health check configuration options
-- **Action Required:** Run `ai-shell --init` to upgrade config
+- **Action Required:** Run `agentic-aishell --init` to upgrade config
 
 #### API Changes
 - `DatabaseModule.execute_query()` now returns structured `QueryResult` objects
@@ -173,13 +173,13 @@ Version 2.0.0 represents a major milestone in AI-Shell's evolution, introducing 
 ##### 1. Backup Your Data
 ```bash
 # Backup vault
-cp -r ~/.ai-shell/vault ~/.ai-shell/vault.backup
+cp -r ~/.agentic-aishell/vault ~/.agentic-aishell/vault.backup
 
 # Backup configuration
-cp ~/.ai-shell/config.yaml ~/.ai-shell/config.yaml.backup
+cp ~/.agentic-aishell/config.yaml ~/.agentic-aishell/config.yaml.backup
 
 # Backup command history
-cp ~/.ai-shell/history.db ~/.ai-shell/history.db.backup
+cp ~/.agentic-aishell/history.db ~/.agentic-aishell/history.db.backup
 ```
 
 ##### 2. Update Installation
@@ -188,7 +188,7 @@ cp ~/.ai-shell/history.db ~/.ai-shell/history.db.backup
 pip install --upgrade aishell
 
 # Or from source
-cd ai-shell
+cd AIShell
 git pull origin main
 pip install -e .
 ```
@@ -196,7 +196,7 @@ pip install -e .
 ##### 3. Update Configuration
 ```bash
 # Initialize new configuration format
-ai-shell --init
+agentic-aishell --init
 
 # The tool will guide you through:
 # - Agent safety settings
@@ -330,10 +330,10 @@ ai-shell --execute "query SELECT 1"
 ```bash
 # Deploy with rollback plan
 # Keep v1.x available for quick rollback
-pip install aishell==2.0.0
+pip install agentic-aishell==2.0.0
 
 # Monitor logs for issues
-tail -f ~/.ai-shell/logs/aishell.log
+tail -f ~/.agentic-aishell/logs/aishell.log
 ```
 
 ### Security Updates

@@ -46,7 +46,7 @@ New to AI-Shell? Start with our comprehensive tutorial series:
 ```bash
 # Clone the repository
 git clone https://github.com/dimensigon/aishell.git
-cd ai-shell
+cd AIShell
 
 # Create virtual environment (Python 3.9-3.14 supported)
 python3 -m venv venv
@@ -56,7 +56,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # Initialize configuration
-ai-shell --init
+agentic-aishell --init
 ```
 
 ### Python Version Support
@@ -72,7 +72,7 @@ ai-shell --init
 
 ```bash
 # Start AI-Shell
-ai-shell
+agentic-aishell
 
 # You'll see a Matrix-style startup animation
 # checking AI model availability and system health
@@ -136,7 +136,7 @@ AI-Shell is built on a modular architecture with the following core components:
 ### Core Components
 
 ```
-ai-shell/
+AIShell/
 ├── core/                    # Core application logic
 │   ├── ui_manager.py       # Textual-based UI management
 │   ├── llm_manager.py      # Local/cloud LLM integration
@@ -177,7 +177,7 @@ User Input → Intent Analysis (Local LLM) → Module Router
 
 ### Main Configuration File
 
-Create or edit `~/.ai-shell/config.yaml`:
+Create or edit `~/.agentic-aishell/config.yaml`:
 
 ```yaml
 # System Configuration
@@ -562,7 +562,7 @@ AI-Shell is released under the MIT License. See [LICENSE](../LICENSE) for detail
 
 ## Support
 
-- Documentation: https://ai-shell.readthedocs.io
+- Documentation: https://agentic-aishell.readthedocs.io
 - Issues: https://github.com/dimensigon/aishell/issues
 - Discussions: https://github.com/dimensigon/aishell/discussions
 

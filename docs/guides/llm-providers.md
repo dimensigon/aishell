@@ -54,7 +54,7 @@ ollama list
 
 #### Configuration
 
-Edit `~/.ai-shell/config.yaml`:
+Edit `~/.agentic-aishell/config.yaml`:
 
 ```yaml
 llm:
@@ -506,7 +506,7 @@ llm:
 logging:
   llm:
     level: INFO
-    file: ~/.ai-shell/logs/llm.log
+    file: ~/.agentic-aishell/logs/llm.log
 
     # Log requests/responses
     log_requests: true

@@ -18,7 +18,7 @@ AI-Shell provides a powerful plugin system for developing custom commands and mo
 ### Basic Command Structure
 
 ```python
-# ~/.ai-shell/plugins/hello.py
+# ~/.agentic-aishell/plugins/hello.py
 from ai_shell.core.command import Command
 from ai_shell.core.context import ExecutionContext
 
@@ -361,7 +361,7 @@ class RiskyCommand(Command):
 ### Creating a Custom Module
 
 ```python
-# ~/.ai-shell/plugins/monitoring/__init__.py
+# ~/.agentic-aishell/plugins/monitoring/__init__.py
 from ai_shell.core.module import Module
 from ai_shell.core.context import ExecutionContext
 
@@ -409,7 +409,7 @@ def register(shell):
 ### Module Commands
 
 ```python
-# ~/.ai-shell/plugins/monitoring/commands.py
+# ~/.agentic-aishell/plugins/monitoring/commands.py
 from ai_shell.core.command import Command
 
 class StatsCommand(Command):

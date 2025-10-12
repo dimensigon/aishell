@@ -35,7 +35,7 @@ pipx install ai-shell
 
 # Method 3: From source
 git clone https://github.com/yourusername/ai-shell.git
-cd ai-shell
+cd AIShell
 pip install -e .
 ```
 
@@ -59,7 +59,7 @@ pip install -e .
 
 ### Demo Code:
 ```bash
-ai-shell
+agentic-aishell
 ```
 
 ### Expected Output:

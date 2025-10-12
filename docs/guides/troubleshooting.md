@@ -81,7 +81,7 @@ curl http://localhost:11434/api/tags
 sudo ufw allow 11434
 
 # 5. Verify in AI-Shell config
-cat ~/.ai-shell/config.yaml | grep -A 5 ollama
+cat ~/.agentic-aishell/config.yaml | grep -A 5 ollama
 ```
 
 #### Ollama Model Not Found
@@ -120,7 +120,7 @@ Error: Invalid API key provided
 **Solution:**
 ```bash
 # 1. Verify API key in vault
-ai-shell
+agentic-aishell
 AI$ > vault get openai_key
 
 # 2. Update API key
@@ -349,7 +349,7 @@ AI$ > debug events status
 
 # Restart AI-Shell
 exit
-ai-shell
+agentic-aishell
 ```
 
 #### Text Overflow or Truncation
@@ -476,13 +476,13 @@ sudo apt install gnome-keyring
 # config.yaml
 security:
   vault_backend: file
-  vault_file: ~/.ai-shell/vault.enc
+  vault_file: ~/.agentic-aishell/vault.enc
 
 # 4. Unlock keyring
 gnome-keyring-daemon --unlock
 
 # 5. Reset vault if corrupted
-ai-shell
+agentic-aishell
 AI$ > vault reset
 ```
 
@@ -538,7 +538,7 @@ pip uninstall ai-shell-database
 pip install ai-shell-database
 
 # 5. Check logs
-tail -f ~/.ai-shell/logs/ai-shell.log
+tail -f ~/.agentic-aishell/logs/ai-shell.log
 ```
 
 #### Custom Module Not Recognized
@@ -552,7 +552,7 @@ Error: Plugin 'my-plugin' not found
 **Solution:**
 ```bash
 # 1. Check plugin directory
-ls -la ~/.ai-shell/plugins/
+ls -la ~/.agentic-aishell/plugins/
 
 # 2. Verify plugin structure
 my-plugin/
@@ -608,19 +608,19 @@ AI$ > debug performance
 
 ```bash
 # View real-time logs
-tail -f ~/.ai-shell/logs/ai-shell.log
+tail -f ~/.agentic-aishell/logs/ai-shell.log
 
 # Error logs only
-grep ERROR ~/.ai-shell/logs/ai-shell.log
+grep ERROR ~/.agentic-aishell/logs/ai-shell.log
 
 # LLM requests
-grep "LLM Request" ~/.ai-shell/logs/llm.log
+grep "LLM Request" ~/.agentic-aishell/logs/llm.log
 
 # Database queries
-grep "SQL Execute" ~/.ai-shell/logs/database.log
+grep "SQL Execute" ~/.agentic-aishell/logs/database.log
 
 # Audit trail
-tail -f ~/.ai-shell/logs/audit.log
+tail -f ~/.agentic-aishell/logs/audit.log
 ```
 
 ### Verbose Mode
@@ -628,7 +628,7 @@ tail -f ~/.ai-shell/logs/audit.log
 ```bash
 # Enable debug logging
 export AI_SHELL_DEBUG=1
-ai-shell
+agentic-aishell
 
 # Or in config
 # config.yaml

@@ -16,7 +16,7 @@ This is a template plugin for AI-Shell that demonstrates plugin development.
 
 1. Copy this directory to AI-Shell's plugin directory:
    ```bash
-   cp -r sample-plugin ~/.ai-shell/plugins/
+   cp -r sample-plugin ~/.agentic-aishell/plugins/
    ```
 
 2. Or install globally:
@@ -56,7 +56,7 @@ ai-shell plugin install git+https://github.com/yourusername/ai-shell-sample-plug
 
 ### Configuration File
 
-Create `~/.ai-shell/plugins/sample-plugin/config.json`:
+Create `~/.agentic-aishell/plugins/sample-plugin/config.json`:
 
 ```json
 {
@@ -316,7 +316,7 @@ async def stop(self):
 - Check `plugin.json` is valid JSON
 - Verify entry_point matches class name
 - Check dependencies are installed
-- Review logs: `~/.ai-shell/logs/plugins.log`
+- Review logs: `~/.agentic-aishell/logs/plugins.log`
 
 ### Configuration Errors
 

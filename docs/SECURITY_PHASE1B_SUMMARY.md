@@ -172,7 +172,7 @@ export RATE_LIMIT_PERIOD=60
 ### Verify Security
 ```bash
 # Check file permissions
-ls -la ~/.ai-shell/
+ls -la ~/.agentic-aishell/
 # Should show:
 # drwx------ .ai-shell
 # -rw------- .vault_salt

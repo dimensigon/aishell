@@ -28,7 +28,7 @@ pip install ai-shell
 
 # Or install from source
 git clone https://github.com/yourusername/ai-shell.git
-cd ai-shell
+cd AIShell
 pip install -e .
 ```
 
@@ -62,7 +62,7 @@ Commands:
 
 ### Step 1.3: Set Up Configuration
 
-Create a configuration file at `~/.ai-shell/config.yaml`:
+Create a configuration file at `~/.agentic-aishell/config.yaml`:
 
 ```yaml
 # Default database settings
@@ -89,7 +89,7 @@ databases:
 # Logging
 logging:
   level: INFO
-  file: ~/.ai-shell/logs/ai-shell.log
+  file: ~/.agentic-aishell/logs/ai-shell.log
 
 # Security
 security:
