@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/agents/parallel_executor.py
+# hypothesis_version: 6.140.3
+
+[0.0, 180, 'No tasks to execute', 'ParallelExecutor', 'agent_type', 'all', 'cancelled', 'completed', 'execution_id', 'failed', 'first', 'majority', 'max_concurrent', 'name', 'pending', 'priority', 'running', 'status', 'strategy', 'tasks', 'threshold', 'total_tasks']

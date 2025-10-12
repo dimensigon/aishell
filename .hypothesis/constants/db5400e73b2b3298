@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/mcp_clients/__init__.py
+# hypothesis_version: 6.140.3
+
+['1.0.0', 'ConnectionManager', 'ConnectionState', 'MCPClient', 'MCPClientError', 'OracleClient', 'PostgreSQLClient']

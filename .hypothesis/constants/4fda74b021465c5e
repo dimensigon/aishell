@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/enterprise/audit/change_tracker.py
+# hypothesis_version: 6.140.3
+
+[100, ' AND table_name = ?', ' AND tenant_id = ?', ' AND timestamp >= ?', '.ai-shell', 'changes.db']

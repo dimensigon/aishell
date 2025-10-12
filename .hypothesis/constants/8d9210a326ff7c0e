@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/agents/database/backup.py
+# hypothesis_version: 6.140.3
+
+[1024, 'actions_count', 'agent_id', 'backup_database_full', 'backup_directory', 'backup_path', 'backup_type', 'base_backup', 'checksum', 'cleaned_up_backups', 'cleanup_old', 'cleanup_old_backups', 'compress_backup', 'compression', 'compression_ratio', 'database', 'database_config', 'deleted_count', 'destination', 'duration_seconds', 'full', 'high', 'incremental', 'integrity_check', 'list_backups', 'llm_manager', 'low', 'medium', 'mitigations', 'overwrite', 'params', 'rationale', 'requires_approval', 'restore', 'restore_backup', 'restore_status', 'result', 'retention_days', 'risk_level', 'risks', 'safe', 'size_bytes', 'size_mb', 'strict', 'task_id', 'tool', 'unknown', 'validate_backup', 'validation_status']

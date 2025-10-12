@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/security/error_handler.py
+# hypothesis_version: 6.140.3
+
+[' | ', '1', '=', '=***', 'An error occurred', 'DEBUG', 'PRODUCTION', 'Stack trace:', 'api_key', 'apikey', 'auth', 'cookie', 'credential', 'key', 'passwd', 'password', 'secret', 'session', 'token', 'true', 'yes']

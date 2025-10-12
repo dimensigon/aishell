@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/vector/store.py
+# hypothesis_version: 6.140.3
+
+[1e-08, 0.5, 1.0, 384, '_deleted', 'column', 'columns', 'description', 'dimension', 'index_size', 'name', 'public', 'schema', 'table', 'total_entries', 'type', 'type_counts']

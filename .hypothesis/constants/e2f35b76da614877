@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/mcp_clients/manager.py
+# hypothesis_version: 6.140.3
+
+['CONNECTION_EXISTS', 'CONNECTION_NOT_FOUND', 'MAX_CONNECTIONS', 'UNKNOWN_CLIENT_TYPE', 'by_state', 'by_type', 'client_type', 'connection_id', 'created_at', 'database', 'error', 'host', 'last_used', 'max_connections', 'oracle', 'postgresql', 'state', 'total_connections', 'use_count', 'utilization']

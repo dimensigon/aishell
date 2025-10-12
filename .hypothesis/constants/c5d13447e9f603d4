@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/coordination/__init__.py
+# hypothesis_version: 6.140.3
+
+['DistributedLock', 'LockManager', 'StateSync', 'StateSyncManager', 'Task', 'TaskPriority', 'TaskQueue']

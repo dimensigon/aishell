@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/enterprise/tenancy/tenant_middleware.py
+# hypothesis_version: 6.140.3
+
+['/', ':', 'F', 'Tenant-ID', 'X-Tenant', 'X-Tenant-ID', 'X-User-ID', 'current_tenant', 'current_user', 't', 'tenants', 'www']

@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/security/path_validator.py
+# hypothesis_version: 6.140.3
+
+['.ai-shell', 'config.yaml', 'vault.enc']

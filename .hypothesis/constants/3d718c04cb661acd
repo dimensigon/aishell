@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/security/validation.py
+# hypothesis_version: 6.140.3
+
+[5000, '.', '@', 'error', 'length', 'max_length', 'valid']

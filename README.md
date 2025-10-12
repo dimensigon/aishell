@@ -1,7 +1,9 @@
 # AI-Shell Documentation
 
 ![Python Version](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)
-![Test Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen)
+![Test Coverage](https://img.shields.io/badge/coverage-22.60%25-yellow)
+![Tests](https://img.shields.io/badge/tests-3396%20passing-brightgreen)
+![Test Files](https://img.shields.io/badge/test%20files-134-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![FAISS](https://img.shields.io/badge/FAISS-1.12.0-orange)
 
@@ -75,6 +77,35 @@ ai-shell
 # You'll see a Matrix-style startup animation
 # checking AI model availability and system health
 ```
+
+### Running Tests
+
+```bash
+# Run all tests
+python -m pytest tests/ -v
+
+# Run with coverage report
+python -m pytest tests/ --cov=. --cov-report=html --cov-report=term
+
+# Run specific test category
+python -m pytest tests/ -m unit          # Unit tests only
+python -m pytest tests/ -m integration   # Integration tests only
+
+# View coverage report
+open htmlcov/index.html  # macOS
+xdg-open htmlcov/index.html  # Linux
+```
+
+**Current Test Statistics**:
+- Total Tests: 3,396 test cases
+- Test Files: 134 test modules
+- Overall Coverage: 22.60%
+- Lines Covered: 9,496 out of 42,025
+
+For detailed testing information, see:
+- [Testing Guide](docs/TESTING_GUIDE.md) - Comprehensive testing documentation
+- [CI/CD Integration](docs/CI_CD_INTEGRATION.md) - CI/CD setup and configuration
+- [Contributing Guide](CONTRIBUTING.md) - Testing requirements for PRs
 
 ### Basic Usage
 

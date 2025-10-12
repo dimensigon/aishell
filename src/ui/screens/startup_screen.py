@@ -87,9 +87,9 @@ class MatrixStartupScreen(Screen):
 
     def __init__(
         self,
-        name: str | None = None,
-        id: str | None = None,
-        classes: str | None = None,
+        name: Optional[str] = None,
+        id: Optional[str] = None,
+        classes: Optional[str] = None,
         health_runner: Optional[HealthCheckRunner] = None
     ) -> None:
         """

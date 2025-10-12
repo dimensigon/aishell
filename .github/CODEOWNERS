@@ -1,0 +1,35 @@
+# CODEOWNERS for AIShell Project
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for everything in the repo
+*       @ruvnet
+
+# GitHub Actions workflows and CI/CD configuration
+/.github/workflows/    @ruvnet
+/.github/dependabot.yml    @ruvnet
+/.github/CODEOWNERS    @ruvnet
+
+# Core application code
+/aishell/    @ruvnet
+
+# Tests
+/tests/    @ruvnet
+
+# Documentation
+/docs/    @ruvnet
+*.md    @ruvnet
+
+# Configuration files
+pyproject.toml    @ruvnet
+setup.py    @ruvnet
+setup.cfg    @ruvnet
+.gitignore    @ruvnet
+
+# Security and dependency files
+requirements*.txt    @ruvnet
+poetry.lock    @ruvnet
+
+# Docker configuration
+Dockerfile    @ruvnet
+docker-compose.yml    @ruvnet
+.dockerignore    @ruvnet

@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/database/risk_analyzer.py
+# hypothesis_version: 6.140.3
+
+['--\\s*$', '/\\*.*\\*/', '0x[0-9a-f]+', ';', ';\\s*DELETE\\s+FROM', ';\\s*DROP\\s+DATABASE', ';\\s*DROP\\s+TABLE', ';\\s*TRUNCATE\\s+TABLE', 'CONCAT\\s*\\(.*SELECT', 'CRITICAL', 'EXECUTE\\s+IMMEDIATE', 'EXEC\\s*\\(', 'HIGH', 'Hex-encoded payload', 'INTO\\s+DUMPFILE', 'INTO\\s+OUTFILE', 'LOAD_FILE\\s*\\(', 'LOW', 'MEDIUM', 'MySQL file read', 'MySQL file write', 'Warnings:\n', '\\bALTER\\s+TABLE\\b', '\\bBENCHMARK\\s*\\(', '\\bCHAR\\s*\\(\\s*0x', '\\bDESCRIBE\\s+', '\\bEXPLAIN\\s+', '\\bGRANT\\s+ALL\\b', '\\bINSERT\\s+INTO\\b', '\\bPG_SLEEP\\s*\\(', '\\bREVOKE\\s+ALL\\b', '\\bSELECT\\s+', '\\bSELECT\\s+\\*', '\\bSHOW\\s+', '\\bSLEEP\\s*\\(', '\\bTRUNCATE\\s+TABLE\\b', '\\bUNION\\s+SELECT', '\\bWAITFOR\\s+DELAY', 'issues', 'risk_level', 'safe_to_execute', 'sql', 'warnings', 'xp_cmdshell']

@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/agents/database/migration.py
+# hypothesis_version: 6.140.3
+
+[100, 'CRITICAL', 'HIGH', 'LOW', 'MEDIUM', 'SAFE', 'analyze_data_volume', 'analyze_rollback', 'analyze_schema', 'backup_database_full', 'check_data_loss', 'create_rollback', 'current_schema', 'custom_script', 'data_migration', 'database', 'database_module', 'default', 'dry_run', 'execute_migration', 'execute_rollback', 'expected_schema', 'include_constraints', 'include_indexes', 'llm_manager', 'load_rollback_script', 'migration_id', 'migration_spec', 'migration_sql', 'migration_type', 'mitigations', 'params', 'rationale', 'requires_approval', 'risk_level', 'risks', 'rollback', 'rollback_script', 'rollback_sql', 'safe', 'sample_size', 'schema_change', 'state_manager', 'strict', 'tables', 'target_schema', 'target_state', 'task_id', 'tool', 'validate_migration', 'validate_rollback', 'verify_migration', 'verify_row_counts']

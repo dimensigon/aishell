@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/vector/autocomplete.py
+# hypothesis_version: 6.140.3
+
+[0.3, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95, 100, "'", '(', ')', '*)', 'FROM', 'FULL JOIN', 'INNER JOIN', 'INSERT', 'LEFT JOIN', 'RIGHT JOIN', 'SELECT', 'WHERE', 'avg', 'column', 'count', 'cursor_position', 'fr', 'from', 'function', 'history', 'into', 'join', 'keyword', 'max', 'min', 'name', 'object_type', 'pattern', 'query_length', 'sel', 'select', 'statement_type', 'sum', 'syntax', 'table', 'type', 'vector', 'wh']

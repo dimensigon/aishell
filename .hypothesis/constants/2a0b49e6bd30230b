@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/agents/tools/registry.py
+# hypothesis_version: 6.140.3
+
+['\nExamples:\n', '=', 'analysis', 'backup', 'critical', 'database_ddl', 'database_read', 'database_write', 'error', 'execution_time', 'failed_executions', 'file_system', 'high', 'low', 'medium', 'migration', 'optimization', 'params', 'result', 'safe', 'success', 'timestamp', 'tool_name', 'tools_by_category', 'tools_by_risk_level', 'total_executions', 'total_tools']

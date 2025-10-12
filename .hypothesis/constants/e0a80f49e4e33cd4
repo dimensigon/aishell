@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/core/event_bus.py
+# hypothesis_version: 6.140.3
+
+[1.0, 1000, 'Event bus started', 'Event bus stopped', 'events_dropped', 'events_processed', 'events_published']

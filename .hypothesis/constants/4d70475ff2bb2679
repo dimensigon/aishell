@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/enterprise/tenancy/tenant_database.py
+# hypothesis_version: 6.140.3
+
+['%Y%m%d_%H%M%S', '.ai-shell', 'FROM', 'GROUP BY', 'LIMIT', 'OFFSET', 'ORDER BY', 'SELECT', 'WHERE', 'backups', 'database_per_tenant', 'database_size_bytes', 'isolation_strategy', 'query_count', 'rows_affected', 'schema_per_tenant', 'shared.db', 'shared_database', 'tenant_dbs', 'tenant_id']

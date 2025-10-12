@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/llm/embeddings.py
+# hypothesis_version: 6.140.3
+
+[384, '/data0/models', 'all-MiniLM-L6-v2']

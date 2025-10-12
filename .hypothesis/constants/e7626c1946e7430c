@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/core/config.py
+# hypothesis_version: 6.140.3
+
+[384, 1000, '.', '.ai-shell', 'AI_SHELL_', '_', 'ai-shell-config.yaml', 'anonymizer', 'async_workers', 'auto_redaction', 'balanced', 'cache_size', 'codellama:13b', 'completion', 'config', 'config.yaml', 'connection_pool_size', 'cyberpunk', 'enhanced', 'false', 'framework', 'idle', 'intent', 'keyring', 'llama2:7b', 'llm', 'localhost:11434', 'matrix_style', 'mcp', 'mistral:7b', 'models', 'ollama_host', 'oracle', 'panel_priority', 'performance', 'postgresql', 'prompt', 'r', 'security', 'startup_animation', 'system', 'textual', 'theme', 'thin_mode', 'true', 'typing', 'ui', 'vault_backend', 'vector_db_dimension']

@@ -1,0 +1,101 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: Linting and Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          pip install pylint mypy black isort flake8 ruff
+
+      - name: Check code formatting with Black
+        run: |
+          black --check --diff .
+
+      - name: Check import sorting with isort
+        run: |
+          isort --check-only --diff .
+
+      - name: Lint with Ruff
+        run: |
+          ruff check . --output-format=github
+        continue-on-error: true
+
+      - name: Lint with Flake8
+        run: |
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      - name: Lint with Pylint
+        run: |
+          pylint **/*.py --exit-zero --output-format=colorized
+        continue-on-error: true
+
+      - name: Type checking with mypy
+        run: |
+          mypy . --ignore-missing-imports --show-error-codes --pretty
+        continue-on-error: true
+
+      - name: Check docstring coverage
+        run: |
+          pip install interrogate
+          interrogate -v --fail-under=50 .
+        continue-on-error: true
+
+  format:
+    name: Auto-format Code
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install formatters
+        run: |
+          pip install black isort
+
+      - name: Run Black
+        run: |
+          black .
+
+      - name: Run isort
+        run: |
+          isort .
+
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "style: Auto-format code with Black and isort"
+          commit_user_name: github-actions[bot]
+          commit_user_email: github-actions[bot]@users.noreply.github.com

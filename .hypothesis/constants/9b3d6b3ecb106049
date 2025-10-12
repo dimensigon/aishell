@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/performance/optimizer.py
+# hypothesis_version: 6.140.3
+
+[0.0, 0.2, 0.8, 1.0, "'[^']*'", ',', '?', 'FORCE INDEX', 'FROM', 'JOIN', 'LIMIT', 'SELECT', 'WHERE', 'WHERE ID =', '\\d+', 'max_pool_size', 'max_size', 'min_pool_size', 'min_size', 'slow_query_threshold']

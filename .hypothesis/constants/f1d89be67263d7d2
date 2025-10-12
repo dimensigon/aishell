@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/agents/tools/__init__.py
+# hypothesis_version: 6.140.3
+
+[120, 300, 'ToolCategory', 'ToolDefinition', 'ToolRegistry', 'ToolRiskLevel', 'database_read', 'database_write', 'func', 'name', 'object', 'performance_analyze', 'register_core_tools', 'schema', 'schema_modify', 'type']

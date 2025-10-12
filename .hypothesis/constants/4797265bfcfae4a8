@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/database/history.py
+# hypothesis_version: 6.140.3
+
+['.ai_shell', '0%', 'UNKNOWN', 'error', 'execution_time', 'failed_queries', 'r', 'risk_level', 'rows_affected', 'sql', 'sql_history.json', 'success', 'success_rate', 'successful_queries', 'timestamp', 'total_queries', 'w']

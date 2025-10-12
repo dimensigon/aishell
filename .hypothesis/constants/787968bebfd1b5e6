@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/database/nlp_to_sql.py
+# hypothesis_version: 6.140.3
+
+["  - 'count orders'", "  - 'show me users'", '\'"', 'Try phrases like:', 'column', 'columns', 'confidence', 'count (?:all )?(\\w+)', 'error', 'high', 'how many (\\w+)', 'list (?:all )?(\\w+)', 'matched_pattern', 'none', 'original_query', 'parameters', 'params', 'pattern', 'regex', 'sql', 'suggestions', 'table', 'template', 'value', 'values', 'where_column', 'where_value']

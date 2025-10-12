@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/performance/monitor.py
+# hypothesis_version: 6.140.3
+
+[0.1, 1.0, 80.0, 85.0, 90.0, 1000, '/', '; ', 'No metrics available', 'Performance normal', 'active_connections', 'avg_cpu_percent', 'avg_disk_percent', 'avg_memory_percent', 'avg_response_time', 'check_interval', 'checks', 'cpu_percent', 'cpu_threshold', 'database', 'degraded', 'disk_percent', 'disk_threshold', 'duration_minutes', 'healthy', 'max_history', 'memory_percent', 'memory_threshold', 'message', 'metrics', 'performance', 'sample_count', 'status', 'system', 'timestamp', 'total_queries', 'unhealthy']
