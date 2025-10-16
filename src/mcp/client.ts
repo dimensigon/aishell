@@ -11,14 +11,12 @@ import {
   MCPServerConfig,
   ConnectionState,
   MCPMessage,
-  MCPRequest,
   MCPResponse,
   MCPTool,
   MCPResource,
   MCPContext,
   MCPClientEvents,
-  RequestOptions,
-  ReconnectionOptions
+  RequestOptions
 } from './types';
 import { MCPMessageBuilder } from './messages';
 
@@ -219,7 +217,7 @@ class ServerConnection {
       version: '1.0.0'
     });
 
-    const response = await this.request(initRequest.method!, initRequest.params);
+    await this.request(initRequest.method!, initRequest.params);
 
     // Send initialized notification
     const initializedNotification = MCPMessageBuilder.createNotification('initialized');

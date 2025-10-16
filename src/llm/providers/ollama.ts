@@ -5,7 +5,7 @@
 
 import axios, { AxiosInstance } from 'axios';
 import { BaseLLMProvider } from '../provider.js';
-import { LLMMessage, LLMResponse, GenerateOptions, StreamCallback } from '../../types/llm.js';
+import { LLMResponse, GenerateOptions, StreamCallback } from '../../types/llm.js';
 
 export class OllamaProvider extends BaseLLMProvider {
   readonly name = 'ollama';

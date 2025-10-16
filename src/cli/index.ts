@@ -72,7 +72,7 @@ class AIShell {
       }
     });
 
-    this.queue.on('commandComplete', ({ command, result }) => {
+    this.queue.on('commandComplete', ({ result }) => {
       if (!result.success && result.error) {
         console.error(`❌ Error: ${result.error}`);
       }

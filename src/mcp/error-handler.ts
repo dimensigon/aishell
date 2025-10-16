@@ -273,7 +273,7 @@ export class MCPErrorHandler extends EventEmitter<ErrorHandlerEvents> {
       }
 
       // Default retryable errors
-      const retryableCodes = [
+      const retryableCodes: number[] = [
         MCPMessageBuilder.ErrorCodes.TIMEOUT_ERROR,
         MCPMessageBuilder.ErrorCodes.CONNECTION_ERROR,
         MCPMessageBuilder.ErrorCodes.SERVER_ERROR

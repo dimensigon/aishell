@@ -54,7 +54,6 @@ export class ResponseParser {
     const blocks: CodeBlock[] = [];
     const regex = /```(\w+)?\n([\s\S]*?)```/g;
     let match;
-    let lineNumber = 0;
 
     while ((match = regex.exec(text)) !== null) {
       const language = match[1] || 'text';
@@ -205,12 +204,6 @@ export class ResponseParser {
    * Format SQL queries for display
    */
   formatSQL(sql: string): string {
-    const keywords = [
-      'SELECT', 'FROM', 'WHERE', 'JOIN', 'INNER', 'LEFT', 'RIGHT', 'OUTER',
-      'ON', 'GROUP BY', 'ORDER BY', 'HAVING', 'LIMIT', 'INSERT', 'UPDATE',
-      'DELETE', 'CREATE', 'ALTER', 'DROP', 'TABLE', 'INDEX', 'VIEW',
-    ];
-
     let formatted = sql;
 
     // Add line breaks before major keywords

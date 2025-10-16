@@ -3,7 +3,7 @@
  * Supports Ollama, LlamaCPP, and future providers
  */
 
-import { LLMMessage, LLMResponse, LLMStreamChunk, GenerateOptions, StreamCallback } from '../types/llm.js';
+import { LLMMessage, LLMResponse, GenerateOptions, StreamCallback } from '../types/llm.js';
 
 export interface ILLMProvider {
   /**

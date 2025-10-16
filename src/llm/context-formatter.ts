@@ -112,7 +112,7 @@ Use this schema to provide accurate SQL queries and recommendations.`;
   /**
    * Format SQL query analysis request
    */
-  formatSQLAnalysis(sqlQuery: string, options: ContextOptions = {}): LLMMessage[] {
+  formatSQLAnalysis(sqlQuery: string): LLMMessage[] {
     return [
       {
         role: 'system',
@@ -134,7 +134,7 @@ Provide specific, actionable feedback.`,
   /**
    * Format database design request
    */
-  formatDatabaseDesign(requirements: string, options: ContextOptions = {}): LLMMessage[] {
+  formatDatabaseDesign(requirements: string): LLMMessage[] {
     return [
       {
         role: 'system',

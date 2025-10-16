@@ -52,10 +52,18 @@ export class MCPContextAdapter extends EventEmitter<ContextAdapterEvents> {
    * Create default context
    */
   private createDefaultContext(partial?: Partial<MCPContext>): MCPContext {
+    // Filter out undefined values from process.env
+    const env: Record<string, string> = {};
+    for (const [key, value] of Object.entries(process.env)) {
+      if (value !== undefined) {
+        env[key] = value;
+      }
+    }
+
     return {
       sessionId: partial?.sessionId || uuidv4(),
       workingDirectory: partial?.workingDirectory || process.cwd(),
-      environment: partial?.environment || { ...process.env },
+      environment: partial?.environment || env,
       metadata: partial?.metadata || {},
       timestamp: Date.now()
     };
@@ -335,10 +343,18 @@ export class MCPContextAdapter extends EventEmitter<ContextAdapterEvents> {
     sessionId?: string,
     metadata?: Record<string, unknown>
   ): MCPContext {
+    // Filter out undefined values from process.env
+    const env: Record<string, string> = {};
+    for (const [key, value] of Object.entries(process.env)) {
+      if (value !== undefined) {
+        env[key] = value;
+      }
+    }
+
     return {
       sessionId: sessionId || uuidv4(),
       workingDirectory: process.cwd(),
-      environment: { ...process.env },
+      environment: env,
       metadata: metadata || {},
       timestamp: Date.now()
     };
