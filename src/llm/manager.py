@@ -12,7 +12,10 @@ import hashlib
 import logging
 from enum import Enum
 
-from src.llm.providers import LocalLLMProvider, OllamaProvider
+from src.llm.providers import (
+    LocalLLMProvider, OllamaProvider, LocalTransformersProvider,
+    OpenAIProvider, AnthropicProvider, MockProvider, LLMProviderFactory
+)
 from src.llm.embeddings import EmbeddingModel
 
 logger = logging.getLogger(__name__)
@@ -61,13 +64,14 @@ class LocalLLMManager:
 
         self.initialized = False
 
-    def initialize(self, provider_type: str = "ollama", model_name: str = "llama2") -> bool:
+    def initialize(self, provider_type: str = "ollama", model_name: str = "llama2", api_key: Optional[str] = None) -> bool:
         """
         Initialize LLM manager with specified provider
 
         Args:
-            provider_type: Type of provider (ollama, transformers)
+            provider_type: Type of provider (ollama, transformers, openai, anthropic, mock)
             model_name: Name of the model to use
+            api_key: API key for cloud providers
 
         Returns:
             True if initialization successful
@@ -75,13 +79,14 @@ class LocalLLMManager:
         try:
             # Initialize provider if not provided
             if self.provider is None:
-                if provider_type == "ollama":
-                    self.provider = OllamaProvider(
-                        model_name=model_name,
-                        model_path=self.model_path
-                    )
-                else:
-                    raise ValueError(f"Unknown provider type: {provider_type}")
+                # Use factory to create provider
+                kwargs = {"model_name": model_name}
+                if provider_type in ["openai", "anthropic"]:
+                    kwargs["api_key"] = api_key
+                elif provider_type in ["ollama", "transformers"]:
+                    kwargs["model_path"] = self.model_path
+
+                self.provider = LLMProviderFactory.create(provider_type, **kwargs)
 
             # Initialize provider and embeddings
             provider_success = self.provider.initialize()
@@ -90,7 +95,7 @@ class LocalLLMManager:
             self.initialized = provider_success and embedding_success
 
             if self.initialized:
-                logger.info("LLM Manager initialized successfully")
+                logger.info(f"LLM Manager initialized successfully with {provider_type} provider")
             else:
                 logger.error("LLM Manager initialization failed")
 
@@ -98,6 +103,47 @@ class LocalLLMManager:
         except Exception as e:
             logger.error(f"Failed to initialize LLM Manager: {e}")
             return False
+
+    def switch_provider(self, provider_type: str, model_name: str, api_key: Optional[str] = None) -> bool:
+        """
+        Switch to a different LLM provider
+
+        Args:
+            provider_type: Type of provider to switch to
+            model_name: Name of the model to use
+            api_key: API key for cloud providers
+
+        Returns:
+            True if switch successful
+        """
+        try:
+            # Cleanup current provider
+            if self.provider:
+                self.provider.cleanup()
+
+            # Create new provider
+            kwargs = {"model_name": model_name}
+            if provider_type in ["openai", "anthropic"]:
+                kwargs["api_key"] = api_key
+            elif provider_type in ["ollama", "transformers"]:
+                kwargs["model_path"] = self.model_path
+
+            self.provider = LLMProviderFactory.create(provider_type, **kwargs)
+
+            # Initialize new provider
+            success = self.provider.initialize()
+
+            if success:
+                logger.info(f"Switched to {provider_type} provider with model {model_name}")
+
+            return success
+        except Exception as e:
+            logger.error(f"Failed to switch provider: {e}")
+            return False
+
+    def list_providers(self) -> List[str]:
+        """List available LLM providers"""
+        return LLMProviderFactory.list_providers()
 
     def analyze_intent(self, query: str) -> Dict[str, Any]:
         """
