@@ -6,25 +6,37 @@
 ![Test Files](https://img.shields.io/badge/test%20files-134-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![FAISS](https://img.shields.io/badge/FAISS-1.12.0-orange)
+![MCP](https://img.shields.io/badge/MCP-Discovery-purple)
+![LLM](https://img.shields.io/badge/LLM-Integrated-green)
 
 ## Overview
 
-Agentic AI-Shell (AI$) is an intelligent command-line interface that combines traditional shell functionality with agentic AI-powered assistance, database management, and multi-threaded asynchronous processing. Built with Python's `prompt-toolkit` and modern async architecture, it provides a context-aware terminal experience with modular extensibility and autonomous agent capabilities.
+Agentic AI-Shell (AI$) is a next-generation intelligent command-line interface that seamlessly integrates AI capabilities, MCP (Model Context Protocol) server discovery, and autonomous agent execution. With built-in LLM integration and automatic MCP tool discovery, AI-Shell transforms your terminal into an intelligent assistant capable of understanding natural language, executing complex tasks in parallel, and automatically leveraging available tools and services on your network.
 
 ### Key Features
 
-- **🤖 AI-Powered Interface**: Local and cloud LLM integration for intent analysis and command suggestions
-- **📊 Multi-Database Support**: MCP-based clients for Oracle, PostgreSQL, and extensible architecture for additional databases
+#### 🚀 NEW in v2.0: Consolidated AI + MCP Integration
+- **🔍 MCP Auto-Discovery**: Automatically discovers and connects to MCP servers on your network
+- **🤖 Built-in AI Commands**: Natural language interface with `ai`, `explain`, `suggest` commands
+- **🔗 Seamless Integration**: Agents automatically use discovered MCP tools without configuration
+- **⚡ Parallel Agent Execution**: Execute complex tasks with multiple agents working concurrently
+- **🎯 Context-Aware AI**: LLM queries enriched with MCP resources and command history
+
+#### 🧠 NEW: Cognitive Features (Self-Learning & Autonomous)
+- **💾 Cognitive Shell Memory (CogShell)**: Semantic command search with FAISS vectors, pattern recognition, and learning from feedback
+- **🚨 Anomaly Detection & Self-Healing**: Statistical anomaly detection (Z-score), auto-remediation with rate limiting, rollback support
+- **🤖 Autonomous DevOps Agent (ADA)**: Infrastructure optimization, predictive scaling, cost reduction, self-learning from outcomes
+
+#### Core Capabilities
+- **📊 Multi-Database Support**: MCP-based clients for Oracle, PostgreSQL, and extensible architecture
 - **🔐 Secure Credential Management**: Encrypted vault system with automatic redaction
-- **⚡ Asynchronous Processing**: Non-blocking background enrichment and multi-threaded execution
 - **🎨 Dynamic UI**: Adaptive panel sizing based on content and user activity
-- **🔍 Intelligent Auto-completion**: Vector-based semantic search for commands and database objects
+- **🔍 Intelligent Auto-completion**: Vector-based semantic search with FAISS
 - **📝 Enhanced History**: Queryable command history with exit codes and context
 - **🌐 Web Interface**: Optional Flask-based web UI for graphical interaction
 - **🏥 Health Check System**: Comprehensive async health monitoring with parallel checks
-- **🤖 Custom AI Agents**: Build autonomous agents with multi-step workflows
-- **🛠️ Tool Registry**: Centralized tool management with safety validation
-- **🔒 Safety & Approvals**: Multi-layer protection with risk assessment and approval workflows
+- **🛠️ Tool Registry**: Centralized tool management with 5-level risk assessment
+- **🔒 Safety & Approvals**: Multi-layer protection with automatic risk validation
 
 ## 📚 Tutorials
 
@@ -38,8 +50,6 @@ New to AI-Shell? Start with our comprehensive tutorial series:
 📖 **[View Complete Tutorial Index →](./tutorials/README.md)**
 
 ## Quick Start
-
-**New users**: Follow the **[Health Check Tutorial](./tutorials/01-health-checks-tutorial.md)** for a guided introduction!
 
 ### Installation
 
@@ -55,8 +65,143 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Initialize configuration
-agentic-aishell --init
+# Initialize configuration with AI and MCP enabled
+agentic-aishell --init --enable-ai --enable-mcp
+```
+
+### 🚀 Quick Examples
+
+#### 1. AI-Powered Natural Language Commands
+```bash
+# Ask AI for help with any task
+AI$ > ai how do I find all Python files modified in the last week?
+
+# AI responds with the command and explanation:
+# You can use the find command: find . -name "*.py" -mtime -7
+# This searches for Python files (.py) modified within 7 days
+
+# Get explanations for previous commands
+AI$ > ls -la | grep config
+AI$ > explain
+# The command listed all files and filtered for ones containing "config"...
+
+# Get command suggestions based on intent
+AI$ > suggest optimize database performance
+# 1. ANALYZE TABLE to update statistics
+# 2. CREATE INDEX on frequently queried columns
+# 3. VACUUM FULL to reclaim space...
+```
+
+#### 2. MCP Server Discovery and Management
+```bash
+# Scan for MCP servers on your network
+AI$ > mcp scan
+Found 3 MCP servers:
+  - GitHub Assistant (websocket://192.168.1.10:3000)
+    Tools: create_pr, review_code, manage_issues
+  - Database Manager (stdio://localhost:3749)
+    Tools: backup_db, optimize_query, analyze_schema
+  - Cloud Deployer (websocket://192.168.1.15:8080)
+    Tools: deploy_app, scale_service, monitor_health
+
+# Check connection status
+AI$ > mcp status
+MCP Discovery Status:
+  Total Servers: 3
+  Connected: 2
+  Available Tools: 15
+  Available Resources: 8
+
+# List all available tools from connected servers
+AI$ > mcp tools
+GitHub Assistant:
+  - create_pr: Create a pull request
+  - review_code: Perform code review
+  - manage_issues: Manage GitHub issues
+Database Manager:
+  - backup_db: Create database backup
+  - optimize_query: Optimize SQL queries
+```
+
+#### 3. Agent-Based Task Execution
+```bash
+# Execute complex tasks with agents using MCP tools
+AI$ > agent review all Python files and create a code quality report
+
+Agent Execution Results (3 tasks):
+✓ Task 1: Scanning Python files
+  Output: Found 47 Python files in project
+  Duration: 0.5s
+
+✓ Task 2: Running code analysis
+  Output: Analyzing with pylint, black, and mypy...
+  Duration: 3.2s
+
+✓ Task 3: Generating report
+  Output: Report saved to code_quality_report.md
+  Duration: 1.1s
+
+# Agents automatically use discovered MCP tools
+AI$ > agent backup production database and upload to S3
+
+Agent automatically discovers and uses:
+- Database Manager's backup_db tool
+- Cloud Deployer's upload_to_s3 tool
+```
+
+#### 4. Cognitive Features - Self-Learning System
+```bash
+# Cognitive Memory: Remember and recall command patterns
+AI$ > python -m src.main memory recall "git commit"
+┌─────────────────────────────────────────────────────────────┐
+│ Memories matching: git commit                               │
+├──────────────────────────────┬─────────┬────────┬──────────┤
+│ Command                      │ Success │ Import │ Freq     │
+├──────────────────────────────┼─────────┼────────┼──────────┤
+│ git commit -m "feat: add..." │    ✓    │  0.85  │    15    │
+│ git commit --amend           │    ✓    │  0.72  │     8    │
+└──────────────────────────────┴─────────┴────────┴──────────┘
+
+# Get intelligent command suggestions
+AI$ > python -m src.main memory suggest -c '{"cwd": "/project"}'
+Command Suggestions:
+  1. git commit -m "update" (confidence: 89%)
+  2. git push origin main (confidence: 76%)
+  3. npm test (confidence: 62%)
+
+# Anomaly Detection: Automatic system monitoring
+AI$ > python -m src.main anomaly start --interval 60
+┌────────────────────────────────────────┐
+│ Anomaly Detection Started             │
+│ • Check Interval: 60s                  │
+│ • Auto-Fix: Enabled                    │
+│ • Press Ctrl+C to stop                 │
+└────────────────────────────────────────┘
+
+⚠ 2 anomalies detected
+  • resource_usage: High memory usage (85%)
+    ✓ Auto-fixed: Cleared system caches
+  • performance_degradation: Response time increased 2.3x
+    ✓ Auto-fixed: Restarted connection pool
+
+# Autonomous DevOps: Self-optimizing infrastructure
+AI$ > python -m src.main ada analyze
+Services:
+┌─────────────┬──────────┬──────┬──────┬────────┬────────┐
+│ Service     │ Version  │ Inst │ CPU% │ Memory%│ Health │
+├─────────────┼──────────┼──────┼──────┼────────┼────────┤
+│ api-gateway │ 1.2.3    │  3   │ 75.2 │  82.1  │  0.65  │
+│ auth-svc    │ 2.1.0    │  2   │ 45.8 │  51.3  │  0.89  │
+└─────────────┴──────────┴──────┴──────┴────────┴────────┘
+
+AI$ > python -m src.main ada optimize --type cost --dry-run
+Found Optimization:
+  • Type: cost
+  • Target: worker-service
+  • Action: downsize
+  • Reason: Low resource utilization (CPU: 15%, Memory: 20%)
+  • Potential Savings: $12.50/hour
+  • Monthly savings: ~$9,000
 ```
 
 ### Python Version Support
@@ -114,11 +259,24 @@ For detailed testing information, see:
 AI$ > ls -la
 AI$ > cd /home/user/projects
 
-# Natural language queries (start with #)
-AI$ > #how do I find large files?
+# AI Commands - Natural language interface
+AI$ > ai what files were changed in the last commit?
+AI$ > explain  # Explains the previous command
+AI$ > suggest find memory leaks  # Get command suggestions
 
-# AI-assisted command analysis (Ctrl+A)
-AI$ > rm -rf /important/directory  # Press Ctrl+A for impact analysis
+# MCP Server Management
+AI$ > mcp scan  # Discover available MCP servers
+AI$ > mcp status  # Show connection status
+AI$ > mcp tools  # List all available tools
+AI$ > mcp resources  # List available resources
+
+# Agent Execution - Complex task automation
+AI$ > agent analyze codebase and generate documentation
+AI$ > agent optimize all SQL queries in the project
+
+# Health Monitoring
+AI$ > health  # Run all health checks
+AI$ > health llm  # Check specific component
 
 # Access vault credentials
 AI$ > export DB_PASSWORD=$vault.prod_db_password
@@ -186,35 +344,56 @@ system:
   matrix_style: enhanced
   theme: cyberpunk
 
+# NEW: MCP Discovery Configuration
+mcp_discovery:
+  enabled: true
+  auto_connect: true
+  multicast_address: "239.255.255.250"
+  port: 3749
+  discovery_interval: 30  # seconds
+  capability_filter: []  # Empty = accept all
+
 # LLM Configuration
 llm:
+  enabled: true
   provider: ollama  # ollama, openai, anthropic, deepseek
-  models:
-    intent: "llama2:7b"
-    completion: "codellama:13b"
-    anonymizer: "mistral:7b"
-  ollama_host: "localhost:11434"
-  fallback_provider: "openai"  # Fallback if local LLM unavailable
+  model: "llama2:7b"
+  api_key: ${OPENAI_API_KEY}  # For cloud providers
+  base_url: "http://localhost:11434"  # For local providers
+  temperature: 0.7
+  max_tokens: 1000
+  fallback_provider: "openai"  # Fallback if primary unavailable
 
-# MCP Clients
+# Agent Configuration
+agents:
+  enabled: true
+  max_parallel: 5
+  timeout: 180  # seconds per agent
+  auto_decompose: true  # Use LLM to break down complex tasks
+  show_progress: true
+
+# MCP Clients (Manual Configuration)
 mcp:
-  oracle:
-    thin_mode: true
-    connection_pool_size: 5
-    timeout: 30
-  postgresql:
-    connection_pool_size: 5
-    timeout: 30
+  servers:
+    - name: "github-assistant"
+      command: "npx"
+      args: ["@modelcontextprotocol/github-server"]
+      type: "stdio"
+    - name: "database-manager"
+      command: "mcp-database"
+      args: ["--port", "3749"]
+      type: "websocket"
 
-# UI Settings
-ui:
-  framework: textual
-  panel_weights:
-    output: 0.5
-    module: 0.3
-    prompt: 0.2
-  typing_priority: prompt  # Focus prompt when typing
-  idle_priority: balanced  # Balanced view when idle
+# Tool Registry
+tools:
+  risk_assessment: true
+  require_approval:
+    - HIGH
+    - CRITICAL
+  rate_limiting:
+    enabled: true
+    window: 60  # seconds
+  audit_logging: true
 
 # Security
 security:
@@ -225,16 +404,14 @@ security:
     - DROP
     - DELETE
     - TRUNCATE
-  risk_levels:
-    high: confirm_text
-    medium: confirm_key
-    low: auto_execute
+  auto_approve_risk_level: "LOW"  # Auto-approve LOW risk operations
 
 # Performance
 performance:
   async_workers: 4
   cache_size: 1000
   vector_db_dimension: 384
+  command_history_size: 100
   lazy_loading: true
 ```
 

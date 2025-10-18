@@ -794,10 +794,77 @@ For more information, visit: https://github.com/yourusername/AIShell
         help='Log to file instead of stdout'
     )
 
+    # Cognitive features subparsers
+    subparsers = parser.add_subparsers(dest='command', help='Available commands')
+
+    # Memory commands
+    memory_parser = subparsers.add_parser('memory', help='Cognitive Memory commands')
+    memory_subparsers = memory_parser.add_subparsers(dest='memory_command', help='Memory operations')
+
+    memory_recall = memory_subparsers.add_parser('recall', help='Recall similar commands')
+    memory_recall.add_argument('query', type=str, help='Search query')
+    memory_recall.add_argument('--limit', type=int, default=5, help='Max results')
+    memory_recall.add_argument('--threshold', type=float, default=0.7, help='Similarity threshold')
+
+    memory_insights = memory_subparsers.add_parser('insights', help='Get memory insights')
+    memory_insights.add_argument('--json-output', action='store_true', help='Output as JSON')
+
+    memory_suggest = memory_subparsers.add_parser('suggest', help='Get command suggestions')
+    memory_suggest.add_argument('-c', '--context', type=str, help='Context as JSON string')
+
+    memory_export = memory_subparsers.add_parser('export', help='Export knowledge base')
+    memory_export.add_argument('output_file', type=str, help='Output file path')
+
+    memory_import = memory_subparsers.add_parser('import', help='Import knowledge base')
+    memory_import.add_argument('input_file', type=str, help='Input file path')
+
+    # Anomaly detection commands
+    anomaly_parser = subparsers.add_parser('anomaly', help='Anomaly Detection commands')
+    anomaly_subparsers = anomaly_parser.add_subparsers(dest='anomaly_command', help='Anomaly operations')
+
+    anomaly_start = anomaly_subparsers.add_parser('start', help='Start monitoring')
+    anomaly_start.add_argument('--interval', type=int, default=60, help='Check interval in seconds')
+    anomaly_start.add_argument('--no-auto-fix', action='store_true', help='Disable auto-remediation')
+
+    anomaly_status = anomaly_subparsers.add_parser('status', help='Show status')
+    anomaly_status.add_argument('--json-output', action='store_true', help='Output as JSON')
+
+    anomaly_check = anomaly_subparsers.add_parser('check', help='Run immediate check')
+
+    # ADA commands
+    ada_parser = subparsers.add_parser('ada', help='Autonomous DevOps Agent commands')
+    ada_subparsers = ada_parser.add_subparsers(dest='ada_command', help='ADA operations')
+
+    ada_start = ada_subparsers.add_parser('start', help='Start ADA')
+    ada_start.add_argument('--interval', type=int, default=300, help='Check interval in seconds')
+
+    ada_status = ada_subparsers.add_parser('status', help='Show ADA status')
+    ada_status.add_argument('--json-output', action='store_true', help='Output as JSON')
+
+    ada_analyze = ada_subparsers.add_parser('analyze', help='Analyze infrastructure')
+
+    ada_optimize = ada_subparsers.add_parser('optimize', help='Find and apply optimizations')
+    ada_optimize.add_argument('--dry-run', action='store_true', help='Simulate without executing')
+    ada_optimize.add_argument('--type', type=str, choices=['cost', 'performance', 'reliability'], help='Optimization type')
+
     args = parser.parse_args()
 
     # Configure logging based on arguments
     configure_logging(args.log_level, args.log_file)
+
+    # Handle cognitive feature commands before creating shell
+    if args.command == 'memory':
+        from .cli.cognitive_handlers import handle_memory_command
+        await handle_memory_command(args)
+        return
+    elif args.command == 'anomaly':
+        from .cli.cognitive_handlers import handle_anomaly_command
+        await handle_anomaly_command(args)
+        return
+    elif args.command == 'ada':
+        from .cli.cognitive_handlers import handle_ada_command
+        await handle_ada_command(args)
+        return
 
     # Create shell instance with optional config, db path, and mock mode
     shell = AIShell(config_path=args.config, db_path=args.db_path, mock_mode=args.mock)
