@@ -1,41 +1,41 @@
 # AI-Shell Dependencies
 
 # Core UI Framework
-prompt-toolkit==3.0.43
-textual==0.47.1
-click==8.1.7
-rich==13.7.0
+prompt-toolkit==3.0.52
+textual==6.3.0
+click==8.1.8
+rich==14.2.0
 
 # Database Clients (Thin/Pure Python)
-oracledb==2.0.0
-psycopg2-binary==2.9.9
+oracledb==3.4.0
+psycopg2-binary==2.9.11
 
 # MongoDB Support (v1.2.0)
-motor==3.3.2
-pymongo==4.6.3  # Security: Updated from 4.6.1 to fix medium severity CVE
+motor==3.7.1
+pymongo==4.15.3  # Security: Updated from 4.6.1 to fix medium severity CVE
 
 # Redis Support (v1.2.0)
-redis[asyncio]==5.0.1
+redis[asyncio]==6.4.0
 
 # LLM & Embeddings
-ollama==0.1.7
-sentence-transformers==2.2.2
-transformers==4.53.0  # Security: Updated from 4.36.2 to fix CVE vulnerabilities
+ollama==0.6.0
+sentence-transformers==5.1.1
+transformers==4.57.1  # Security: Updated from 4.36.2 to fix CVE vulnerabilities
 
 # Vector Database
 faiss-cpu==1.12.0
 
 # Security
-cryptography==44.0.1  # Security: Updated from 41.0.7 to fix high severity CVEs
-keyring==24.3.0
+cryptography==46.0.3  # Security: Updated from 41.0.7 to fix high severity CVEs
+keyring==25.6.0
 
 # Configuration
-pyyaml==6.0.1
+pyyaml==6.0.3
 
 # Async & Utilities
-aiofiles==23.2.1
-asyncio-mqtt==0.16.1
-psutil==5.9.8  # System monitoring and memory tracking
+aiofiles==25.1.0
+asyncio-mqtt==0.16.2
+psutil==7.1.1  # System monitoring and memory tracking
 
 # Testing
 pytest==8.3.5
@@ -46,7 +46,7 @@ pytest-mock==3.14.0
 # Development
 black==24.3.0  # Security: Updated from 23.12.1 to fix medium severity CVE
 mypy==1.8.0
-flake8==7.0.0
+flake8==7.3.0
 
 # v2.0.0 AI Features (Optional - for enhanced query assistance)
 # anthropic>=0.18.0  # Uncomment to enable Claude API features
@@ -62,6 +62,6 @@ flake8==7.0.0
 # uvicorn[standard]>=0.27.0  # Required for GraphQL server
 
 # Security Updates (v2.0.0)
-python-jose[cryptography]==3.4.0  # Security: Added to fix critical CVE
-python-multipart==0.0.18  # Security: Added to fix high severity CVE
-python-socketio==5.14.0  # Security: Added to fix medium severity CVE
+python-jose[cryptography]==3.5.0  # Security: Added to fix critical CVE
+python-multipart==0.0.20  # Security: Added to fix high severity CVE
+python-socketio==5.14.2  # Security: Added to fix medium severity CVE
