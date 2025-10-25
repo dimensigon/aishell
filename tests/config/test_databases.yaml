@@ -1,0 +1,79 @@
+# Test Database Configurations
+# Used for integration testing with real database connections
+
+databases:
+  oracle_root:
+    type: oracle
+    description: "Oracle CDB$ROOT container"
+    connection:
+      user: "SYS"
+      password: "MyOraclePass123"
+      host: "localhost"
+      port: 1521
+      service: "free"
+      mode: "SYSDBA"
+    test_queries:
+      - "SELECT 1 FROM DUAL"
+      - "SELECT banner FROM v$version WHERE rownum = 1"
+      - "SELECT name FROM v$database"
+
+  oracle_pdb:
+    type: oracle
+    description: "Oracle FREEPDB1 pluggable database"
+    connection:
+      user: "SYS"
+      password: "MyOraclePass123"
+      host: "localhost"
+      port: 1521
+      service: "freepdb1"
+      mode: "SYSDBA"
+    test_queries:
+      - "SELECT 1 FROM DUAL"
+      - "SELECT con_id, name FROM v$containers WHERE con_id = CON_ID"
+
+  postgres:
+    type: postgresql
+    description: "PostgreSQL default database"
+    connection:
+      user: "postgres"
+      password: "MyPostgresPass123"
+      host: "localhost"
+      port: 5432
+      database: "postgres"
+      connection_string: "postgresql://postgres:MyPostgresPass123@localhost:5432/postgres"
+    test_queries:
+      - "SELECT 1"
+      - "SELECT version()"
+      - "SELECT current_database()"
+
+# Test scenarios for integration testing
+test_scenarios:
+  basic_connectivity:
+    - Connect to each database
+    - Execute simple queries
+    - Verify results
+    - Close connections properly
+
+  pooling:
+    - Create connection pools (size=5)
+    - Concurrent query execution
+    - Pool exhaustion handling
+    - Connection reuse verification
+
+  error_handling:
+    - Invalid credentials
+    - Network timeout simulation
+    - Query syntax errors
+    - Connection loss recovery
+
+  performance:
+    - Query execution timing
+    - Connection establishment time
+    - Pool performance under load
+    - Memory usage monitoring
+
+  security:
+    - Credential redaction in logs
+    - SQL injection prevention
+    - Vault integration
+    - Secure credential storage

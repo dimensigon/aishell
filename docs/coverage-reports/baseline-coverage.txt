@@ -1,0 +1,150 @@
+src/ui/prompt_handler.py                          36      0   100%
+src/ui/screens/__init__.py                         2      2     0%   7-9
+src/ui/screens/startup_screen.py                  61     61     0%   8-209
+src/ui/utils/__init__.py                           3      0   100%
+src/ui/utils/content_tracker.py                  115     20    83%   52, 133, 151-166, 193-194, 207-208, 218, 232-233, 249-250, 269
+src/ui/utils/memory_monitor.py                   178    133    25%   73-113, 125-139, 143-156, 164-188, 197-220, 229-233, 253-272, 280-303, 315-316, 332-343, 352-355, 364-367, 376-386, 396, 405, 413-436, 445, 460-467
+src/ui/widgets/__init__.py                         4      0   100%
+src/ui/widgets/command_preview.py                108     14    87%   143-149, 153, 209, 214-215, 309-317, 359, 365
+src/ui/widgets/risk_indicator.py                  52      4    92%   117-118, 241, 250
+src/ui/widgets/suggestion_list.py                128     91    29%   18-19, 97-102, 106, 118-142, 158-178, 189-198, 209-216, 227-232, 236-240, 244-248, 256-259, 267-270, 274-276, 284-312, 321, 330
+src/vector/__init__.py                             3      0   100%
+src/vector/autocomplete.py                       109     18    83%   127-139, 174, 187-189, 339-343
+src/vector/store.py                              125      6    95%   12-14, 68, 189, 206
+----------------------------------------------------------------------------
+TOTAL                                           8183   3879    53%
+Coverage JSON written to file coverage.json
+=========================== short test summary info ============================
+FAILED tests/agents/test_agent_chain.py::test_transform_function - AssertionError: assert 'Transform: test' in 'test'
+ +  where 'test' = str('test')
+ +    where 'test' = ChainLink(agent_type='coder', transform=<function test_transform_function.<locals>.<lambda> at 0x7f2c82d17700>, validation=None, name=None, timeout=120, link_id='dd1194ea-6ce5-43de-a716-446f1c3dd810', input_data='test', output_data='Result from coder: Transform: test', start_time=datetime.datetime(2025, 10, 11, 4, 37, 9, 546088), end_time=datetime.datetime(2025, 10, 11, 4, 37, 9, 646522), duration=0.100434, success=True, error=None).input_data
+FAILED tests/agents/test_parallel_executor.py::test_priority_ordering - NameError: name 'TaskPriority' is not defined
+FAILED tests/e2e/test_full_workflow.py::TestPyPIInstallation::test_command_line_interface - FileNotFoundError: [Errno 2] No such file or directory: 'aishell'
+FAILED tests/e2e/test_full_workflow.py::TestPyPIInstallation::test_package_installation - AssertionError: 1 != 0
+FAILED tests/e2e/test_full_workflow.py::TestAgenticWorkflow::test_agent_coordination_workflow - ImportError: cannot import name 'AgentCoordinator' from 'src.agents.coordinator' (/home/claude/AIShell/src/agents/coordinator.py)
+FAILED tests/e2e/test_full_workflow.py::TestAgenticWorkflow::test_workflow_execution_with_state - AttributeError: 'StateManager' object has no attribute 'save_state'
+FAILED tests/e2e/test_full_workflow.py::TestMultiTenancyWorkflow::test_tenant_isolation_workflow - ModuleNotFoundError: No module named 'src.core.tenancy'
+FAILED tests/e2e/test_full_workflow.py::TestMultiTenancyWorkflow::test_tenant_quota_enforcement_workflow - ModuleNotFoundError: No module named 'src.core.tenancy'
+FAILED tests/e2e/test_full_workflow.py::TestRBACWorkflow::test_permission_inheritance_workflow - ModuleNotFoundError: No module named 'src.security.rbac'
+FAILED tests/e2e/test_full_workflow.py::TestRBACWorkflow::test_role_based_access_workflow - ModuleNotFoundError: No module named 'src.security.rbac'
+FAILED tests/e2e/test_full_workflow.py::TestAuditLoggingWorkflow::test_audit_search_and_filter - ModuleNotFoundError: No module named 'src.security.audit'
+FAILED tests/e2e/test_full_workflow.py::TestAuditLoggingWorkflow::test_complete_audit_trail - ModuleNotFoundError: No module named 'src.security.audit'
+FAILED tests/e2e/test_full_workflow.py::TestPluginWorkflow::test_plugin_lifecycle_workflow - ModuleNotFoundError: No module named 'src.plugins.manager'
+FAILED tests/e2e/test_full_workflow.py::TestIntegratedWorkflow::test_full_system_workflow - ModuleNotFoundError: No module named 'src.security.rbac'
+FAILED tests/test_integration.py::TestAIShellIntegration::test_performance_metrics - TypeError: object NoneType can't be used in 'await' expression
+FAILED tests/test_llm.py::TestEmbeddingModel::test_similarity - AssertionError: -0.10554012656211853 not greater than or equal to 0.0
+FAILED tests/test_option2_enhanced.py::TestQueryResultCaching::test_cache_compression - TypeError: object NoneType can't be used in 'await' expression
+FAILED tests/test_option2_enhanced.py::TestQueryResultCaching::test_cache_invalidation - TypeError: object NoneType can't be used in 'await' expression
+FAILED tests/test_option2_enhanced.py::TestQueryResultCaching::test_cache_pattern_invalidation - TypeError: object NoneType can't be used in 'await' expression
+FAILED tests/test_option2_enhanced.py::TestQueryResultCaching::test_cache_statistics - TypeError: object NoneType can't be used in 'await' expression
+FAILED tests/test_option2_enhanced.py::TestQueryResultCaching::test_in_memory_cache_expiration - TypeError: object NoneType can't be used in 'await' expression
+FAILED tests/test_option2_enhanced.py::TestQueryResultCaching::test_in_memory_cache_set_get - TypeError: object NoneType can't be used in 'await' expression
+FAILED tests/test_option2_enhanced.py::TestQueryResultCaching::test_redis_cache_backend - ModuleNotFoundError: No module named 'redis'
+FAILED tests/test_option2_enhanced.py::TestAdvancedMonitoring::test_alert_threshold_configuration - ImportError: cannot import name 'PerformanceMonitor' from 'src.performance.monitor' (/home/claude/AIShell/src/performance/monitor.py)
+FAILED tests/test_option2_enhanced.py::TestAdvancedMonitoring::test_dashboard_metrics_export - ImportError: cannot import name 'PerformanceMonitor' from 'src.performance.monitor' (/home/claude/AIShell/src/performance/monitor.py)
+FAILED tests/test_option2_enhanced.py::TestAdvancedMonitoring::test_memory_usage_tracking - ImportError: cannot import name 'PerformanceMonitor' from 'src.performance.monitor' (/home/claude/AIShell/src/performance/monitor.py)
+FAILED tests/test_option2_enhanced.py::TestAdvancedMonitoring::test_performance_metrics_collection - ImportError: cannot import name 'PerformanceMonitor' from 'src.performance.monitor' (/home/claude/AIShell/src/performance/monitor.py)
+FAILED tests/test_option2_enhanced.py::TestAdvancedMonitoring::test_slow_query_detection - ImportError: cannot import name 'PerformanceMonitor' from 'src.performance.monitor' (/home/claude/AIShell/src/performance/monitor.py)
+FAILED tests/test_option2_enhanced.py::TestAdvancedMonitoring::test_webhook_alerts - ImportError: cannot import name 'PerformanceMonitor' from 'src.performance.monitor' (/home/claude/AIShell/src/performance/monitor.py)
+FAILED tests/test_option2_enhanced.py::TestEnhancedAgenticWorkflows::test_agent_communication_protocol - ImportError: cannot import name 'AgentMessage' from 'src.agents.coordinator' (/home/claude/AIShell/src/agents/coordinator.py)
+FAILED tests/test_option2_enhanced.py::TestEnhancedAgenticWorkflows::test_agent_state_persistence - AttributeError: 'StateManager' object has no attribute 'save_state'
+FAILED tests/test_option2_enhanced.py::TestEnhancedAgenticWorkflows::test_multi_agent_task_orchestration - AttributeError: <module 'src.agents.coordinator' from '/home/claude/AIShell/src/agents/coordinator.py'> does not have the attribute 'AgentCoordinator'
+FAILED tests/test_option2_enhanced.py::TestEnhancedAgenticWorkflows::test_parallel_agent_execution - ImportError: cannot import name 'ParallelExecutor' from 'src.agents.coordinator' (/home/claude/AIShell/src/agents/coordinator.py)
+FAILED tests/test_option2_enhanced.py::TestEnhancedAgenticWorkflows::test_workflow_failure_recovery - ImportError: cannot import name 'WorkflowRecovery' from 'src.agents.coordinator' (/home/claude/AIShell/src/agents/coordinator.py)
+FAILED tests/test_option2_enhanced.py::TestMultiDatabaseConnectionPooling::test_automatic_pool_scaling - ModuleNotFoundError: No module named 'src.database.pool'
+FAILED tests/test_option2_enhanced.py::TestMultiDatabaseConnectionPooling::test_connection_acquisition - ModuleNotFoundError: No module named 'src.database.pool'
+FAILED tests/test_option2_enhanced.py::TestMultiDatabaseConnectionPooling::test_connection_pool_creation - ModuleNotFoundError: No module named 'src.database.pool'
+FAILED tests/test_option2_enhanced.py::TestMultiDatabaseConnectionPooling::test_connection_pool_exhaustion - ModuleNotFoundError: No module named 'src.database.pool'
+FAILED tests/test_option2_enhanced.py::TestMultiDatabaseConnectionPooling::test_connection_release - ModuleNotFoundError: No module named 'src.database.pool'
+FAILED tests/test_option2_enhanced.py::TestMultiDatabaseConnectionPooling::test_pool_statistics - ModuleNotFoundError: No module named 'src.database.pool'
+FAILED tests/test_option3_enterprise.py::TestMultiTenancy::test_tenant_configuration_isolation - ModuleNotFoundError: No module named 'src.core.tenancy'
+FAILED tests/test_option3_enterprise.py::TestMultiTenancy::test_tenant_creation - ModuleNotFoundError: No module named 'src.core.tenancy'
+FAILED tests/test_option3_enterprise.py::TestMultiTenancy::test_tenant_database_separation - ModuleNotFoundError: No module named 'src.core.tenancy'
+FAILED tests/test_option3_enterprise.py::TestMultiTenancy::test_tenant_isolation - ModuleNotFoundError: No module named 'src.core.tenancy'
+FAILED tests/test_option3_enterprise.py::TestMultiTenancy::test_tenant_migration - ModuleNotFoundError: No module named 'src.core.tenancy'
+FAILED tests/test_option3_enterprise.py::TestMultiTenancy::test_tenant_resource_quotas - ModuleNotFoundError: No module named 'src.core.tenancy'
+FAILED tests/test_option3_enterprise.py::TestRoleBasedAccessControl::test_dynamic_permission_evaluation - ModuleNotFoundError: No module named 'src.security.rbac'
+FAILED tests/test_option3_enterprise.py::TestRoleBasedAccessControl::test_hierarchical_roles - ModuleNotFoundError: No module named 'src.security.rbac'
+FAILED tests/test_option3_enterprise.py::TestRoleBasedAccessControl::test_permission_checking - ModuleNotFoundError: No module named 'src.security.rbac'
+FAILED tests/test_option3_enterprise.py::TestRoleBasedAccessControl::test_permission_wildcards - ModuleNotFoundError: No module named 'src.security.rbac'
+FAILED tests/test_option3_enterprise.py::TestRoleBasedAccessControl::test_role_creation - ModuleNotFoundError: No module named 'src.security.rbac'
+FAILED tests/test_option3_enterprise.py::TestRoleBasedAccessControl::test_user_role_assignment - ModuleNotFoundError: No module named 'src.security.rbac'
+FAILED tests/test_option3_enterprise.py::TestAdvancedSecurity::test_compliance_data_retention - ModuleNotFoundError: No module named 'src.security.compliance'
+FAILED tests/test_option3_enterprise.py::TestAdvancedSecurity::test_data_encryption_at_rest - ModuleNotFoundError: No module named 'src.security.encryption'
+FAILED tests/test_option3_enterprise.py::TestAdvancedSecurity::test_field_level_encryption - ModuleNotFoundError: No module named 'src.security.encryption'
+FAILED tests/test_option3_enterprise.py::TestAdvancedSecurity::test_gdpr_data_export - ModuleNotFoundError: No module named 'src.security.compliance'
+FAILED tests/test_option3_enterprise.py::TestAdvancedSecurity::test_pii_detection_and_masking - ModuleNotFoundError: No module named 'src.security.pii'
+FAILED tests/test_option3_enterprise.py::TestAdvancedSecurity::test_right_to_be_forgotten - ModuleNotFoundError: No module named 'src.security.compliance'
+FAILED tests/test_option3_enterprise.py::TestAdvancedSecurity::test_sql_injection_prevention - ModuleNotFoundError: No module named 'src.security.sql_guard'
+FAILED tests/test_option3_enterprise.py::TestAuditLogging::test_audit_log_creation - ModuleNotFoundError: No module named 'src.security.audit'
+FAILED tests/test_option3_enterprise.py::TestAuditLogging::test_audit_log_export - ModuleNotFoundError: No module named 'src.security.audit'
+FAILED tests/test_option3_enterprise.py::TestAuditLogging::test_audit_log_retention - ModuleNotFoundError: No module named 'src.security.audit'
+FAILED tests/test_option3_enterprise.py::TestAuditLogging::test_audit_log_search - ModuleNotFoundError: No module named 'src.security.audit'
+FAILED tests/test_option3_enterprise.py::TestAuditLogging::test_tamper_proof_logging - ModuleNotFoundError: No module named 'src.security.audit'
+FAILED tests/test_option3_enterprise.py::TestHighAvailability::test_automatic_failover - ModuleNotFoundError: No module named 'src.database.ha'
+FAILED tests/test_option3_enterprise.py::TestHighAvailability::test_backup_creation - ImportError: cannot import name 'BackupManager' from 'src.agents.database.backup' (/home/claude/AIShell/src/agents/database/backup.py)
+FAILED tests/test_option3_enterprise.py::TestHighAvailability::test_database_replication - ModuleNotFoundError: No module named 'src.database.ha'
+FAILED tests/test_option3_enterprise.py::TestHighAvailability::test_health_check_monitoring - ImportError: cannot import name 'HealthMonitor' from 'src.core.health_checks' (/home/claude/AIShell/src/core/health_checks.py)
+FAILED tests/test_option3_enterprise.py::TestHighAvailability::test_point_in_time_recovery - ModuleNotFoundError: No module named 'src.database.ha'
+FAILED tests/test_performance.py::TestPerformanceOptimizer::test_pattern_extraction - assert 0 > 0
+ +  where 0 = len(set())
+ +    where set() = <src.performance.optimizer.PerformanceOptimizer object at 0x7f2caae09580>._query_patterns
+FAILED tests/test_performance.py::TestQueryCache::test_cache_set_get - TypeError: object NoneType can't be used in 'await' expression
+FAILED tests/test_performance.py::TestQueryCache::test_cache_miss - TypeError: object NoneType can't be used in 'await' expression
+FAILED tests/test_performance.py::TestQueryCache::test_cache_with_params - TypeError: object NoneType can't be used in 'await' expression
+FAILED tests/test_performance.py::TestQueryCache::test_cache_ttl_expiration - TypeError: object NoneType can't be used in 'await' expression
+FAILED tests/test_performance.py::TestQueryCache::test_cache_invalidate - TypeError: object NoneType can't be used in 'await' expression
+FAILED tests/test_performance.py::TestQueryCache::test_cache_clear - TypeError: object NoneType can't be used in 'await' expression
+FAILED tests/test_performance.py::TestQueryCache::test_cache_stats - TypeError: object NoneType can't be used in 'await' expression
+FAILED tests/test_performance.py::TestQueryCache::test_lru_eviction - TypeError: object NoneType can't be used in 'await' expression
+FAILED tests/test_performance.py::TestQueryCache::test_cleanup_expired - TypeError: object NoneType can't be used in 'await' expression
+FAILED tests/test_performance.py::TestQueryCache::test_top_entries - TypeError: object NoneType can't be used in 'await' expression
+FAILED tests/test_plugins.py::TestPluginDiscovery::test_discover_plugins_in_directory - ModuleNotFoundError: No module named 'src.plugins.discovery'
+FAILED tests/test_plugins.py::TestPluginDiscovery::test_ignore_invalid_plugins - ModuleNotFoundError: No module named 'src.plugins.discovery'
+FAILED tests/test_plugins.py::TestPluginDiscovery::test_plugin_filtering_by_type - ModuleNotFoundError: No module named 'src.plugins.discovery'
+FAILED tests/test_plugins.py::TestPluginDiscovery::test_plugin_metadata_extraction - ModuleNotFoundError: No module named 'src.plugins.discovery'
+FAILED tests/test_plugins.py::TestPluginLoading::test_handle_plugin_load_errors - ModuleNotFoundError: No module named 'src.plugins.loader'
+FAILED tests/test_plugins.py::TestPluginLoading::test_load_multiple_plugins - ModuleNotFoundError: No module named 'src.plugins.loader'
+FAILED tests/test_plugins.py::TestPluginLoading::test_load_plugin_from_path - ModuleNotFoundError: No module named 'src.plugins.loader'
+FAILED tests/test_plugins.py::TestPluginLoading::test_plugin_import_isolation - ModuleNotFoundError: No module named 'src.plugins.loader'
+FAILED tests/test_plugins.py::TestPluginLifecycle::test_plugin_activation - ModuleNotFoundError: No module named 'src.plugins.manager'
+FAILED tests/test_plugins.py::TestPluginLifecycle::test_plugin_deactivation - ModuleNotFoundError: No module named 'src.plugins.manager'
+FAILED tests/test_plugins.py::TestPluginLifecycle::test_plugin_dependency_order - ModuleNotFoundError: No module named 'src.plugins.manager'
+FAILED tests/test_plugins.py::TestPluginLifecycle::test_plugin_hot_reload - ModuleNotFoundError: No module named 'src.plugins.manager'
+FAILED tests/test_plugins.py::TestPluginAPI::test_hook_filtering - ModuleNotFoundError: No module named 'src.plugins.hooks'
+FAILED tests/test_plugins.py::TestPluginAPI::test_multiple_hooks_execution_order - ModuleNotFoundError: No module named 'src.plugins.hooks'
+FAILED tests/test_plugins.py::TestPluginAPI::test_plugin_communication - ModuleNotFoundError: No module named 'src.plugins.manager'
+FAILED tests/test_plugins.py::TestPluginAPI::test_register_hook - ModuleNotFoundError: No module named 'src.plugins.hooks'
+FAILED tests/test_plugins.py::TestPluginDependencies::test_check_dependencies - ModuleNotFoundError: No module named 'src.plugins.dependencies'
+FAILED tests/test_plugins.py::TestPluginDependencies::test_circular_dependency_detection - ModuleNotFoundError: No module named 'src.plugins.dependencies'
+FAILED tests/test_plugins.py::TestPluginDependencies::test_missing_dependencies - ModuleNotFoundError: No module named 'src.plugins.dependencies'
+FAILED tests/test_plugins.py::TestPluginDependencies::test_version_compatibility - ModuleNotFoundError: No module named 'src.plugins.dependencies'
+FAILED tests/test_plugins.py::TestPluginSecurity::test_code_signing_verification - ModuleNotFoundError: No module named 'src.plugins.security'
+FAILED tests/test_plugins.py::TestPluginSecurity::test_plugin_permission_system - ModuleNotFoundError: No module named 'src.plugins.security'
+FAILED tests/test_plugins.py::TestPluginSecurity::test_resource_limits - ModuleNotFoundError: No module named 'src.plugins.sandbox'
+FAILED tests/test_plugins.py::TestPluginSecurity::test_sandbox_file_access - ModuleNotFoundError: No module named 'src.plugins.sandbox'
+FAILED tests/test_plugins.py::TestPluginConfiguration::test_config_persistence - ModuleNotFoundError: No module named 'src.plugins.config'
+FAILED tests/test_plugins.py::TestPluginConfiguration::test_config_validation - ModuleNotFoundError: No module named 'src.plugins.config'
+FAILED tests/test_plugins.py::TestPluginConfiguration::test_plugin_config_loading - ModuleNotFoundError: No module named 'src.plugins.config'
+FAILED tests/test_security.py::TestSecureVault::test_vault_persistence - src.security.path_validator.SecurityError: Vault path must be within home directory: /tmp/tmptz7f5hfh/persist_vault.enc (home: /home/claude)
+FAILED tests/test_security.py::TestCredentialTypes::test_oauth_credential - src.security.path_validator.SecurityError: Vault path must be within home directory: /tmp/tmpcj815x0r/oauth_vault.enc (home: /home/claude)
+FAILED tests/test_security.py::TestCredentialTypes::test_ssh_credential - src.security.path_validator.SecurityError: Vault path must be within home directory: /tmp/tmpzry8r_l_/ssh_vault.enc (home: /home/claude)
+FAILED tests/test_security.py::TestCredentialTypes::test_custom_credential - src.security.path_validator.SecurityError: Vault path must be within home directory: /tmp/tmpii18aaw3/custom_vault.enc (home: /home/claude)
+ERROR tests/enterprise/test_audit.py::TestComplianceReporter::test_generate_soc2_report - sqlite3.OperationalError: no such table: audit_log
+ERROR tests/enterprise/test_audit.py::TestComplianceReporter::test_generate_hipaa_report - sqlite3.OperationalError: no such table: audit_log
+ERROR tests/enterprise/test_audit.py::TestComplianceReporter::test_generate_gdpr_report - sqlite3.OperationalError: no such table: audit_log
+ERROR tests/test_security.py::TestSecureVault::test_vault_initialization - src.security.path_validator.SecurityError: Vault path must be within home directory: /tmp/tmpdcq4qti4/test_vault.enc (home: /home/claude)
+ERROR tests/test_security.py::TestSecureVault::test_store_standard_credential - src.security.path_validator.SecurityError: Vault path must be within home directory: /tmp/tmpmtb4hoep/test_vault.enc (home: /home/claude)
+ERROR tests/test_security.py::TestSecureVault::test_store_database_credential - src.security.path_validator.SecurityError: Vault path must be within home directory: /tmp/tmptqcnm084/test_vault.enc (home: /home/claude)
+ERROR tests/test_security.py::TestSecureVault::test_store_api_credential - src.security.path_validator.SecurityError: Vault path must be within home directory: /tmp/tmpxyjdky3y/test_vault.enc (home: /home/claude)
+ERROR tests/test_security.py::TestSecureVault::test_auto_redaction_on_retrieval - src.security.path_validator.SecurityError: Vault path must be within home directory: /tmp/tmpu3zj_jcf/test_vault.enc (home: /home/claude)
+ERROR tests/test_security.py::TestSecureVault::test_encryption_decryption - src.security.path_validator.SecurityError: Vault path must be within home directory: /tmp/tmpzjhn95rq/test_vault.enc (home: /home/claude)
+ERROR tests/test_security.py::TestSecureVault::test_get_credential_by_name - src.security.path_validator.SecurityError: Vault path must be within home directory: /tmp/tmp5di57gfi/test_vault.enc (home: /home/claude)
+ERROR tests/test_security.py::TestSecureVault::test_list_credentials - src.security.path_validator.SecurityError: Vault path must be within home directory: /tmp/tmpfrrp6hls/test_vault.enc (home: /home/claude)
+ERROR tests/test_security.py::TestSecureVault::test_update_credential - src.security.path_validator.SecurityError: Vault path must be within home directory: /tmp/tmptsl510gy/test_vault.enc (home: /home/claude)
+ERROR tests/test_security.py::TestSecureVault::test_delete_credential - src.security.path_validator.SecurityError: Vault path must be within home directory: /tmp/tmpnx4m_17j/test_vault.enc (home: /home/claude)
+ERROR tests/test_security.py::TestSecureVault::test_search_credentials - src.security.path_validator.SecurityError: Vault path must be within home directory: /tmp/tmppi6amy4h/test_vault.enc (home: /home/claude)
+ERROR tests/test_security.py::TestSecureVault::test_vault_stats - src.security.path_validator.SecurityError: Vault path must be within home directory: /tmp/tmpoyske1hd/test_vault.enc (home: /home/claude)
+ERROR tests/test_security.py::TestSecureVault::test_export_credential - src.security.path_validator.SecurityError: Vault path must be within home directory: /tmp/tmp_rg6e5ha/test_vault.enc (home: /home/claude)
+ERROR tests/test_security.py::TestSecureVault::test_keyring_integration - src.security.path_validator.SecurityError: Vault path must be within home directory: /tmp/tmpu6t57gzz/test_vault.enc (home: /home/claude)
+===== 111 failed, 356 passed, 6 skipped, 16 warnings, 17 errors in 16.42s ======

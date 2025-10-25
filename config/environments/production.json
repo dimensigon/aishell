@@ -1,0 +1,30 @@
+{
+  "environment": "production",
+  "logging": {
+    "level": "info",
+    "pretty": false,
+    "file": "logs/production.log"
+  },
+  "database": {
+    "default": "postgresql",
+    "enableQueryLogging": false,
+    "slowQueryThreshold": 500
+  },
+  "ai": {
+    "provider": "ollama",
+    "model": "llama3.2",
+    "temperature": 0.5,
+    "maxTokens": 2048
+  },
+  "security": {
+    "requireApproval": true,
+    "dangerousOperations": ["DROP", "DELETE", "TRUNCATE", "ALTER", "UPDATE"],
+    "allowedHosts": []
+  },
+  "features": {
+    "cognitive": true,
+    "vectorSearch": true,
+    "multiDatabase": true,
+    "mcp": true
+  }
+}

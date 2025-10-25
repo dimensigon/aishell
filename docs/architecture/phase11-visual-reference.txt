@@ -1,0 +1,638 @@
+================================================================================
+  PHASE 11: ADVANCED UI & INTERACTIVE EXPERIENCE - VISUAL REFERENCE
+================================================================================
+
+PROJECT: AIShell - AI-powered CLI Database Management Tool
+DATE: 2025-10-04
+STATUS: Architecture Complete - Ready for Implementation
+
+================================================================================
+  1. COMPLETE SYSTEM ARCHITECTURE
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         USER TERMINAL (Textual TUI)                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │                   MATRIX STARTUP SCREEN (2s)                          │  │
+│  │  ┌─────────────────────────────────────────────────────────────────┐  │  │
+│  │  │  Matrix Rain Animation        Health Checks (Parallel)          │  │
+│  │  │  ░▒▓█▓▒░                      ✓ LLM Connection      (3s)        │  │
+│  │  │  ░▒▓█▓▒░                      ✓ Vector DB           (2s)        │  │
+│  │  │  ░▒▓█▓▒░                      ✓ MCP Clients         (2s)        │  │
+│  │  │                               ✓ Event Bus           (1s)        │  │
+│  │  │                               ✓ Panel Enricher      (1s)        │  │
+│  │  │                                                                 │  │
+│  │  │  Progress: ████████████████████████ 100%                        │  │
+│  │  └─────────────────────────────────────────────────────────────────┘  │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                    ↓                                        │
+│                         [Transition after all checks]                       │
+│                                    ↓                                        │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │                    ENHANCED AISHELL APPLICATION                       │  │
+│  │                                                                       │  │
+│  │  ┌─────────────────────────────────────────────────────────────────┐  │  │
+│  │  │  OUTPUT PANEL (50% height - Scrollable)                         │  │
+│  │  │  ┌───────────────────────────────────────────────────────────┐  │  │  │
+│  │  │  │ AI$ > SELECT * FROM users WHERE id = 123                  │  │  │  │
+│  │  │  │ ID    NAME       EMAIL                                    │  │  │  │
+│  │  │  │ 123   John Doe   john@example.com                         │  │  │  │
+│  │  │  │                                                           │  │  │  │
+│  │  │  │ AI$ > UPDATE users SET status = 'active'                  │  │  │  │
+│  │  │  │ [Command executed - 1000 rows affected]                  │  │  │  │
+│  │  │  │ ▼▼▼                                                       │  │  │  │
+│  │  │  └───────────────────────────────────────────────────────────┘  │  │  │
+│  │  └─────────────────────────────────────────────────────────────────┘  │  │
+│  │                                                                       │  │
+│  │  ┌─────────────────────────────────────────────────────────────────┐  │  │
+│  │  │  MODULE PANEL (30% height - Enriched Context)                  │  │
+│  │  │  ┌───────────────────────────────────────────────────────────┐  │  │  │
+│  │  │  │ 📊 Database: ProductionDB                                 │  │  │  │
+│  │  │  │ 📋 Schema: users (10 columns, 15k rows)                   │  │  │  │
+│  │  │  │ 🔍 Recent: Last query affected 1000 rows                  │  │  │  │
+│  │  │  │ ⚡ Performance: Query took 245ms                          │  │  │  │
+│  │  │  │ 💡 Suggestion: Consider adding WHERE clause for safety   │  │  │  │
+│  │  │  └───────────────────────────────────────────────────────────┘  │  │  │
+│  │  └─────────────────────────────────────────────────────────────────┘  │  │
+│  │                                                                       │  │
+│  │  ┌─────────────────────────────────────────────────────────────────┐  │  │
+│  │  │  SMART PROMPT PANEL (20% height - Grows when typing)           │  │
+│  │  │                                                                 │  │
+│  │  │  ┌─────────────────────────────────────────────────────────┐    │  │
+│  │  │  │ ⚠⚠ HIGH RISK OPERATION                                  │    │  │
+│  │  │  │ UPDATE without WHERE will affect ALL 15,000 rows        │    │  │
+│  │  │  │ Estimated execution time: 2.3s | Lock duration: 2.8s    │    │  │
+│  │  │  │ Resource usage: HIGH                                    │    │  │
+│  │  │  └─────────────────────────────────────────────────────────┘    │  │
+│  │  │  [CommandPreviewWidget - Risk Overlay, appears when risk > LOW] │  │
+│  │  │                                                                 │  │
+│  │  │  ┌─────────────────────────────────────────────────────────┐    │  │
+│  │  │  │ 🔍 users                        █████░ (0.95)           │    │  │
+│  │  │  │ 📋 user_sessions                ████░░ (0.87)           │    │  │
+│  │  │  │ 🕐 user_logs                    ███░░░ (0.72)           │    │  │
+│  │  │  │ ⚙️ UPDATE                       ██░░░░ (0.54)           │    │  │
+│  │  │  └─────────────────────────────────────────────────────────┘    │  │
+│  │  │  [SmartSuggestionList - Dropdown, appears on Tab or typing]    │  │
+│  │  │                                                                 │  │
+│  │  │  AI$ > UPDATE users SET status = 'active' WHERE_              │  │
+│  │  │  [Input area with real-time analysis]                          │  │
+│  │  └─────────────────────────────────────────────────────────────────┘  │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    ↕
+        ┌───────────────────────────────────────────────────────┐
+        │            ASYNC EVENT BUS (Priority Queue)           │
+        │  ┌─────────────────────────────────────────────────┐  │
+        │  │  CRITICAL: Command execution                    │  │
+        │  │  HIGH:     Risk analysis, command preview       │  │
+        │  │  NORMAL:   Autocomplete, typing state           │  │
+        │  │  LOW:      Panel enrichment, background updates │  │
+        │  └─────────────────────────────────────────────────┘  │
+        └───────────────────────────────────────────────────────┘
+                                    ↕
+        ┌───────────────────────────────────────────────────────┐
+        │              CORE SERVICES (Async Workers)            │
+        ├───────────────────────────────────────────────────────┤
+        │  SQLRiskAnalyzer     IntelligentCompleter            │
+        │  (Pattern-based)     (FAISS Vector Search)           │
+        │       ↕                      ↕                        │
+        │  ModulePanelEnricher (4 concurrent workers)          │
+        └───────────────────────────────────────────────────────┘
+
+
+================================================================================
+  2. EVENT FLOW DIAGRAM
+================================================================================
+
+User Types "DELETE FROM users" → SmartPromptPanel
+    │
+    ├─→ Event: typing_state_changed
+    │   └─→ DynamicPanelContainer
+    │       └─→ Resize: Prompt grows from 20% to 35%
+    │           (Animation: 100ms smooth transition)
+    │
+    ├─→ Event: command_preview_request (debounce: 300ms)
+    │   └─→ AsyncEventBus (Priority: HIGH)
+    │       └─→ SQLRiskAnalyzer (async worker)
+    │           └─→ Analysis complete (< 200ms)
+    │               └─→ Event: risk_analysis_complete
+    │                   └─→ CommandPreviewWidget
+    │                       └─→ Display: ⚠⚠ HIGH RISK (red overlay)
+    │
+    ├─→ Event: suggestion_request (debounce: 150ms)
+    │   └─→ AsyncEventBus (Priority: NORMAL)
+    │       └─→ IntelligentCompleter
+    │           ├─→ Generate embedding (async)
+    │           ├─→ FAISS vector search (async)
+    │           └─→ Rank candidates (async)
+    │               └─→ Event: suggestions_ready
+    │                   └─→ SmartSuggestionList
+    │                       └─→ Display: Ranked dropdown
+    │
+    └─→ User continues typing " WHERE id = 123"
+        │
+        └─→ Event: command_preview_request (re-analyze)
+            └─→ Risk downgraded: MEDIUM
+                └─→ CommandPreviewWidget
+                    └─→ Update: ⚠ MEDIUM RISK (yellow)
+
+User Presses Enter → Command Execution
+    │
+    └─→ Event: command_executed (Priority: CRITICAL)
+        └─→ AsyncEventBus
+            ├─→ OutputPanel: Display results
+            └─→ Event: panel_enrichment_request (Priority: LOW)
+                └─→ ModulePanelEnricher
+                    ├─→ Gather context (4 workers)
+                    ├─→ Query database schema
+                    ├─→ Analyze performance metrics
+                    └─→ Update ModulePanel (background)
+
+
+================================================================================
+  3. COMPONENT DEPENDENCY GRAPH
+================================================================================
+
+EnhancedAIShellApp
+    ├─→ MatrixStartupScreen (initial)
+    │   ├─→ MatrixRainWidget
+    │   ├─→ HealthCheckGrid
+    │   └─→ HealthCheckRunner
+    │       ├─→ AsyncEventBus ✓
+    │       ├─→ VectorDatabase (FAISS) ✓
+    │       ├─→ LLMManager ✓
+    │       └─→ MCPClientManager ✓
+    │
+    └─→ MainAppScreen (after startup)
+        └─→ DynamicPanelContainer
+            ├─→ OutputPanel (RichLog)
+            │
+            ├─→ ModulePanel (Static)
+            │   └─→ ModulePanelEnricher ✓
+            │       └─→ Context Providers
+            │
+            └─→ SmartPromptPanel (Container)
+                ├─→ CommandPreviewWidget (overlay)
+                │   ├─→ SQLRiskAnalyzer ✓
+                │   ├─→ ImpactEstimator (NEW)
+                │   └─→ RiskIndicator (NEW)
+                │
+                ├─→ SmartSuggestionList (dropdown)
+                │   ├─→ IntelligentCompleter ✓
+                │   ├─→ ContextAwareSuggestionEngine (NEW)
+                │   └─→ EmbeddingProvider ✓
+                │
+                └─→ TextArea (input)
+
+Legend:
+  ✓ = Existing component (integrated)
+  (NEW) = New component to implement
+
+
+================================================================================
+  4. ASYNC WORKFLOW PATTERNS
+================================================================================
+
+Pattern 1: Non-Blocking Risk Analysis
+────────────────────────────────────────────────────────────────────────
+async def on_input_changed(self, text: str):
+    # Cancel previous analysis
+    if self.analysis_task and not self.analysis_task.done():
+        self.analysis_task.cancel()
+
+    # Debounce
+    await asyncio.sleep(0.3)
+
+    # Run in background thread
+    self.analysis_task = asyncio.create_task(
+        self._analyze_command(text)
+    )
+
+async def _analyze_command(self, command: str):
+    # Move CPU-intensive work off UI thread
+    analysis = await asyncio.to_thread(
+        self.risk_analyzer.analyze,
+        command
+    )
+
+    # Update UI on main thread
+    await self.update_preview(analysis)
+
+
+Pattern 2: Parallel Health Checks
+────────────────────────────────────────────────────────────────────────
+async def run_all_checks(self):
+    # Create all check tasks
+    tasks = [
+        asyncio.wait_for(check_llm(), timeout=3.0),
+        asyncio.wait_for(check_vector_db(), timeout=2.0),
+        asyncio.wait_for(check_mcp_clients(), timeout=2.0),
+        asyncio.wait_for(check_event_bus(), timeout=1.0),
+        asyncio.wait_for(check_panel_enricher(), timeout=1.0)
+    ]
+
+    # Run all in parallel
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    # Process results
+    for i, result in enumerate(results):
+        if isinstance(result, Exception):
+            # Handle failure
+            pass
+        else:
+            # Handle success
+            pass
+
+
+Pattern 3: Priority Event Processing
+────────────────────────────────────────────────────────────────────────
+# In AsyncEventBus
+async def _process_events(self):
+    while self.processing:
+        # Get highest priority event (blocks until available)
+        event = await self.event_queue.get()
+
+        # Get all subscribers
+        handlers = self.subscribers.get(event.type, [])
+
+        # Execute handlers
+        tasks = [handler(event) for handler in handlers]
+
+        if event.critical:
+            # Wait for all critical event handlers
+            await asyncio.gather(*tasks)
+        else:
+            # Fire and forget for non-critical
+            asyncio.create_task(asyncio.gather(*tasks))
+
+
+Pattern 4: Smart Caching with TTL
+────────────────────────────────────────────────────────────────────────
+class CachedEnrichment:
+    def __init__(self, data, ttl_seconds=300):
+        self.data = data
+        self.timestamp = time.time()
+        self.ttl = ttl_seconds
+
+    def is_expired(self):
+        return (time.time() - self.timestamp) > self.ttl
+
+async def get_enriched(self, panel_id: str):
+    # Check cache
+    if panel_id in self.cache:
+        cached = self.cache[panel_id]
+        if not cached.is_expired():
+            return cached.data
+        else:
+            # Expired - remove
+            del self.cache[panel_id]
+
+    # Not cached - enrich
+    data = await self.enrich_panel(panel_id)
+    self.cache[panel_id] = CachedEnrichment(data, ttl_seconds=300)
+    return data
+
+
+================================================================================
+  5. PERFORMANCE OPTIMIZATION MAP
+================================================================================
+
+┌──────────────────────────────────────────────────────────────────────┐
+│                      OPTIMIZATION POINTS                             │
+├──────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  1. DEBOUNCING (Reduce unnecessary processing)                      │
+│     ┌─────────────────────────────────────────────────────────┐     │
+│     │ Typing Input  → 300ms → Risk Analysis                   │     │
+│     │ Tab Key       → 150ms → Autocomplete Search             │     │
+│     │ Panel Resize  →   0ms → Immediate (animated over 100ms) │     │
+│     └─────────────────────────────────────────────────────────┘     │
+│                                                                      │
+│  2. ASYNC THREADING (Keep UI responsive)                            │
+│     ┌─────────────────────────────────────────────────────────┐     │
+│     │ Risk Analysis    → asyncio.to_thread()                  │     │
+│     │ FAISS Search     → asyncio.to_thread()                  │     │
+│     │ Embedding Gen    → asyncio.to_thread()                  │     │
+│     │ Schema Query     → asyncio.to_thread()                  │     │
+│     │ Impact Estimate  → asyncio.to_thread()                  │     │
+│     └─────────────────────────────────────────────────────────┘     │
+│                                                                      │
+│  3. CACHING (Avoid redundant work)                                  │
+│     ┌─────────────────────────────────────────────────────────┐     │
+│     │ Panel Enrichment  → 60% target hit rate, 5min TTL       │     │
+│     │ Autocomplete      → Last 100 items in memory            │     │
+│     │ Schema Metadata   → 5min TTL, refresh on connect        │     │
+│     │ Embeddings        → Cache query embeddings (1000 max)   │     │
+│     └─────────────────────────────────────────────────────────┘     │
+│                                                                      │
+│  4. PRIORITY QUEUING (Process important events first)               │
+│     ┌─────────────────────────────────────────────────────────┐     │
+│     │ CRITICAL (1)  → Command execution, errors               │     │
+│     │ HIGH (2)      → Risk analysis, command preview          │     │
+│     │ NORMAL (3)    → Autocomplete, typing state              │     │
+│     │ LOW (4)       → Panel enrichment, background updates    │     │
+│     └─────────────────────────────────────────────────────────┘     │
+│                                                                      │
+│  5. MEMORY MANAGEMENT (Prevent leaks)                               │
+│     ┌─────────────────────────────────────────────────────────┐     │
+│     │ Monitor every 5s                                        │     │
+│     │ Warning at 150MB → Gradual cache cleanup                │     │
+│     │ Critical at 200MB → Aggressive cleanup                  │     │
+│     │ Eviction: LRU (Least Recently Used)                     │     │
+│     └─────────────────────────────────────────────────────────┘     │
+│                                                                      │
+└──────────────────────────────────────────────────────────────────────┘
+
+
+================================================================================
+  6. IMPLEMENTATION TIMELINE (5 WEEKS)
+================================================================================
+
+Week 1: Matrix Startup Animation
+┌─────────────────────────────────────────────────────────────────┐
+│ Files:                                                          │
+│   • src/ui/screens/startup_screen.py                            │
+│   • src/ui/widgets/matrix_rain.py                               │
+│   • src/core/health_checks.py                                   │
+│   • tests/ui/test_matrix_startup.py                             │
+│                                                                 │
+│ Deliverables:                                                   │
+│   ✓ MatrixStartupScreen with animation                          │
+│   ✓ Parallel health checks (5 checks, < 2s total)               │
+│   ✓ Smooth transition to main app                               │
+│   ✓ 90% test coverage                                           │
+└─────────────────────────────────────────────────────────────────┘
+
+Week 2: Dynamic Panel Enhancement
+┌─────────────────────────────────────────────────────────────────┐
+│ Files:                                                          │
+│   • src/ui/containers/dynamic_panel_container.py                │
+│   • src/ui/utils/content_tracker.py                             │
+│   • Enhanced: src/ui/panel_manager.py                           │
+│   • tests/ui/test_dynamic_panels.py                             │
+│                                                                 │
+│ Deliverables:                                                   │
+│   ✓ Adaptive panel sizing (50ms response)                       │
+│   ✓ Smooth 100ms animations                                     │
+│   ✓ Typing state detection                                      │
+│   ✓ Content-aware sizing                                        │
+└─────────────────────────────────────────────────────────────────┘
+
+Week 3: Command Preview System
+┌─────────────────────────────────────────────────────────────────┐
+│ Files:                                                          │
+│   • src/ui/widgets/command_preview.py                           │
+│   • src/ui/widgets/risk_indicator.py                            │
+│   • src/database/impact_estimator.py                            │
+│   • tests/ui/test_command_preview.py                            │
+│                                                                 │
+│ Deliverables:                                                   │
+│   ✓ Real-time risk overlay (< 200ms)                            │
+│   ✓ Color-coded risk levels                                     │
+│   ✓ Impact estimation (±20% accuracy)                           │
+│   ✓ No typing lag                                               │
+└─────────────────────────────────────────────────────────────────┘
+
+Week 4: Smart Suggestions UI
+┌─────────────────────────────────────────────────────────────────┐
+│ Files:                                                          │
+│   • src/ui/widgets/suggestion_list.py                           │
+│   • src/ui/engines/context_suggestion.py                        │
+│   • tests/ui/test_smart_suggestions.py                          │
+│                                                                 │
+│ Deliverables:                                                   │
+│   ✓ Vector-based autocomplete (< 150ms)                         │
+│   ✓ Context-aware suggestions                                   │
+│   ✓ Keyboard navigation                                         │
+│   ✓ Relevance scoring visualization                             │
+└─────────────────────────────────────────────────────────────────┘
+
+Week 5: Integration & Polish
+┌─────────────────────────────────────────────────────────────────┐
+│ Files:                                                          │
+│   • src/ui/app_enhanced.py                                      │
+│   • src/ui/integration/event_coordinator.py                     │
+│   • src/ui/utils/memory_monitor.py                              │
+│   • tests/ui/test_integration.py                                │
+│                                                                 │
+│ Deliverables:                                                   │
+│   ✓ Full system integration                                     │
+│   ✓ All 251+ tests passing                                      │
+│   ✓ 60fps sustained performance                                 │
+│   ✓ Memory overhead < 100MB                                     │
+└─────────────────────────────────────────────────────────────────┘
+
+
+================================================================================
+  7. CRITICAL SUCCESS METRICS
+================================================================================
+
+Performance Targets:
+────────────────────────────────────────────────────────────────────────
+  Metric                Target          Critical Threshold    Status
+  ────────────────────  ──────────────  ───────────────────  ────────
+  Startup Time          < 2s            < 3s                 [ ]
+  Panel Resize          < 50ms          < 100ms              [ ]
+  Risk Analysis         < 200ms         < 500ms              [ ]
+  Autocomplete          < 150ms         < 300ms              [ ]
+  Frame Rate            60fps           30fps                [ ]
+  Memory Overhead       < 100MB         < 200MB              [ ]
+
+Quality Targets:
+────────────────────────────────────────────────────────────────────────
+  Metric                              Target                 Status
+  ──────────────────────────────────  ────────────────────  ────────
+  Existing Tests Pass                 251/251 (100%)         [ ]
+  New UI Tests                        50+ tests              [ ]
+  Code Coverage (new code)            90%                    [ ]
+  Blocking Operations in UI           0                      [ ]
+  Critical Event Failures             0                      [ ]
+
+User Experience Targets:
+────────────────────────────────────────────────────────────────────────
+  Feature                             Target                 Status
+  ──────────────────────────────────  ────────────────────  ────────
+  Animation Smoothness                No flicker/tearing     [ ]
+  Input Responsiveness                No perceptible lag     [ ]
+  Risk Visualization Clarity          All levels distinct    [ ]
+  Autocomplete Relevance              > 80% top suggestion   [ ]
+  Keyboard Navigation                 All features           [ ]
+
+
+================================================================================
+  8. INTEGRATION CHECKLIST
+================================================================================
+
+Event Bus Integration:
+  [ ] Subscribe to 'typing_state_changed'
+  [ ] Subscribe to 'command_preview_request'
+  [ ] Subscribe to 'suggestion_request'
+  [ ] Subscribe to 'panel_enrichment_request'
+  [ ] Publish 'risk_analysis_complete'
+  [ ] Publish 'suggestions_ready'
+  [ ] Publish 'panel_enriched'
+
+Risk Analyzer Integration:
+  [ ] Async wrapper for analyze()
+  [ ] Debouncing implementation (300ms)
+  [ ] Error handling and fallback
+  [ ] Result caching strategy
+
+Autocomplete Integration:
+  [ ] Embedding generation async
+  [ ] FAISS search async
+  [ ] Context gathering from event bus
+  [ ] Result ranking and deduplication
+
+Panel Enricher Integration:
+  [ ] Priority queue setup
+  [ ] 4 worker tasks spawned
+  [ ] Context providers registered
+  [ ] Cache management (60% hit rate)
+
+
+================================================================================
+  9. TESTING STRATEGY
+================================================================================
+
+Unit Tests (Per Component):
+────────────────────────────────────────────────────────────────────────
+  Component                    Tests                           Coverage
+  ───────────────────────────  ─────────────────────────────  ─────────
+  MatrixRainWidget             Animation, rendering            90%
+  MatrixStartupScreen          Health checks, transitions      90%
+  DynamicPanelContainer        Resize, animation, typing       90%
+  CommandPreviewWidget         Risk display, debouncing        90%
+  SmartSuggestionList          Search, keyboard, display       90%
+  RiskIndicator                Visual bars, levels             90%
+  ImpactEstimator              Row counts, execution time      90%
+  ContextAwareSuggestionEngine Context gathering, inference    90%
+
+Integration Tests (Cross-Component):
+────────────────────────────────────────────────────────────────────────
+  Test Scenario                                               Priority
+  ──────────────────────────────────────────────────────────  ────────
+  End-to-end command flow with risk preview                   HIGH
+  Autocomplete integration with vector search                 HIGH
+  Panel resizing during typing                                MEDIUM
+  Event bus message routing                                   HIGH
+  Memory management under load                                MEDIUM
+
+Performance Tests:
+────────────────────────────────────────────────────────────────────────
+  Test                         Target          Measurement
+  ───────────────────────────  ──────────────  ─────────────────────
+  Autocomplete latency         < 150ms         time.perf_counter()
+  Risk analysis latency        < 200ms         time.perf_counter()
+  Panel resize latency         < 50ms          time.perf_counter()
+  Frame rate under load        60fps           Textual profiler
+  Memory growth over 1hr       < 100MB         tracemalloc
+
+
+================================================================================
+  10. COMMON PITFALLS & SOLUTIONS
+================================================================================
+
+❌ PITFALL 1: Blocking UI Thread
+────────────────────────────────────────────────────────────────────────
+Problem: Calling slow operations in UI handlers
+Solution: Always use asyncio.to_thread() for CPU/IO work
+
+  # ❌ WRONG
+  def on_input_changed(self, text):
+      analysis = self.risk_analyzer.analyze(text)  # BLOCKS!
+
+  # ✅ CORRECT
+  async def on_input_changed(self, text):
+      analysis = await asyncio.to_thread(
+          self.risk_analyzer.analyze, text
+      )
+
+❌ PITFALL 2: Missing Debouncing
+────────────────────────────────────────────────────────────────────────
+Problem: Running expensive operations on every keystroke
+Solution: Add debounce delays
+
+  # ❌ WRONG
+  async def on_key(self, event):
+      await self.analyze_command()  # Too frequent!
+
+  # ✅ CORRECT
+  async def on_key(self, event):
+      if self.analysis_task:
+          self.analysis_task.cancel()
+      await asyncio.sleep(0.3)  # Debounce
+      await self.analyze_command()
+
+❌ PITFALL 3: Not Cancelling Previous Tasks
+────────────────────────────────────────────────────────────────────────
+Problem: Multiple parallel tasks for same operation
+Solution: Cancel previous task before starting new one
+
+  # ✅ CORRECT
+  async def search_suggestions(self, query):
+      if self.search_task and not self.search_task.done():
+          self.search_task.cancel()
+      self.search_task = asyncio.create_task(self._run_search(query))
+
+❌ PITFALL 4: Memory Leaks in Caches
+────────────────────────────────────────────────────────────────────────
+Problem: Unbounded cache growth
+Solution: Implement TTL and size limits
+
+  # ✅ CORRECT
+  def add_to_cache(self, key, value):
+      if len(self.cache) > 1000:
+          oldest = min(self.cache.items(), key=lambda x: x[1].timestamp)
+          del self.cache[oldest[0]]
+      self.cache[key] = CachedEnrichment(value, ttl_seconds=300)
+
+❌ PITFALL 5: Unhandled Exceptions
+────────────────────────────────────────────────────────────────────────
+Problem: Unhandled exceptions crash UI
+Solution: Comprehensive try/except in async handlers
+
+  # ✅ CORRECT
+  async def _run_analysis(self, command):
+      try:
+          analysis = await asyncio.to_thread(
+              self.risk_analyzer.analyze, command
+          )
+          self._update_display(analysis)
+      except Exception as e:
+          logger.error(f"Analysis error: {e}")
+          self._hide()  # Graceful degradation
+
+
+================================================================================
+  READY FOR IMPLEMENTATION
+================================================================================
+
+Architecture Status: ✅ COMPLETE
+Documentation:       ✅ COMPREHENSIVE
+Dependencies:        ✅ IDENTIFIED
+Test Strategy:       ✅ DEFINED
+Performance Goals:   ✅ SPECIFIED
+
+Next Steps:
+1. Review architecture documents
+2. Install dependencies (textual>=0.82.0, rich>=13.7.0)
+3. Start Week 1 implementation (Matrix Startup)
+4. Follow 5-week roadmap sequentially
+
+Memory Storage:
+• Architecture: .swarm/memory.db (key: phase11/architecture)
+• Diagrams: .swarm/memory.db (key: phase11/component-diagrams)
+• Summary: .swarm/memory.db (key: phase11/implementation-summary)
+
+Documentation Files:
+• /home/claude/AIShell/docs/architecture/phase11-advanced-ui-architecture.md
+• /home/claude/AIShell/docs/architecture/phase11-component-diagrams.md
+• /home/claude/AIShell/docs/architecture/phase11-implementation-summary.md
+• /home/claude/AIShell/docs/architecture/phase11-visual-reference.txt
+
+================================================================================
+  END OF VISUAL REFERENCE
+================================================================================

@@ -1,0 +1,19 @@
+{
+  "mysql": {
+    "production": {
+      "host": "localhost",
+      "port": 3307,
+      "database": "mysql",
+      "username": "root",
+      "password": "${MYSQL_PASSWORD}",
+      "connectionLimit": 10
+    },
+    "testing": {
+      "host": "51.15.90.27",
+      "port": 3307,
+      "database": "mysql",
+      "username": "root",
+      "password": "MyMySQLPass123"
+    }
+  }
+}

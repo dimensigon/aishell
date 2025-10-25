@@ -1,0 +1,44 @@
+{
+  "oracle": {
+    "cdb_root": {
+      "host": "localhost",
+      "port": 1521,
+      "serviceName": "free",
+      "username": "SYS",
+      "password": "${ORACLE_PASSWORD}",
+      "role": "SYSDBA",
+      "poolMin": 2,
+      "poolMax": 10,
+      "poolIncrement": 2
+    },
+    "freepdb1": {
+      "host": "localhost",
+      "port": 1521,
+      "serviceName": "freepdb1",
+      "username": "SYS",
+      "password": "${ORACLE_PASSWORD}",
+      "role": "SYSDBA",
+      "poolMin": 2,
+      "poolMax": 10,
+      "poolIncrement": 2
+    }
+  },
+  "testing": {
+    "cdb_root": {
+      "host": "51.15.90.27",
+      "port": 1521,
+      "serviceName": "free",
+      "username": "SYS",
+      "password": "MyOraclePass123",
+      "role": "SYSDBA"
+    },
+    "freepdb1": {
+      "host": "51.15.90.27",
+      "port": 1521,
+      "serviceName": "freepdb1",
+      "username": "SYS",
+      "password": "MyOraclePass123",
+      "role": "SYSDBA"
+    }
+  }
+}

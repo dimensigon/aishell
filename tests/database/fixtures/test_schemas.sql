@@ -1,0 +1,112 @@
+-- Test database schemas
+-- Compatible with PostgreSQL, MySQL, and Oracle (with minor syntax variations)
+
+-- Basic user management schema
+-- PostgreSQL/MySQL version
+-- CREATE TABLE IF NOT EXISTS users (
+--     id SERIAL PRIMARY KEY,
+--     username VARCHAR(100) NOT NULL UNIQUE,
+--     email VARCHAR(255) NOT NULL UNIQUE,
+--     password_hash VARCHAR(255) NOT NULL,
+--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     is_active BOOLEAN DEFAULT true
+-- );
+
+-- Oracle version
+-- CREATE TABLE users (
+--     id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+--     username VARCHAR2(100) NOT NULL UNIQUE,
+--     email VARCHAR2(255) NOT NULL UNIQUE,
+--     password_hash VARCHAR2(255) NOT NULL,
+--     created_at TIMESTAMP DEFAULT SYSTIMESTAMP,
+--     updated_at TIMESTAMP DEFAULT SYSTIMESTAMP,
+--     is_active NUMBER(1) DEFAULT 1
+-- );
+
+-- Product catalog schema
+-- PostgreSQL/MySQL version
+-- CREATE TABLE IF NOT EXISTS products (
+--     id SERIAL PRIMARY KEY,
+--     name VARCHAR(200) NOT NULL,
+--     description TEXT,
+--     price DECIMAL(10, 2) NOT NULL,
+--     category VARCHAR(100),
+--     stock INTEGER DEFAULT 0,
+--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- );
+
+-- Oracle version
+-- CREATE TABLE products (
+--     id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+--     name VARCHAR2(200) NOT NULL,
+--     description CLOB,
+--     price NUMBER(10, 2) NOT NULL,
+--     category VARCHAR2(100),
+--     stock NUMBER DEFAULT 0,
+--     created_at TIMESTAMP DEFAULT SYSTIMESTAMP
+-- );
+
+-- Orders schema with foreign keys
+-- PostgreSQL/MySQL version
+-- CREATE TABLE IF NOT EXISTS orders (
+--     id SERIAL PRIMARY KEY,
+--     user_id INTEGER NOT NULL,
+--     total_amount DECIMAL(10, 2) NOT NULL,
+--     status VARCHAR(50) DEFAULT 'pending',
+--     order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+-- );
+
+-- Oracle version
+-- CREATE TABLE orders (
+--     id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+--     user_id NUMBER NOT NULL,
+--     total_amount NUMBER(10, 2) NOT NULL,
+--     status VARCHAR2(50) DEFAULT 'pending',
+--     order_date TIMESTAMP DEFAULT SYSTIMESTAMP,
+--     CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+-- );
+
+-- Order items (many-to-many relationship)
+-- PostgreSQL/MySQL version
+-- CREATE TABLE IF NOT EXISTS order_items (
+--     id SERIAL PRIMARY KEY,
+--     order_id INTEGER NOT NULL,
+--     product_id INTEGER NOT NULL,
+--     quantity INTEGER NOT NULL,
+--     unit_price DECIMAL(10, 2) NOT NULL,
+--     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+--     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT
+-- );
+
+-- Schema for testing different data types
+-- PostgreSQL version
+-- CREATE TABLE IF NOT EXISTS data_types_test (
+--     id SERIAL PRIMARY KEY,
+--     int_col INTEGER,
+--     bigint_col BIGINT,
+--     varchar_col VARCHAR(100),
+--     text_col TEXT,
+--     decimal_col DECIMAL(10, 2),
+--     float_col FLOAT,
+--     date_col DATE,
+--     timestamp_col TIMESTAMP,
+--     boolean_col BOOLEAN,
+--     json_col JSONB
+-- );
+
+-- Schema for testing indexes and performance
+-- CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+-- CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
+-- CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id);
+-- CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
+
+-- Schema for testing constraints
+-- CREATE TABLE IF NOT EXISTS constraints_test (
+--     id SERIAL PRIMARY KEY,
+--     unique_col VARCHAR(100) UNIQUE,
+--     not_null_col VARCHAR(100) NOT NULL,
+--     check_col INTEGER CHECK (check_col > 0 AND check_col < 100),
+--     default_col VARCHAR(50) DEFAULT 'default_value'
+-- );

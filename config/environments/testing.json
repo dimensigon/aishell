@@ -1,0 +1,31 @@
+{
+  "environment": "testing",
+  "logging": {
+    "level": "warn",
+    "pretty": false,
+    "file": "logs/testing.log"
+  },
+  "database": {
+    "default": "postgresql",
+    "enableQueryLogging": true,
+    "slowQueryThreshold": 2000,
+    "remoteHost": "51.15.90.27"
+  },
+  "ai": {
+    "provider": "ollama",
+    "model": "llama3.2",
+    "temperature": 0.7,
+    "maxTokens": 2048
+  },
+  "security": {
+    "requireApproval": false,
+    "dangerousOperations": [],
+    "allowedHosts": ["localhost", "127.0.0.1", "51.15.90.27"]
+  },
+  "features": {
+    "cognitive": true,
+    "vectorSearch": true,
+    "multiDatabase": true,
+    "mcp": true
+  }
+}

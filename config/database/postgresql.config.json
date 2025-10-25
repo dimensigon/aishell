@@ -1,0 +1,22 @@
+{
+  "postgresql": {
+    "production": {
+      "host": "localhost",
+      "port": 5432,
+      "database": "postgres",
+      "username": "postgres",
+      "password": "${POSTGRES_PASSWORD}",
+      "ssl": false,
+      "poolMin": 2,
+      "poolMax": 10
+    },
+    "testing": {
+      "host": "51.15.90.27",
+      "port": 5432,
+      "database": "postgres",
+      "username": "postgres",
+      "password": "MyPostgresPass123",
+      "ssl": false
+    }
+  }
+}
