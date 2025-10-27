@@ -902,7 +902,7 @@ describe('Redis Integration Tests', () => {
         await redis.xadd('limited_stream', '*', 'value', `${i}`);
       }
 
-      await redis.xtrim('limited_stream', 'MAXLEN', '~', 5);
+      await redis.xtrim('limited_stream', 'MAXLEN', 5);
 
       const length = await redis.xlen('limited_stream');
       expect(length).toBeLessThanOrEqual(5);

@@ -55,6 +55,7 @@ export class AnthropicProvider implements ILLMProvider {
   async generateStream(options: GenerateOptions, callback: StreamCallback): Promise<void> {
     try {
       const messages = this.convertMessages(options.messages);
+      let fullResponse = '';
 
       const stream = await this.client.messages.create({
         model: this.model,
@@ -67,14 +68,19 @@ export class AnthropicProvider implements ILLMProvider {
       for await (const event of stream) {
         if (event.type === 'content_block_delta') {
           if (event.delta.type === 'text_delta') {
+            fullResponse += event.delta.text;
             callback.onChunk(event.delta.text);
           }
         }
       }
 
-      callback.onComplete();
+      if (callback.onComplete) {
+        callback.onComplete(fullResponse);
+      }
     } catch (error) {
-      callback.onError(error instanceof Error ? error : new Error(String(error)));
+      if (callback.onError) {
+        callback.onError(error instanceof Error ? error : new Error(String(error)));
+      }
     }
   }
 
@@ -101,11 +107,11 @@ export class AnthropicProvider implements ILLMProvider {
     ];
   }
 
-  private convertMessages(messages: LLMMessage[]): Array<{ role: string; content: string }> {
+  private convertMessages(messages: LLMMessage[]): Array<{ role: 'user' | 'assistant'; content: string }> {
     return messages
       .filter((m) => m.role !== 'system')
       .map((m) => ({
-        role: m.role,
+        role: m.role as 'user' | 'assistant',
         content: m.content
       }));
   }

@@ -1,0 +1,103 @@
+{
+  "queryOptimizer": {
+    "enabled": true,
+    "autoOptimize": false,
+    "slowQueryThreshold": 1000,
+    "logSlowQueries": true,
+    "maxLogSize": 1000
+  },
+  "healthMonitor": {
+    "enabled": false,
+    "monitoringInterval": 5000,
+    "alerts": {
+      "enabled": false,
+      "channels": {
+        "slack": {
+          "enabled": false,
+          "webhookUrl": ""
+        },
+        "email": {
+          "enabled": false,
+          "to": [],
+          "smtp": {
+            "host": "",
+            "port": 587,
+            "user": "",
+            "password": ""
+          }
+        },
+        "webhook": {
+          "enabled": false,
+          "url": ""
+        }
+      },
+      "thresholds": {
+        "responseTime": 1000,
+        "errorRate": 5,
+        "cpuUsage": 80,
+        "memoryUsage": 85,
+        "diskSpace": 90
+      }
+    }
+  },
+  "backupSystem": {
+    "enabled": false,
+    "schedule": "0 2 * * *",
+    "retention": 30,
+    "compression": true,
+    "location": "local",
+    "localPath": "./backups",
+    "s3Config": {
+      "bucket": "",
+      "region": "",
+      "accessKeyId": "",
+      "secretAccessKey": ""
+    }
+  },
+  "queryFederation": {
+    "enabled": true,
+    "cacheResults": true,
+    "maxDatabases": 5,
+    "timeout": 30000
+  },
+  "schemaDesigner": {
+    "enabled": true,
+    "autoValidate": true,
+    "generateMigrations": true,
+    "templatePath": "./schemas"
+  },
+  "queryCache": {
+    "enabled": false,
+    "ttl": 3600,
+    "maxSize": 10485760,
+    "redisUrl": "redis://localhost:6379",
+    "invalidationStrategy": "time",
+    "autoInvalidateTables": []
+  },
+  "migrationTester": {
+    "enabled": true,
+    "preserveTestData": false,
+    "parallelTests": false,
+    "timeout": 60000
+  },
+  "sqlExplainer": {
+    "enabled": true,
+    "cacheExplanations": true,
+    "detailedBreakdown": true
+  },
+  "schemaDiff": {
+    "enabled": true,
+    "autoGenerateMigration": true,
+    "includeIndexes": true,
+    "includeConstraints": true
+  },
+  "costOptimizer": {
+    "enabled": true,
+    "provider": {
+      "name": "AWS",
+      "region": "us-east-1"
+    },
+    "analysisInterval": "weekly",
+    "autoApplyOptimizations": false
+  }
+}

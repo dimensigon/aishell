@@ -1,10 +1,9 @@
 /**
  * Terminal Dashboard UI
- * Beautiful terminal dashboard using blessed
+ * Beautiful terminal dashboard using blessed (pure blessed implementation)
  */
 
 import * as blessed from 'blessed';
-import * as contrib from 'blessed-contrib';
 import { PerformanceMetrics } from './performance-monitor';
 import { QueryLog } from './query-logger';
 
@@ -22,14 +21,14 @@ export interface DashboardConfig {
  */
 export class DashboardUI {
   private screen?: blessed.Widgets.Screen;
-  private grid?: any;
   private widgets: {
-    metrics?: any;
-    qpsLine?: any;
-    queryLog?: any;
-    slowQueries?: any;
-    resources?: any;
+    metrics?: blessed.Widgets.BoxElement;
+    qpsLine?: blessed.Widgets.BoxElement;
+    queryLog?: blessed.Widgets.BoxElement;
+    slowQueries?: blessed.Widgets.BoxElement;
+    resources?: blessed.Widgets.BoxElement;
   } = {};
+  private qpsData: Array<{ x: string; y: number }> = [];
 
   constructor(_config: DashboardConfig = {}) {}
 
@@ -41,13 +40,6 @@ export class DashboardUI {
     this.screen = blessed.screen({
       smartCSR: true,
       title: 'AI Shell - Performance Dashboard'
-    });
-
-    // Create grid layout
-    this.grid = new contrib.grid({
-      rows: 12,
-      cols: 12,
-      screen: this.screen
     });
 
     // Create widgets
@@ -78,7 +70,16 @@ export class DashboardUI {
     // Update QPS line chart
     if (this.widgets.qpsLine) {
       // Add data point
-      // Note: blessed-contrib has specific API for updating charts
+      this.qpsData.push({
+        x: new Date().toLocaleTimeString(),
+        y: metrics.queriesPerSecond
+      });
+      // Keep last 20 data points
+      if (this.qpsData.length > 20) {
+        this.qpsData.shift();
+      }
+      const chartContent = this.formatLineChart(this.qpsData);
+      this.widgets.qpsLine.setContent(chartContent);
     }
 
     // Update resource gauges
@@ -96,17 +97,14 @@ export class DashboardUI {
   updateQueryLog(queries: QueryLog[]): void {
     if (!this.screen || !this.widgets.queryLog) return;
 
-    const rows = queries.slice(0, 10).map((q) => [
-      new Date(q.timestamp).toLocaleTimeString(),
-      `${q.duration}ms`,
-      q.query.substring(0, 50) + (q.query.length > 50 ? '...' : '')
-    ]);
+    const content = queries.slice(0, 10).map((q, i) => {
+      const time = new Date(q.timestamp).toLocaleTimeString();
+      const duration = `${q.duration}ms`;
+      const query = q.query.substring(0, 40) + (q.query.length > 40 ? '...' : '');
+      return `${i + 1}. ${time} | ${duration.padEnd(8)} | ${query}`;
+    }).join('\n');
 
-    this.widgets.queryLog.setData({
-      headers: ['Time', 'Duration', 'Query'],
-      data: rows
-    });
-
+    this.widgets.queryLog.setContent(content || 'No queries yet');
     this.screen.render();
   }
 
@@ -129,10 +127,15 @@ export class DashboardUI {
    * Create dashboard widgets
    */
   private createWidgets(): void {
-    if (!this.grid) return;
+    if (!this.screen) return;
 
     // Metrics box (top left)
-    this.widgets.metrics = this.grid.set(0, 0, 4, 6, blessed.box, {
+    this.widgets.metrics = blessed.box({
+      parent: this.screen,
+      top: 0,
+      left: 0,
+      width: '50%',
+      height: '33%',
       label: '📊 Performance Metrics',
       content: 'Loading...',
       tags: true,
@@ -144,7 +147,12 @@ export class DashboardUI {
     });
 
     // Resources box (top right)
-    this.widgets.resources = this.grid.set(0, 6, 4, 6, blessed.box, {
+    this.widgets.resources = blessed.box({
+      parent: this.screen,
+      top: 0,
+      left: '50%',
+      width: '50%',
+      height: '33%',
       label: '💻 System Resources',
       content: 'Loading...',
       tags: true,
@@ -156,31 +164,52 @@ export class DashboardUI {
     });
 
     // QPS line chart (middle)
-    this.widgets.qpsLine = this.grid.set(4, 0, 4, 12, contrib.line, {
+    this.widgets.qpsLine = blessed.box({
+      parent: this.screen,
+      top: '33%',
+      left: 0,
+      width: '100%',
+      height: '33%',
       label: '⚡ Queries Per Second',
-      showLegend: true,
-      legend: { width: 12 },
+      content: 'No data yet',
+      tags: true,
+      border: { type: 'line' },
       style: {
-        line: 'yellow',
-        text: 'green',
-        baseline: 'white'
+        fg: 'yellow',
+        border: { fg: 'yellow' }
       }
     });
 
     // Query log table (bottom left)
-    this.widgets.queryLog = this.grid.set(8, 0, 4, 7, contrib.table, {
+    this.widgets.queryLog = blessed.box({
+      parent: this.screen,
+      top: '66%',
+      left: 0,
+      width: '60%',
+      height: '34%',
       label: '📝 Recent Queries',
-      keys: true,
-      fg: 'white',
-      selectedFg: 'white',
-      selectedBg: 'blue',
-      interactive: false,
-      columnSpacing: 2,
-      columnWidth: [10, 10, 50]
+      content: 'No queries yet',
+      tags: true,
+      border: { type: 'line' },
+      style: {
+        fg: 'white',
+        border: { fg: 'green' }
+      },
+      scrollable: true,
+      alwaysScroll: true,
+      scrollbar: {
+        ch: ' ',
+        style: { bg: 'green' }
+      }
     });
 
     // Slow queries box (bottom right)
-    this.widgets.slowQueries = this.grid.set(8, 7, 4, 5, blessed.box, {
+    this.widgets.slowQueries = blessed.box({
+      parent: this.screen,
+      top: '66%',
+      left: '60%',
+      width: '40%',
+      height: '34%',
       label: '⚠️  Slow Queries',
       content: 'No slow queries',
       tags: true,
@@ -268,6 +297,40 @@ ${new Date(metrics.timestamp).toLocaleString()}
     }
 
     return `${size.toFixed(2)} ${units[unitIndex]}`;
+  }
+
+  /**
+   * Format line chart data as ASCII art
+   */
+  private formatLineChart(data: Array<{ x: string; y: number }>): string {
+    if (data.length === 0) return 'No data yet';
+
+    const maxY = Math.max(...data.map(d => d.y), 1);
+    const height = 10;
+    const width = data.length;
+
+    let chart = '';
+    for (let row = height; row >= 0; row--) {
+      const threshold = (row / height) * maxY;
+      let line = `${threshold.toFixed(0).padStart(4)} │ `;
+
+      for (let col = 0; col < width; col++) {
+        const value = data[col].y;
+        if (value >= threshold) {
+          line += '█';
+        } else if (value >= threshold - (maxY / height / 2)) {
+          line += '▄';
+        } else {
+          line += ' ';
+        }
+      }
+      chart += line + '\n';
+    }
+
+    chart += '     └' + '─'.repeat(width) + '\n';
+    chart += '      ' + data.map(d => d.x.substring(0, 5)).join('').substring(0, width);
+
+    return chart;
   }
 
   /**

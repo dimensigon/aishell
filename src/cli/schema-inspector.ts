@@ -22,7 +22,7 @@ export class SchemaInspector {
    * Explore tables using natural language query
    */
   async exploreTables(nlQuery: string): Promise<TableInfo[]> {
-    return this.errorHandler.wrap(
+    const result = await this.errorHandler.wrap(
       async () => {
         // Get all tables first
         const allTables = await this.getAllTables();
@@ -68,13 +68,15 @@ Return a JSON array of relevant table names: ["table1", "table2", ...]`;
         component: 'SchemaInspector'
       }
     )();
+
+    return result || [];
   }
 
   /**
    * Describe table structure
    */
-  async describeTable(tableName: string): Promise<TableInfo | null> {
-    return this.errorHandler.wrap(
+  async describeTable(tableName: string): Promise<TableInfo> {
+    const result = await this.errorHandler.wrap(
       async () => {
         const connection = this.connectionManager.getActive();
 
@@ -101,6 +103,12 @@ Return a JSON array of relevant table names: ["table1", "table2", ...]`;
         component: 'SchemaInspector'
       }
     )();
+
+    if (!result) {
+      throw new Error(`Failed to describe table: ${tableName}`);
+    }
+
+    return result;
   }
 
   /**
@@ -170,7 +178,7 @@ Return a JSON array of relevant table names: ["table1", "table2", ...]`;
     return {
       name: tableName,
       columns,
-      primaryKey: primaryKey.length > 0 ? primaryKey : undefined
+      primaryKey: primaryKey.length > 0 ? primaryKey : []
     };
   }
 
@@ -195,7 +203,7 @@ Return a JSON array of relevant table names: ["table1", "table2", ...]`;
     return {
       name: tableName,
       columns,
-      primaryKey: primaryKey.length > 0 ? primaryKey : undefined
+      primaryKey: primaryKey.length > 0 ? primaryKey : []
     };
   }
 
@@ -203,7 +211,7 @@ Return a JSON array of relevant table names: ["table1", "table2", ...]`;
    * Find relationships for a table
    */
   async findRelationships(tableName: string): Promise<Relationship[]> {
-    return this.errorHandler.wrap(
+    const result = await this.errorHandler.wrap(
       async () => {
         const connection = this.connectionManager.getActive();
 
@@ -230,6 +238,8 @@ Return a JSON array of relevant table names: ["table1", "table2", ...]`;
         component: 'SchemaInspector'
       }
     )();
+
+    return result || [];
   }
 
   /**
@@ -316,7 +326,7 @@ Return a JSON array of relevant table names: ["table1", "table2", ...]`;
    * Search for columns matching a keyword
    */
   async searchColumns(keyword: string): Promise<ColumnInfo[]> {
-    return this.errorHandler.wrap(
+    const result = await this.errorHandler.wrap(
       async () => {
         const tables = await this.getAllTables();
         const matchingColumns: ColumnInfo[] = [];
@@ -344,6 +354,8 @@ Return a JSON array of relevant table names: ["table1", "table2", ...]`;
         component: 'SchemaInspector'
       }
     )();
+
+    return result || [];
   }
 
   /**

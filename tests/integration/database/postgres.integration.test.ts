@@ -803,6 +803,7 @@ describe('PostgreSQL Prepared Statements', () => {
       await client.query({
         name: 'get-user-by-email',
         text: 'SELECT * FROM users WHERE email = $1',
+        values: ['john@example.com'],
       });
 
       // Execute prepared statement
@@ -825,6 +826,7 @@ describe('PostgreSQL Prepared Statements', () => {
       await client.query({
         name: 'get-user-count',
         text: 'SELECT COUNT(*) as count FROM users WHERE is_active = $1',
+        values: [true],
       });
 
       const result1 = await client.query({

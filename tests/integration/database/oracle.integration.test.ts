@@ -510,7 +510,7 @@ describe('Oracle FREEPDB1 Integration Tests', () => {
         }
       );
 
-      expect(result.rows[0]?.result || (result as any).outBinds?.result).toBe(30);
+      expect((result as any).outBinds?.result).toBe(30);
     });
 
     it('should call function in SELECT', async () => {
@@ -530,7 +530,7 @@ describe('Oracle FREEPDB1 Integration Tests', () => {
       // Clean up
       await client.execute(`
         BEGIN
-          EXECUTE IMMEDIATE 'DROP SEQUENCE ${TEST_SEQ}';
+          EXECUTE IMMEDIATE 'DROP SEQUENCE test_user.${TEST_SEQ}';
         EXCEPTION
           WHEN OTHERS THEN NULL;
         END;
@@ -538,52 +538,52 @@ describe('Oracle FREEPDB1 Integration Tests', () => {
 
       await client.execute(`
         BEGIN
-          EXECUTE IMMEDIATE 'DROP TABLE ${TEST_TABLE}';
+          EXECUTE IMMEDIATE 'DROP TABLE test_user.${TEST_TABLE}';
         EXCEPTION
           WHEN OTHERS THEN NULL;
         END;
       `);
 
-      // Create sequence
-      await client.execute(`CREATE SEQUENCE ${TEST_SEQ} START WITH 100 INCREMENT BY 1`);
+      // Create sequence in test_user schema
+      await client.execute(`CREATE SEQUENCE test_user.${TEST_SEQ} START WITH 100 INCREMENT BY 1`);
 
-      // Create table with trigger
+      // Create table with trigger in test_user schema
       await client.execute(`
-        CREATE TABLE ${TEST_TABLE} (
+        CREATE TABLE test_user.${TEST_TABLE} (
           id NUMBER PRIMARY KEY,
           name VARCHAR2(100)
         )
       `);
 
       await client.execute(`
-        CREATE OR REPLACE TRIGGER trg_${TEST_TABLE}
-          BEFORE INSERT ON ${TEST_TABLE}
+        CREATE OR REPLACE TRIGGER test_user.trg_${TEST_TABLE}
+          BEFORE INSERT ON test_user.${TEST_TABLE}
           FOR EACH ROW
           WHEN (NEW.id IS NULL)
         BEGIN
-          SELECT ${TEST_SEQ}.NEXTVAL INTO :NEW.id FROM DUAL;
+          SELECT test_user.${TEST_SEQ}.NEXTVAL INTO :NEW.id FROM DUAL;
         END;
       `);
     });
 
     afterEach(async () => {
-      await client.execute(`DROP TABLE ${TEST_TABLE}`);
-      await client.execute(`DROP SEQUENCE ${TEST_SEQ}`);
+      await client.execute(`DROP TABLE test_user.${TEST_TABLE}`);
+      await client.execute(`DROP SEQUENCE test_user.${TEST_SEQ}`);
     });
 
     it('should use sequence manually', async () => {
-      const result = await client.execute(`SELECT ${TEST_SEQ}.NEXTVAL AS next_val FROM DUAL`);
+      const result = await client.execute(`SELECT test_user.${TEST_SEQ}.NEXTVAL AS next_val FROM DUAL`);
 
       expect(result.rows[0].NEXT_VAL).toBeGreaterThanOrEqual(100);
     });
 
     it('should auto-populate ID with trigger', async () => {
       await client.execute(
-        `INSERT INTO ${TEST_TABLE} (name) VALUES ('Auto ID')`
+        `INSERT INTO test_user.${TEST_TABLE} (name) VALUES ('Auto ID')`
       );
 
       const result = await client.execute(
-        `SELECT id, name FROM ${TEST_TABLE} WHERE name = 'Auto ID'`
+        `SELECT id, name FROM test_user.${TEST_TABLE} WHERE name = 'Auto ID'`
       );
 
       expect(result.rows).toHaveLength(1);
