@@ -8,7 +8,7 @@ export { MCPClient } from './client';
 export { MCPMessageBuilder } from './messages';
 export { MCPContextAdapter } from './context-adapter';
 export { MCPErrorHandler } from './error-handler';
-export { MCPResourceManager } from './resource-manager';
+export { ResourceManager } from './resource-manager';
 
 // Types
 export * from './types';

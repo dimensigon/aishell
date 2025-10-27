@@ -7,13 +7,51 @@ import { spawn, ChildProcess } from 'child_process';
 import { CommandContext, CommandResult, ShellConfig } from '../types';
 import * as fs from 'fs';
 import * as path from 'path';
+import { createLogger, auditLogger } from './logger';
 
 export class CommandProcessor {
   private config: ShellConfig;
   private executionHistory: CommandResult[] = [];
+  private logger = createLogger('CommandProcessor');
+
+  // Whitelist of safe commands to prevent command injection
+  private static readonly SAFE_COMMANDS = [
+    'ls', 'cat', 'grep', 'find', 'echo', 'pwd', 'mkdir', 'rm', 'cp', 'mv',
+    'touch', 'chmod', 'chown', 'head', 'tail', 'wc', 'sort', 'uniq', 'cut',
+    'sed', 'awk', 'tar', 'gzip', 'gunzip', 'zip', 'unzip', 'curl', 'wget',
+    'git', 'npm', 'node', 'python', 'python3', 'pip', 'pip3', 'make',
+    'docker', 'kubectl', 'terraform', 'ansible', 'ssh', 'scp', 'rsync',
+    'ps', 'top', 'htop', 'df', 'du', 'free', 'uptime', 'whoami', 'which',
+    'man', 'less', 'more', 'vi', 'vim', 'nano', 'date', 'cal', 'bc'
+  ];
+
+  // Dangerous characters that could be used for command injection
+  private static readonly DANGEROUS_CHARS = /[;&|`$()<>]/;
 
   constructor(config: ShellConfig) {
     this.config = config;
+  }
+
+  /**
+   * Validate if a command is in the whitelist
+   */
+  private validateCommand(command: string): boolean {
+    // Extract base command (handle paths like /usr/bin/ls)
+    const baseCommand = path.basename(command);
+    return CommandProcessor.SAFE_COMMANDS.includes(baseCommand);
+  }
+
+  /**
+   * Sanitize input to prevent shell injection
+   */
+  private sanitizeInput(input: string): string {
+    // Remove or escape dangerous characters
+    if (CommandProcessor.DANGEROUS_CHARS.test(input)) {
+      throw new Error(
+        'Input contains dangerous characters that could lead to command injection'
+      );
+    }
+    return input;
   }
 
   /**
@@ -25,17 +63,49 @@ export class CommandProcessor {
     return new Promise((resolve, reject) => {
       const { command, args, workingDirectory, environment } = context;
 
-      // Log execution if verbose
-      if (this.config.verbose) {
-        console.log(
-          `[EXEC] ${command} ${args.join(' ')} in ${workingDirectory}`
+      // Security: Validate command is in whitelist
+      if (!this.validateCommand(command)) {
+        reject(
+          new Error(
+            `Security: Command '${command}' is not in the whitelist of safe commands. ` +
+            `This is to prevent command injection attacks.`
+          )
         );
+        return;
       }
 
+      // Security: Sanitize all arguments
+      try {
+        args.forEach((arg, index) => {
+          args[index] = this.sanitizeInput(arg);
+        });
+      } catch (error) {
+        reject(error);
+        return;
+      }
+
+      // Log execution if verbose
+      if (this.config.verbose) {
+        this.logger.info('Executing command', {
+          command,
+          args,
+          workingDirectory
+        });
+      }
+
+      // Audit log for command execution
+      auditLogger.info('Command execution', {
+        command,
+        args: args.join(' '),
+        workingDirectory,
+        timestamp: Date.now()
+      });
+
+      // Security: DO NOT use shell: true to prevent command injection
       const child: ChildProcess = spawn(command, args, {
         cwd: workingDirectory,
         env: { ...process.env, ...environment },
-        shell: true,
+        // shell: true REMOVED - this was the critical vulnerability
       });
 
       let stdout = '';
@@ -83,9 +153,16 @@ export class CommandProcessor {
         }
 
         if (this.config.verbose) {
-          console.log(
-            `[DONE] Exit code: ${code}, Duration: ${Date.now() - startTime}ms`
-          );
+          const duration = Date.now() - startTime;
+          this.logger.info('Command completed', {
+            exitCode: code,
+            duration,
+            success: code === 0
+          });
+          this.logger.perf('command_execution', duration, {
+            command,
+            exitCode: code
+          });
         }
 
         resolve(result);

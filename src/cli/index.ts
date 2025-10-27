@@ -12,12 +12,14 @@ import { ConfigManager } from '../core/config';
 import { CommandProcessor } from '../core/processor';
 import { AsyncCommandQueue } from '../core/queue';
 import { REPLState, CommandContext } from '../types';
+import { createLogger, auditLogger } from '../core/logger';
 
 class AIShell {
   private config!: ConfigManager;
   private processor!: CommandProcessor;
   private queue!: AsyncCommandQueue;
   private rl!: readline.Interface;
+  private logger = createLogger('AIShell');
   private state: REPLState = {
     running: false,
     history: [],
@@ -50,7 +52,15 @@ class AIShell {
         console.log(`   Model: ${shellConfig.model}`);
         console.log(`   Mode: ${shellConfig.mode}`);
       }
+
+      // Log initialization
+      this.logger.info('AI-Shell initialized', {
+        provider: shellConfig.aiProvider,
+        model: shellConfig.model,
+        mode: shellConfig.mode
+      });
     } catch (error) {
+      this.logger.error('Failed to initialize AI-Shell', error);
       console.error('Failed to initialize AI-Shell:', error);
       process.exit(1);
     }
@@ -79,6 +89,7 @@ class AIShell {
     });
 
     this.queue.on('commandError', ({ command, error }) => {
+      this.logger.error('Command failed', error, { command });
       console.error(`💥 Command failed: ${command}`);
       console.error(error.message);
     });
@@ -119,6 +130,7 @@ class AIShell {
       try {
         await this.handleInput(input);
       } catch (error) {
+        this.logger.error('Input handling failed', error);
         console.error(
           '❌ Error:',
           error instanceof Error ? error.message : String(error)
@@ -177,6 +189,14 @@ class AIShell {
     try {
       const result = await this.queue.enqueue(input, context, 0);
 
+      // Audit log command execution
+      auditLogger.info('User command executed', {
+        command,
+        workingDirectory: this.state.currentDirectory,
+        success: result.success,
+        timestamp: Date.now()
+      });
+
       if (result.output) {
         console.log(result.output);
       }
@@ -185,6 +205,7 @@ class AIShell {
         console.error(`stderr: ${result.error}`);
       }
     } catch (error) {
+      this.logger.error('Failed to execute command', error, { command, args });
       console.error(
         'Failed to execute command:',
         error instanceof Error ? error.message : String(error)
@@ -245,21 +266,25 @@ class AIShell {
    */
   private setupSignalHandlers(): void {
     process.on('SIGINT', () => {
+      this.logger.info('Received SIGINT, shutting down gracefully');
       console.log('\n🛑 Received SIGINT, shutting down gracefully...');
       this.shutdown();
     });
 
     process.on('SIGTERM', () => {
+      this.logger.info('Received SIGTERM, shutting down gracefully');
       console.log('\n🛑 Received SIGTERM, shutting down gracefully...');
       this.shutdown();
     });
 
     process.on('uncaughtException', (error) => {
+      this.logger.error('Uncaught exception', error);
       console.error('💥 Uncaught exception:', error);
       this.shutdown(1);
     });
 
     process.on('unhandledRejection', (reason) => {
+      this.logger.error('Unhandled rejection', reason instanceof Error ? reason : new Error(String(reason)));
       console.error('💥 Unhandled rejection:', reason);
       this.shutdown(1);
     });
@@ -295,6 +320,7 @@ class AIShell {
 
     this.state.running = false;
 
+    this.logger.info('Shutting down AI-Shell', { exitCode });
     console.log('\n👋 Shutting down AI-Shell...');
 
     // Wait for queue to drain

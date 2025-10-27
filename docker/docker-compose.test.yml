@@ -1,0 +1,202 @@
+services:
+  # MongoDB - Document Database
+  mongodb:
+    image: mongo:latest
+    container_name: aishell-mongodb-test
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-MyMongoPass123}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE:-testdb}
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+      - ./init-scripts/mongodb:/docker-entrypoint-initdb.d:ro
+    networks:
+      - aishell-test-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # Redis - In-Memory Cache and Message Broker
+  redis:
+    image: redis:latest
+    container_name: aishell-redis-test
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - aishell-test-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # PostgreSQL 16 - Relational Database
+  postgres:
+    image: postgres:16
+    container_name: aishell-postgres-test
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-MyPostgresPass123}
+      POSTGRES_DB: ${POSTGRES_DB:-testdb}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts/postgres:/docker-entrypoint-initdb.d:ro
+    networks:
+      - aishell-test-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-testdb}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    command: >
+      postgres
+      -c max_connections=200
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=128MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+
+  # MySQL - External Container (connecting to existing 'tstmysql' container)
+  # Note: This references an existing external container named 'tstmysql'
+  # Ensure the external mysql container is running with these specs:
+  # - Container name: tstmysql
+  # - Root password: MyMySQLPass123
+  # - Port mapping: 3307:3306
+  # - Connection: mysql://root:MyMySQLPass123@localhost:3307
+
+  # Oracle Database 23c Free - External Container (connecting to existing 'tstoracle' container)
+  # Note: This references an existing external container named 'tstoracle'
+  # Ensure the external oracle container is running with these specs:
+  # - Container name: tstoracle
+  # - SYS password: MyOraclePass123
+  # - Port mapping: 1521:1521
+  # - CDB Connection: SYS/MyOraclePass123@//localhost:1521/FREE as SYSDBA
+  # - PDB Connection: SYS/MyOraclePass123@//localhost:1521/FREEPDB1 as SYSDBA
+
+  # Database Admin Tools (Optional)
+  adminer:
+    image: adminer:latest
+    container_name: aishell-adminer-test
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+      ADMINER_DESIGN: nette
+    networks:
+      - aishell-test-network
+    depends_on:
+      - postgres
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+  # MongoDB Express (Optional)
+  mongo-express:
+    image: mongo-express:latest
+    container_name: aishell-mongo-express-test
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_ROOT_USERNAME:-admin}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_ROOT_PASSWORD:-MyMongoPass123}
+      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_ROOT_USERNAME:-admin}:${MONGO_ROOT_PASSWORD:-MyMongoPass123}@mongodb:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USER:-admin}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD:-pass}
+    networks:
+      - aishell-test-network
+    depends_on:
+      - mongodb
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+  # Redis Commander (Optional)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: aishell-redis-commander-test
+    restart: unless-stopped
+    ports:
+      - "8082:8081"
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    networks:
+      - aishell-test-network
+    depends_on:
+      - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+networks:
+  aishell-test-network:
+    name: aishell-test-network
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  mongodb_data:
+    name: aishell-mongodb-data
+    driver: local
+  mongodb_config:
+    name: aishell-mongodb-config
+    driver: local
+  redis_data:
+    name: aishell-redis-data
+    driver: local
+  postgres_data:
+    name: aishell-postgres-data
+    driver: local

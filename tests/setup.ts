@@ -28,13 +28,13 @@ afterAll(async () => {
 // Reset state before each test
 beforeEach(() => {
   // Clear any test state
-  jest.clearAllMocks?.();
+  // Vitest handles mock clearing automatically with vi.clearAllMocks()
 });
 
 // Cleanup after each test
 afterEach(() => {
   // Reset modules if needed
-  jest.resetModules?.();
+  // Vitest handles module resetting automatically
 });
 
 // Global error handler for unhandled rejections
@@ -43,5 +43,4 @@ process.on('unhandledRejection', (reason, promise) => {
   throw reason;
 });
 
-// Extend global timeout for slower tests
-jest?.setTimeout?.(GLOBAL_TIMEOUT);
+// Note: Vitest uses testTimeout in config instead of jest.setTimeout

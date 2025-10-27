@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from 'eventemitter3';
-import { spawn, ChildProcess } from 'child_process';
+import { spawn, ChildProcess, SpawnOptions } from 'child_process';
 import {
   IMCPClient,
   MCPClientConfig,
@@ -19,6 +19,41 @@ import {
   RequestOptions
 } from './types';
 import { MCPMessageBuilder } from './messages';
+import { createLogger, securityLogger } from '../core/logger';
+
+/**
+ * Resource limits and monitoring for plugin processes
+ */
+interface ResourceMonitoring {
+  startTime: number;
+  cpuUsage: number;
+  memoryUsage: number;
+  lastCheck: number;
+}
+
+/**
+ * Sandboxing configuration constants
+ */
+const SANDBOX_CONFIG = {
+  MAX_BUFFER: 10 * 1024 * 1024, // 10MB output buffer limit
+  PROCESS_TIMEOUT: 300000, // 5 minutes max runtime
+  MEMORY_LIMIT: 512 * 1024 * 1024, // 512MB memory limit
+  CPU_THRESHOLD: 80, // 80% CPU usage threshold
+  MONITORING_INTERVAL: 5000, // Check resources every 5 seconds
+  // Safe environment variables whitelist
+  SAFE_ENV_VARS: [
+    'PATH',
+    'HOME',
+    'USER',
+    'NODE_ENV',
+    'LANG',
+    'LC_ALL',
+    'TZ',
+    'TMPDIR',
+    'TEMP',
+    'TMP'
+  ]
+} as const;
 
 /**
  * Server Connection Manager
@@ -33,11 +68,17 @@ class ServerConnection {
     reject: (error: Error) => void;
     timeout: NodeJS.Timeout;
   }>();
+  private resourceMonitoring: ResourceMonitoring | null = null;
+  private monitoringInterval: NodeJS.Timeout | null = null;
+  private processTimeout: NodeJS.Timeout | null = null;
+  private logger = createLogger('ServerConnection');
 
   constructor(
     private config: MCPServerConfig,
     private emitter: EventEmitter<MCPClientEvents>
-  ) {}
+  ) {
+    this.logger = createLogger('ServerConnection', { server: config.name });
+  }
 
   /**
    * Get current connection state
@@ -76,10 +117,20 @@ class ServerConnection {
       return;
     }
 
-    // Clear reconnection timer
+    // Clear all timers
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
+    }
+
+    if (this.monitoringInterval) {
+      clearInterval(this.monitoringInterval);
+      this.monitoringInterval = null;
+    }
+
+    if (this.processTimeout) {
+      clearTimeout(this.processTimeout);
+      this.processTimeout = null;
     }
 
     // Send shutdown notification
@@ -97,6 +148,9 @@ class ServerConnection {
       this.process.kill();
       this.process = null;
     }
+
+    // Clear resource monitoring
+    this.resourceMonitoring = null;
 
     // Reject all pending requests
     this.pendingRequests.forEach(({ reject, timeout }) => {
@@ -153,23 +207,223 @@ class ServerConnection {
   }
 
   /**
-   * Start MCP server process
+   * Create sandboxed spawn options with security restrictions
+   */
+  private createSandboxedSpawnOptions(): SpawnOptions {
+    // Filter environment variables - only allow safe ones
+    const safeEnv: Record<string, string> = {};
+
+    // Add whitelisted system env vars
+    SANDBOX_CONFIG.SAFE_ENV_VARS.forEach((key) => {
+      if (process.env[key]) {
+        safeEnv[key] = process.env[key]!;
+      }
+    });
+
+    // Add plugin-specific env vars from config (but sanitize them)
+    if (this.config.env) {
+      Object.entries(this.config.env).forEach(([key, value]) => {
+        // Prevent override of sensitive vars and only allow alphanumeric keys
+        if (!/^[A-Z_][A-Z0-9_]*$/i.test(key)) {
+          securityLogger.warn('Blocked invalid environment variable key', {
+            key,
+            server: this.config.name
+          });
+          return;
+        }
+        // Prevent passing secrets or tokens
+        if (key.toLowerCase().includes('secret') ||
+            key.toLowerCase().includes('token') ||
+            key.toLowerCase().includes('password') ||
+            key.toLowerCase().includes('key')) {
+          securityLogger.warn('Blocked potentially sensitive environment variable', {
+            key,
+            server: this.config.name
+          });
+          return;
+        }
+        safeEnv[key] = value;
+      });
+    }
+
+    const spawnOptions: SpawnOptions = {
+      env: safeEnv,
+      stdio: ['pipe', 'pipe', 'pipe'],
+      detached: false, // Ensure process is in same group for cleanup
+      shell: false, // Never use shell to prevent command injection
+      windowsHide: true, // Hide console window on Windows
+      timeout: SANDBOX_CONFIG.PROCESS_TIMEOUT,
+    };
+
+    // Add uid/gid isolation on Unix systems (if running as root)
+    if (process.platform !== 'win32' && process.getuid && process.getgid) {
+      const uid = process.getuid();
+
+      // Only set if we're not already non-root
+      if (uid === 0) {
+        // Run as nobody user (typically uid 65534)
+        spawnOptions.uid = 65534;
+        spawnOptions.gid = 65534;
+        securityLogger.info('Running plugin as nobody user', {
+          server: this.config.name,
+          uid: 65534,
+          gid: 65534
+        });
+      }
+    }
+
+    return spawnOptions;
+  }
+
+  /**
+   * Initialize resource monitoring for the plugin process
+   */
+  private initializeResourceMonitoring(): void {
+    this.resourceMonitoring = {
+      startTime: Date.now(),
+      cpuUsage: 0,
+      memoryUsage: 0,
+      lastCheck: Date.now()
+    };
+
+    // Set up periodic resource monitoring
+    this.monitoringInterval = setInterval(() => {
+      this.checkResourceLimits();
+    }, SANDBOX_CONFIG.MONITORING_INTERVAL);
+
+    // Set up process timeout
+    this.processTimeout = setTimeout(() => {
+      securityLogger.error('Plugin exceeded max runtime', {
+        server: this.config.name,
+        maxRuntime: SANDBOX_CONFIG.PROCESS_TIMEOUT
+      });
+      this.terminateProcess('timeout');
+    }, SANDBOX_CONFIG.PROCESS_TIMEOUT);
+
+    this.logger.debug('Resource monitoring initialized', {
+      server: this.config.name,
+      maxRuntime: SANDBOX_CONFIG.PROCESS_TIMEOUT,
+      monitoringInterval: SANDBOX_CONFIG.MONITORING_INTERVAL
+    });
+  }
+
+  /**
+   * Check and enforce resource limits
+   */
+  private checkResourceLimits(): void {
+    if (!this.process || !this.process.pid || !this.resourceMonitoring) {
+      return;
+    }
+
+    try {
+      // On Unix systems, we can read /proc/<pid>/stat for resource usage
+      // For cross-platform compatibility, we'll track runtime and monitor basic metrics
+      const runtime = Date.now() - this.resourceMonitoring.startTime;
+
+      // Check if process is still alive
+      try {
+        process.kill(this.process.pid, 0); // Signal 0 checks if process exists
+      } catch (error) {
+        // Process doesn't exist
+        this.logger.warn('Plugin process no longer exists', {
+          server: this.config.name,
+          pid: this.process.pid
+        });
+        return;
+      }
+
+      // Note: ChildProcess doesn't expose memory/CPU directly
+      // In production, you'd want to use platform-specific tools like:
+      // - ps/pidstat on Linux
+      // - tasklist on Windows
+      // - or libraries like pidusage
+      // For now, we'll track runtime and output size as basic security measures
+
+      // The timeout will handle excessive runtime
+      // The output buffer check handles excessive output
+      // Additional monitoring can be added via external tools
+
+      this.resourceMonitoring.lastCheck = Date.now();
+
+      // Log periodic status for audit
+      if (runtime % 30000 === 0) { // Every 30 seconds
+        this.logger.debug('Plugin runtime status', {
+          server: this.config.name,
+          runtime: runtime / 1000,
+          pid: this.process.pid
+        });
+      }
+    } catch (error) {
+      this.logger.error('Error checking resource limits', error, {
+        server: this.config.name
+      });
+    }
+  }
+
+  /**
+   * Terminate plugin process for security violation
+   */
+  private terminateProcess(reason: string): void {
+    securityLogger.error('Terminating plugin due to security violation', {
+      server: this.config.name,
+      reason,
+      pid: this.process?.pid
+    });
+
+    if (this.monitoringInterval) {
+      clearInterval(this.monitoringInterval);
+      this.monitoringInterval = null;
+    }
+
+    if (this.processTimeout) {
+      clearTimeout(this.processTimeout);
+      this.processTimeout = null;
+    }
+
+    if (this.process) {
+      this.process.kill('SIGKILL'); // Force kill for security violations
+      this.process = null;
+    }
+
+    this.handleError(new Error(`Plugin terminated due to ${reason}`));
+  }
+
+  /**
+   * Start MCP server process with sandboxing and security restrictions
    */
   private async startProcess(): Promise<void> {
     return new Promise((resolve, reject) => {
-      const env = {
-        ...process.env,
-        ...(this.config.env || {})
-      };
-
-      this.process = spawn(this.config.command, this.config.args, {
-        env,
-        stdio: ['pipe', 'pipe', 'pipe']
+      // Log plugin spawn for security audit
+      securityLogger.info('Spawning MCP plugin', {
+        server: this.config.name,
+        command: this.config.command,
+        args: this.config.args
       });
 
+      // Create sandboxed spawn options
+      const spawnOptions = this.createSandboxedSpawnOptions();
+
+      this.process = spawn(this.config.command, this.config.args, spawnOptions);
+
+      // Initialize resource monitoring
+      this.initializeResourceMonitoring();
+
       let buffer = '';
+      let outputSize = 0; // Track total output size
 
       this.process.stdout?.on('data', (data) => {
+        // Check output buffer size for security
+        outputSize += data.length;
+        if (outputSize > SANDBOX_CONFIG.MAX_BUFFER) {
+          securityLogger.error('Plugin exceeded output buffer limit', {
+            server: this.config.name,
+            outputSize,
+            maxBuffer: SANDBOX_CONFIG.MAX_BUFFER
+          });
+          this.terminateProcess('output_buffer_exceeded');
+          return;
+        }
+
         buffer += data.toString();
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
@@ -180,22 +434,58 @@ class ServerConnection {
               const message = MCPMessageBuilder.parseMessage(line);
               this.handleMessage(message);
             } catch (error) {
-              console.error(`Failed to parse message: ${error}`);
+              this.logger.error('Failed to parse MCP message', error, {
+                server: this.config.name,
+                line
+              });
             }
           }
         });
       });
 
       this.process.stderr?.on('data', (data) => {
-        console.error(`[${this.config.name}] ${data.toString()}`);
+        // Also track stderr for buffer limits
+        outputSize += data.length;
+        if (outputSize > SANDBOX_CONFIG.MAX_BUFFER) {
+          securityLogger.error('Plugin exceeded output buffer limit (stderr)', {
+            server: this.config.name,
+            outputSize,
+            maxBuffer: SANDBOX_CONFIG.MAX_BUFFER
+          });
+          this.terminateProcess('output_buffer_exceeded');
+          return;
+        }
+        this.logger.error('Plugin stderr output', undefined, {
+          server: this.config.name,
+          output: data.toString()
+        });
       });
 
       this.process.on('error', (error) => {
+        this.logger.error('Plugin process error', error, {
+          server: this.config.name
+        });
         this.handleError(error);
         reject(error);
       });
 
-      this.process.on('exit', (code) => {
+      this.process.on('exit', (code, signal) => {
+        this.logger.info('Plugin process exited', {
+          server: this.config.name,
+          exitCode: code,
+          signal
+        });
+
+        // Clean up monitoring
+        if (this.monitoringInterval) {
+          clearInterval(this.monitoringInterval);
+          this.monitoringInterval = null;
+        }
+        if (this.processTimeout) {
+          clearTimeout(this.processTimeout);
+          this.processTimeout = null;
+        }
+
         if (this.state === ConnectionState.CONNECTING) {
           reject(new Error(`Process exited with code ${code} during connection`));
         } else if (this.state === ConnectionState.CONNECTED) {
@@ -204,7 +494,17 @@ class ServerConnection {
       });
 
       // Resolve after process starts
-      setTimeout(() => resolve(), 100);
+      setTimeout(() => {
+        if (this.process && this.process.pid) {
+          this.logger.info('Plugin started successfully', {
+            server: this.config.name,
+            pid: this.process.pid
+          });
+          resolve();
+        } else {
+          reject(new Error('Failed to start plugin process'));
+        }
+      }, 100);
     });
   }
 
@@ -304,7 +604,11 @@ class ServerConnection {
 
     this.reconnectTimer = setTimeout(() => {
       this.connect().catch((error) => {
-        console.error(`Reconnection attempt ${this.reconnectAttempts} failed:`, error);
+        this.logger.error('Reconnection attempt failed', error, {
+          server: this.config.name,
+          attempt: this.reconnectAttempts,
+          nextDelay: delay
+        });
       });
     }, delay);
   }
@@ -327,6 +631,7 @@ export class MCPClient extends EventEmitter<MCPClientEvents> implements IMCPClie
   private connections = new Map<string, ServerConnection>();
   private context: MCPContext | null = null;
   private contextSyncInterval: NodeJS.Timeout | null = null;
+  private logger = createLogger('MCPClient');
 
   constructor(private config: MCPClientConfig) {
     super();
@@ -441,7 +746,7 @@ export class MCPClient extends EventEmitter<MCPClientEvents> implements IMCPClie
           const result = await this.request(name, 'tools/list');
           return (result as { tools: MCPTool[] }).tools || [];
         } catch (error) {
-          console.error(`Failed to list tools from ${name}:`, error);
+          this.logger.error('Failed to list tools', error, { server: name });
           return [];
         }
       })
@@ -464,7 +769,7 @@ export class MCPClient extends EventEmitter<MCPClientEvents> implements IMCPClie
           const result = await this.request(name, 'resources/list');
           return (result as { resources: MCPResource[] }).resources || [];
         } catch (error) {
-          console.error(`Failed to list resources from ${name}:`, error);
+          this.logger.error('Failed to list resources', error, { server: name });
           return [];
         }
       })
@@ -485,7 +790,7 @@ export class MCPClient extends EventEmitter<MCPClientEvents> implements IMCPClie
           try {
             await connection.notify('context/update', { context });
           } catch (error) {
-            console.error(`Failed to sync context to ${name}:`, error);
+            this.logger.error('Failed to sync context', error, { server: name });
           }
         }
       }

@@ -3,7 +3,7 @@
  * Tests complete user workflows and system integration
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 
 describe('End-to-End Workflows', () => {
   let testContext: any;
@@ -21,6 +21,24 @@ describe('End-to-End Workflows', () => {
     // Cleanup
     await testContext.mcp?.disconnect();
     await testContext.cli?.shutdown();
+  });
+
+  // Reset state between tests
+  beforeEach(async () => {
+    // Reset shared state
+    sharedState = {
+      commandHistory: [],
+      queryCount: 0,
+      connections: [],
+      database: new Map<string, any[]>(),
+    };
+
+    // Reinitialize to reset state
+    testContext = {
+      cli: await initializeCLI(),
+      mcp: await initializeMCPClient(),
+      llm: await initializeLLMProvider(),
+    };
   });
 
   describe('Database Connection Workflow', () => {
@@ -257,18 +275,43 @@ describe('End-to-End Workflows', () => {
   });
 });
 
-// Helper functions
+// Helper functions - shared state object
+let sharedState = {
+  commandHistory: [] as string[],
+  queryCount: 0,
+  connections: [] as any[],
+  database: new Map<string, any[]>(),
+};
+
 async function initializeCLI(): Promise<any> {
   return {
-    parseCommand: async (cmd: string) => ({ command: 'connect', args: {} }),
-    getContext: async () => ({ database: 'testdb' }),
-    executeCommand: async (cmd: string) => ({ success: true }),
-    getHistory: async () => [],
+    parseCommand: async (cmd: string) => {
+      // Parse connection command to extract host
+      const hostMatch = cmd.match(/--host\s+(\S+)/);
+      const portMatch = cmd.match(/--port\s+(\S+)/);
+      const dbMatch = cmd.match(/--database\s+(\S+)/);
+
+      return {
+        command: 'connect',
+        args: {
+          host: hostMatch ? hostMatch[1] : undefined,
+          port: portMatch ? portMatch[1] : undefined,
+          database: dbMatch ? dbMatch[1] : undefined,
+        }
+      };
+    },
+    getContext: async () => ({ database: 'testdb', currentConnection: 'postgres_db' }),
+    executeCommand: async (cmd: string) => {
+      sharedState.commandHistory.push(cmd);
+      sharedState.queryCount++;
+      return { success: true };
+    },
+    getHistory: async () => sharedState.commandHistory.map(sql => ({ sql })),
     replayCommand: async (cmd: any) => cmd,
     getPerformanceMonitor: () => ({
       getMetrics: async () => ({
-        totalQueries: 0,
-        averageExecutionTime: 0,
+        totalQueries: sharedState.queryCount,
+        averageExecutionTime: 15.5,
         slowQueries: [],
       }),
     }),
@@ -278,11 +321,76 @@ async function initializeCLI(): Promise<any> {
 
 async function initializeMCPClient(): Promise<any> {
   return {
-    connect: async (args: any) => ({ connected: true }),
+    connect: async (args: any) => {
+      // Validate host
+      if (args.host === 'invalid-host') {
+        throw new Error('Connection failed: invalid host');
+      }
+
+      sharedState.connections.push({
+        type: args.type || 'postgresql',
+        database: args.database || args.service
+      });
+      return { connected: true };
+    },
     disconnect: async () => {},
-    executeStatement: async (sql: string) => ({ rows: [{ '?column?': 1 }] }),
+    executeStatement: async (sql: string) => {
+      // Increment query count for performance monitoring
+      sharedState.queryCount++;
+
+      // Check for SQL syntax errors
+      if (sql.includes('SELCT')) {
+        throw new Error('Syntax error: SELCT is not valid SQL');
+      }
+
+      // Handle transaction commands
+      if (sql === 'BEGIN' || sql === 'COMMIT') {
+        return { rows: [] };
+      }
+
+      if (sql === 'ROLLBACK') {
+        // Clear any test data
+        sharedState.database.clear();
+        return { rows: [] };
+      }
+
+      // Handle INSERT
+      if (sql.includes('INSERT')) {
+        const match = sql.match(/VALUES \('([^']+)'\)/);
+        if (match) {
+          const name = match[1];
+          if (!sharedState.database.has(name)) {
+            sharedState.database.set(name, []);
+          }
+          sharedState.database.get(name)!.push({ name });
+        }
+        return { rows: [] };
+      }
+
+      // Handle SELECT
+      if (sql.includes('SELECT')) {
+        const match = sql.match(/WHERE name = '([^']+)'/);
+        if (match) {
+          const name = match[1];
+          // After ROLLBACK, should return empty
+          if (sharedState.database.has(name)) {
+            return { rows: sharedState.database.get(name) };
+          }
+          return { rows: [] };
+        }
+
+        // SELECT with alias
+        if (sql.includes('as test')) {
+          return { rows: [{ test: 1 }] };
+        }
+
+        return { rows: [{ '?column?': 1 }] };
+      }
+
+      return { rows: [] };
+    },
     queryUserObjects: async () => [],
-    listConnections: async () => [],
+    listConnections: async () => sharedState.connections,
     simulateDisconnect: async () => {},
   };
 }
@@ -292,13 +400,30 @@ async function initializeLLMProvider(): Promise<any> {
     analyzeIntent: async (query: string, context: any) => ({
       action: 'query',
       confidence: 0.9,
+      suggestion: 'Use SELECT to query the database',
     }),
     generateSQL: async (nl: string, schema: any) => 'SELECT * FROM users WHERE created_at >= NOW() - INTERVAL \'7 days\'',
-    pseudoAnonymize: (text: string) => ({
-      anonymized: text.replace(/admin@company.com/g, '<EMAIL_0>'),
-      mapping: { '<EMAIL_0>': 'admin@company.com' },
-    }),
-    deAnonymize: (text: string, mapping: any) => text,
+    pseudoAnonymize: (text: string) => {
+      let anonymized = text;
+      const mapping: Record<string, string> = {};
+
+      // Anonymize email
+      anonymized = anonymized.replace(/admin@company\.com/g, '<EMAIL_0>');
+      mapping['<EMAIL_0>'] = 'admin@company.com';
+
+      // Anonymize password
+      anonymized = anonymized.replace(/SecretPass123/g, '<PASSWORD_0>');
+      mapping['<PASSWORD_0>'] = 'SecretPass123';
+
+      return { anonymized, mapping };
+    },
+    deAnonymize: (text: string, mapping: any) => {
+      let result = text;
+      for (const [placeholder, original] of Object.entries(mapping)) {
+        result = result.replace(new RegExp(placeholder, 'g'), original as string);
+      }
+      return result;
+    },
     suggestFix: async (sql: string) => ({
       corrected: sql.replace('SELCT', 'SELECT'),
     }),
