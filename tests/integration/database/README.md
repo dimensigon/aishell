@@ -2,13 +2,96 @@
 
 Comprehensive integration test suites for multiple databases using Docker test environments.
 
+## 🚀 Quick Start
+
+### Using the Automated Script (Recommended)
+```bash
+# Start all core databases (PostgreSQL, MongoDB, MySQL, Redis)
+./start-databases.sh
+
+# Start with management UIs
+./start-databases.sh --ui
+
+# Start all databases including optional ones (Neo4j, Cassandra, Oracle)
+./start-databases.sh --full --optional --ui
+
+# Stop all containers
+./start-databases.sh --stop
+
+# Clean up everything (removes all data!)
+./start-databases.sh --clean
+```
+
+### Manual Docker Compose
+```bash
+# Core databases only
+docker-compose up -d
+
+# All databases with UIs
+docker-compose -f docker-compose.full.yml --profile ui --profile optional up -d
+
+# Verify setup
+python3 test_docker_setup.py
+
+# View status
+docker-compose ps
+```
+
+## 📚 Documentation
+
+- **[README_DOCKER.md](./README_DOCKER.md)** - Complete Docker Compose guide
+- **[QUICK_START.md](./QUICK_START.md)** - Getting started guide
+- **Database-specific guides:**
+  - [PostgreSQL Tests](./POSTGRES_TESTS.md)
+  - [MongoDB Tests](./MONGODB_INTEGRATION_TESTS.md)
+  - [Redis Tests](./REDIS_TEST_SUMMARY.md)
+  - [Oracle Quick Start](./ORACLE_QUICK_START.md)
+
 ## Available Test Suites
 
-- **MySQL 8.x** - `test-mysql-integration.ts` (67 tests)
-- **PostgreSQL** - `test-postgres-integration.ts`
-- **MongoDB** - `test-mongodb-integration.ts`
-- **Oracle Database** - `test-oracle-integration.ts`
-- **Redis** - `test-redis-integration.ts`
+- **PostgreSQL 16** - `postgres.integration.test.ts` - Advanced relational database
+- **MongoDB 7.0** - `mongodb.integration.test.ts` - Document-oriented NoSQL
+- **MySQL 8.0** - `mysql.integration.test.ts` - Popular relational database
+- **Redis 7.2** - `redis.integration.test.ts` - In-memory data store
+- **Oracle** - `oracle.integration.test.ts` - Enterprise database
+- **SQLite** - File-based database (no container needed)
+
+## 🔌 Connection Strings
+
+```bash
+# PostgreSQL
+postgresql://postgres:MyPostgresPass123@localhost:5432/postgres
+
+# MongoDB
+mongodb://admin:MyMongoPass123@localhost:27017/test_integration_db?authSource=admin
+
+# MySQL
+mysql://testuser:testpass@localhost:3306/test_integration_db
+
+# Redis
+redis://:MyRedisPass123@localhost:6379/0
+
+# SQLite
+./test_integration.db
+```
+
+## 🧪 Running Tests
+
+```bash
+# All integration tests
+npm run test:integration
+
+# Specific database
+npm test -- postgres.integration.test.ts
+npm test -- mongodb.integration.test.ts
+npm test -- mysql.integration.test.ts
+npm test -- redis.integration.test.ts
+
+# With Docker environment
+docker-compose up -d
+npm run test:integration
+docker-compose down
+```
 
 ---
 

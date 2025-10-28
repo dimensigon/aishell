@@ -1,27 +1,10 @@
 version: '3.8'
 
-services:
-  mongodb:
-    image: mongo:7.0
-    container_name: test_mongodb
-    ports:
-      - "27017:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: MyMongoPass123
-      MONGO_INITDB_DATABASE: test_integration_db
-    volumes:
-      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
-      - mongodb_data:/data/db
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 40s
-    networks:
-      - test_network
+# AI-Shell Database Integration Test Environment
+# Includes all core databases: PostgreSQL, MongoDB, MySQL, Redis, SQLite (file-based)
 
+services:
+  # PostgreSQL 16 - Relational Database
   postgres:
     image: postgres:16-alpine
     container_name: test_postgres
@@ -43,13 +26,97 @@ services:
       start_period: 10s
     networks:
       - test_network
+    restart: unless-stopped
+
+  # MongoDB 7.0 - NoSQL Document Database
+  mongodb:
+    image: mongo:7.0
+    container_name: test_mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: MyMongoPass123
+      MONGO_INITDB_DATABASE: test_integration_db
+    volumes:
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    networks:
+      - test_network
+    restart: unless-stopped
+
+  # MySQL 8.0 - Relational Database
+  mysql:
+    image: mysql:8.0
+    container_name: test_mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: MyMySQLPass123
+      MYSQL_DATABASE: test_integration_db
+      MYSQL_USER: testuser
+      MYSQL_PASSWORD: testpass
+    volumes:
+      - ./init-mysql.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pMyMySQLPass123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - test_network
+    restart: unless-stopped
+
+  # Redis 7.2 - In-Memory Data Store
+  redis:
+    image: redis:7.2-alpine
+    container_name: test_redis
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --requirepass MyRedisPass123
+      --save 60 1
+      --loglevel warning
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --databases 16
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "MyRedisPass123", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - test_network
+    restart: unless-stopped
 
 volumes:
-  mongodb_data:
-    driver: local
   postgres_data:
     driver: local
+    name: aishell_postgres_test_data
+  mongodb_data:
+    driver: local
+    name: aishell_mongodb_test_data
+  mysql_data:
+    driver: local
+    name: aishell_mysql_test_data
+  redis_data:
+    driver: local
+    name: aishell_redis_test_data
 
 networks:
   test_network:
     driver: bridge
+    name: aishell_test_network
