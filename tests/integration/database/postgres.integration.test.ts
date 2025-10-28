@@ -477,8 +477,8 @@ describe('PostgreSQL Window Functions and CTEs', () => {
     );
 
     expect(result.rows).toHaveLength(5);
-    expect(result.rows[0].row_num).toBe(1);
-    expect(result.rows[4].row_num).toBe(5);
+    expect(parseInt(result.rows[0].row_num)).toBe(1);
+    expect(parseInt(result.rows[4].row_num)).toBe(5);
   });
 
   it('should use RANK and DENSE_RANK', async () => {
@@ -612,8 +612,8 @@ describe('PostgreSQL Foreign Key Constraints', () => {
          (SELECT COUNT(*) FROM order_items WHERE order_id NOT IN (SELECT id FROM orders)) as orphaned_items`
     );
 
-    expect(result.rows[0].orphaned_orders).toBe(0);
-    expect(result.rows[0].orphaned_items).toBe(0);
+    expect(parseInt(result.rows[0].orphaned_orders)).toBe(0);
+    expect(parseInt(result.rows[0].orphaned_items)).toBe(0);
   });
 });
 
@@ -644,13 +644,13 @@ describe('PostgreSQL Indexes and Query Optimization', () => {
 
   it('should show table statistics', async () => {
     const result = await pool.query(
-      `SELECT schemaname, tablename, n_live_tup, n_dead_tup
+      `SELECT schemaname, relname as tablename, n_live_tup, n_dead_tup
        FROM pg_stat_user_tables
-       WHERE tablename = 'users'`
+       WHERE relname = 'users'`
     );
 
     expect(result.rows).toHaveLength(1);
-    expect(result.rows[0].n_live_tup).toBeGreaterThan(0);
+    expect(parseInt(result.rows[0].n_live_tup)).toBeGreaterThan(0);
   });
 
   it('should analyze query performance', async () => {
