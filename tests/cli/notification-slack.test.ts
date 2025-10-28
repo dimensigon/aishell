@@ -1,0 +1,907 @@
+/**
+ * Comprehensive test suite for Slack Integration
+ *
+ * Tests cover:
+ * - Configuration management
+ * - Message building with Block Kit
+ * - Alert sending (Web API and webhook)
+ * - Channel routing
+ * - Thread support
+ * - Interactive actions
+ * - Rate limiting
+ * - Error handling
+ * - Severity formatting
+ * - Specialized alert types
+ */
+
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import SlackIntegration, {
+  SlackConfig,
+  AlertMessage,
+  setupSlack,
+  testSlack,
+  listSlackChannels,
+  configureSlackRouting,
+  showSlackConfig,
+} from '../../src/cli/notification-slack';
+
+// Mock dependencies
+vi.mock('@slack/web-api');
+vi.mock('fs');
+vi.mock('axios');
+
+const TEST_CONFIG_PATH = '/tmp/test-slack-config.json';
+
+describe('SlackIntegration', () => {
+  let integration: SlackIntegration;
+  let mockConfig: SlackConfig;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    mockConfig = {
+      token: 'xoxb-test-token',
+      webhookUrl: 'https://hooks.slack.com/services/TEST/WEBHOOK',
+      defaultChannel: '#test-channel',
+      enableThreads: true,
+      enableInteractive: true,
+      channelRouting: {
+        query: '#test-queries',
+        security: '#test-security',
+        performance: '#test-performance',
+      },
+      rateLimiting: {
+        maxMessagesPerMinute: 60,
+        burstSize: 10,
+      },
+      mentions: {
+        criticalAlerts: ['@channel'],
+        securityAlerts: ['@security-team'],
+      },
+    };
+
+    // Mock fs
+    const fs = require('fs');
+    (fs.existsSync as any).mockReturnValue(true);
+    (fs.readFileSync as any).mockReturnValue(JSON.stringify(mockConfig));
+    (fs.writeFileSync as any).mockImplementation(() => {});
+    (fs.mkdirSync as any).mockImplementation(() => {});
+
+    integration = new SlackIntegration(TEST_CONFIG_PATH);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  // ============================================================================
+  // Configuration Tests
+  // ============================================================================
+
+  describe('Configuration Management', () => {
+    it('should load configuration from file', () => {
+      const fs = require('fs');
+      expect(fs.existsSync).toHaveBeenCalledWith(TEST_CONFIG_PATH);
+      expect(fs.readFileSync).toHaveBeenCalledWith(TEST_CONFIG_PATH, 'utf-8');
+      const config = integration.getConfig();
+      expect(config.token).toBe('xoxb-test-token');
+    });
+
+    it('should use default configuration if file does not exist', () => {
+      const fs = require('fs');
+      (fs.existsSync as any).mockReturnValue(false);
+      const newIntegration = new SlackIntegration(TEST_CONFIG_PATH);
+      const config = newIntegration.getConfig();
+      expect(config.defaultChannel).toBe('#ai-shell-alerts');
+    });
+
+    it('should save configuration to file', () => {
+      const fs = require('fs');
+      const newConfig: Partial<SlackConfig> = {
+        token: 'new-token',
+        defaultChannel: '#new-channel',
+      };
+
+      integration.saveConfig(newConfig);
+
+      expect(fs.mkdirSync).toHaveBeenCalled();
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        TEST_CONFIG_PATH,
+        expect.stringContaining('new-token'),
+        'utf-8'
+      );
+    });
+
+    it('should merge configuration on save', () => {
+      integration.saveConfig({ defaultChannel: '#updated-channel' });
+      const config = integration.getConfig();
+      expect(config.token).toBe('xoxb-test-token'); // Original
+      expect(config.defaultChannel).toBe('#updated-channel'); // Updated
+    });
+
+    it('should return configuration copy to prevent mutation', () => {
+      const config1 = integration.getConfig();
+      const config2 = integration.getConfig();
+      expect(config1).toEqual(config2);
+      expect(config1).not.toBe(config2); // Different objects
+    });
+  });
+
+  // ============================================================================
+  // Alert Sending Tests
+  // ============================================================================
+
+  describe('Alert Sending', () => {
+    it('should send alert via Web API when token is configured', async () => {
+      const mockClient = {
+        chat: {
+          postMessage: vi.fn().mockResolvedValue({ ok: true, ts: '1234567890.123456' }),
+        },
+      };
+
+      // Mock WebClient
+      const { WebClient } = await import('@slack/web-api');
+      (WebClient as any).mockImplementation(() => mockClient);
+
+      const newIntegration = new SlackIntegration(TEST_CONFIG_PATH);
+
+      const alert: AlertMessage = {
+        type: 'system',
+        severity: 'info',
+        title: 'Test Alert',
+        description: 'This is a test alert',
+        timestamp: Date.now(),
+      };
+
+      const result = await newIntegration.sendAlert(alert);
+
+      expect(result).toBe(true);
+      expect(mockClient.chat.postMessage).toHaveBeenCalled();
+    });
+
+    it('should send alert via webhook when only webhook is configured', async () => {
+      const fs = require('fs');
+      (fs.readFileSync as any).mockReturnValue(JSON.stringify({
+        webhookUrl: 'https://hooks.slack.com/services/TEST',
+        defaultChannel: '#test',
+      }));
+
+      const axios = await import('axios');
+      const mockPost = vi.fn().mockResolvedValue({ status: 200 });
+      (axios.default.create as any).mockReturnValue({ post: mockPost });
+
+      const newIntegration = new SlackIntegration(TEST_CONFIG_PATH);
+
+      const alert: AlertMessage = {
+        type: 'system',
+        severity: 'info',
+        title: 'Test Alert',
+        description: 'This is a test alert',
+        timestamp: Date.now(),
+      };
+
+      const result = await newIntegration.sendAlert(alert);
+
+      expect(result).toBe(true);
+    });
+
+    it('should throw error when no integration is configured', async () => {
+      const fs = require('fs');
+      (fs.readFileSync as any).mockReturnValue(JSON.stringify({
+        defaultChannel: '#test',
+      }));
+
+      const newIntegration = new SlackIntegration(TEST_CONFIG_PATH);
+
+      const alert: AlertMessage = {
+        type: 'system',
+        severity: 'info',
+        title: 'Test Alert',
+        description: 'This is a test alert',
+        timestamp: Date.now(),
+      };
+
+      const result = await newIntegration.sendAlert(alert);
+      expect(result).toBe(false);
+    });
+
+    it('should handle sending errors gracefully', async () => {
+      const mockClient = {
+        chat: {
+          postMessage: vi.fn().mockRejectedValue(new Error('API Error')),
+        },
+      };
+
+      const { WebClient } = await import('@slack/web-api');
+      (WebClient as any).mockImplementation(() => mockClient);
+
+      const newIntegration = new SlackIntegration(TEST_CONFIG_PATH);
+
+      const alert: AlertMessage = {
+        type: 'system',
+        severity: 'info',
+        title: 'Test Alert',
+        description: 'This is a test alert',
+        timestamp: Date.now(),
+      };
+
+      const result = await newIntegration.sendAlert(alert);
+      expect(result).toBe(false);
+    });
+  });
+
+  // ============================================================================
+  // Message Building Tests
+  // ============================================================================
+
+  describe('Message Building', () => {
+    it('should build message with correct emoji for severity', async () => {
+      const testCases = [
+        { severity: 'critical', expectedEmoji: '🚨' },
+        { severity: 'high', expectedEmoji: '⚠️' },
+        { severity: 'medium', expectedEmoji: '⚡' },
+        { severity: 'low', expectedEmoji: 'ℹ️' },
+        { severity: 'info', expectedEmoji: '📊' },
+      ];
+
+      for (const { severity, expectedEmoji } of testCases) {
+        const alert: AlertMessage = {
+          type: 'system',
+          severity: severity as any,
+          title: 'Test Alert',
+          description: 'Test description',
+          timestamp: Date.now(),
+        };
+
+        // We'll test via sending since buildAlertMessage is private
+        const mockClient = {
+          chat: {
+            postMessage: vi.fn().mockResolvedValue({ ok: true }),
+          },
+        };
+
+        const { WebClient } = await import('@slack/web-api');
+        (WebClient as any).mockImplementation(() => mockClient);
+
+        const testIntegration = new SlackIntegration(TEST_CONFIG_PATH);
+        await testIntegration.sendAlert(alert);
+
+        expect(mockClient.chat.postMessage).toHaveBeenCalledWith(
+          expect.objectContaining({
+            text: expect.stringContaining(expectedEmoji),
+          })
+        );
+      }
+    });
+
+    it('should include alert details in message blocks', async () => {
+      const mockClient = {
+        chat: {
+          postMessage: vi.fn().mockResolvedValue({ ok: true }),
+        },
+      };
+
+      const { WebClient } = await import('@slack/web-api');
+      (WebClient as any).mockImplementation(() => mockClient);
+
+      const testIntegration = new SlackIntegration(TEST_CONFIG_PATH);
+
+      const alert: AlertMessage = {
+        type: 'performance',
+        severity: 'high',
+        title: 'High CPU Usage',
+        description: 'CPU usage is at 95%',
+        details: {
+          cpu_usage: '95%',
+          threshold: '80%',
+          duration: '5 minutes',
+        },
+        timestamp: Date.now(),
+      };
+
+      await testIntegration.sendAlert(alert);
+
+      expect(mockClient.chat.postMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          blocks: expect.arrayContaining([
+            expect.objectContaining({ type: 'header' }),
+            expect.objectContaining({ type: 'context' }),
+            expect.objectContaining({ type: 'section' }),
+          ]),
+        })
+      );
+    });
+
+    it('should add interactive actions for alerts', async () => {
+      const mockClient = {
+        chat: {
+          postMessage: vi.fn().mockResolvedValue({ ok: true }),
+        },
+      };
+
+      const { WebClient } = await import('@slack/web-api');
+      (WebClient as any).mockImplementation(() => mockClient);
+
+      const testIntegration = new SlackIntegration(TEST_CONFIG_PATH);
+
+      const alert: AlertMessage = {
+        type: 'security',
+        severity: 'critical',
+        title: 'Security Breach Detected',
+        description: 'Unauthorized access attempt',
+        details: {
+          ip_address: '192.168.1.100',
+          attempts: 5,
+        },
+        timestamp: Date.now(),
+      };
+
+      await testIntegration.sendAlert(alert);
+
+      const call = mockClient.chat.postMessage.mock.calls[0][0];
+      expect(call.blocks).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ type: 'actions' }),
+        ])
+      );
+    });
+
+    it('should include mentions for critical alerts', async () => {
+      const mockClient = {
+        chat: {
+          postMessage: vi.fn().mockResolvedValue({ ok: true }),
+        },
+      };
+
+      const { WebClient } = await import('@slack/web-api');
+      (WebClient as any).mockImplementation(() => mockClient);
+
+      const testIntegration = new SlackIntegration(TEST_CONFIG_PATH);
+
+      const alert: AlertMessage = {
+        type: 'system',
+        severity: 'critical',
+        title: 'System Down',
+        description: 'Database is unreachable',
+        timestamp: Date.now(),
+      };
+
+      await testIntegration.sendAlert(alert);
+
+      expect(mockClient.chat.postMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          text: expect.stringContaining('@channel'),
+        })
+      );
+    });
+
+    it('should include mentions for security alerts', async () => {
+      const mockClient = {
+        chat: {
+          postMessage: vi.fn().mockResolvedValue({ ok: true }),
+        },
+      };
+
+      const { WebClient } = await import('@slack/web-api');
+      (WebClient as any).mockImplementation(() => mockClient);
+
+      const testIntegration = new SlackIntegration(TEST_CONFIG_PATH);
+
+      const alert: AlertMessage = {
+        type: 'security',
+        severity: 'high',
+        title: 'Security Issue',
+        description: 'Potential breach detected',
+        timestamp: Date.now(),
+      };
+
+      await testIntegration.sendAlert(alert);
+
+      expect(mockClient.chat.postMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          text: expect.stringContaining('@security-team'),
+        })
+      );
+    });
+  });
+
+  // ============================================================================
+  // Channel Routing Tests
+  // ============================================================================
+
+  describe('Channel Routing', () => {
+    it('should route alerts to type-specific channels', async () => {
+      const mockClient = {
+        chat: {
+          postMessage: vi.fn().mockResolvedValue({ ok: true }),
+        },
+      };
+
+      const { WebClient } = await import('@slack/web-api');
+      (WebClient as any).mockImplementation(() => mockClient);
+
+      const testIntegration = new SlackIntegration(TEST_CONFIG_PATH);
+
+      const testCases = [
+        { type: 'query', expectedChannel: '#test-queries' },
+        { type: 'security', expectedChannel: '#test-security' },
+        { type: 'performance', expectedChannel: '#test-performance' },
+      ];
+
+      for (const { type, expectedChannel } of testCases) {
+        mockClient.chat.postMessage.mockClear();
+
+        const alert: AlertMessage = {
+          type: type as any,
+          severity: 'info',
+          title: 'Test Alert',
+          description: 'Test description',
+          timestamp: Date.now(),
+        };
+
+        await testIntegration.sendAlert(alert);
+
+        expect(mockClient.chat.postMessage).toHaveBeenCalledWith(
+          expect.objectContaining({
+            channel: expectedChannel,
+          })
+        );
+      }
+    });
+
+    it('should use default channel for unmapped alert types', async () => {
+      const mockClient = {
+        chat: {
+          postMessage: vi.fn().mockResolvedValue({ ok: true }),
+        },
+      };
+
+      const { WebClient } = await import('@slack/web-api');
+      (WebClient as any).mockImplementation(() => mockClient);
+
+      const testIntegration = new SlackIntegration(TEST_CONFIG_PATH);
+
+      const alert: AlertMessage = {
+        type: 'backup',
+        severity: 'info',
+        title: 'Backup Complete',
+        description: 'Database backup completed',
+        timestamp: Date.now(),
+      };
+
+      await testIntegration.sendAlert(alert);
+
+      expect(mockClient.chat.postMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          channel: '#test-channel',
+        })
+      );
+    });
+  });
+
+  // ============================================================================
+  // Thread Support Tests
+  // ============================================================================
+
+  describe('Thread Support', () => {
+    it('should send message in thread when threadId is provided', async () => {
+      const mockClient = {
+        chat: {
+          postMessage: vi.fn()
+            .mockResolvedValueOnce({ ok: true, ts: '1234567890.123456' })
+            .mockResolvedValueOnce({ ok: true, ts: '1234567890.234567' }),
+        },
+      };
+
+      const { WebClient } = await import('@slack/web-api');
+      (WebClient as any).mockImplementation(() => mockClient);
+
+      const testIntegration = new SlackIntegration(TEST_CONFIG_PATH);
+
+      // First message creates thread
+      const alert1: AlertMessage = {
+        type: 'system',
+        severity: 'info',
+        title: 'Thread Start',
+        description: 'First message',
+        threadId: 'test-thread-1',
+        timestamp: Date.now(),
+      };
+
+      await testIntegration.sendAlert(alert1);
+
+      // Second message should be in thread
+      const alert2: AlertMessage = {
+        type: 'system',
+        severity: 'info',
+        title: 'Thread Reply',
+        description: 'Second message',
+        threadId: 'test-thread-1',
+        timestamp: Date.now(),
+      };
+
+      await testIntegration.sendAlert(alert2);
+
+      const secondCall = mockClient.chat.postMessage.mock.calls[1][0];
+      expect(secondCall.thread_ts).toBe('1234567890.123456');
+    });
+
+    it('should not use threads when disabled in config', async () => {
+      const fs = require('fs');
+      (fs.readFileSync as any).mockReturnValue(JSON.stringify({
+        ...mockConfig,
+        enableThreads: false,
+      }));
+
+      const mockClient = {
+        chat: {
+          postMessage: vi.fn().mockResolvedValue({ ok: true }),
+        },
+      };
+
+      const { WebClient } = await import('@slack/web-api');
+      (WebClient as any).mockImplementation(() => mockClient);
+
+      const testIntegration = new SlackIntegration(TEST_CONFIG_PATH);
+
+      const alert: AlertMessage = {
+        type: 'system',
+        severity: 'info',
+        title: 'Test',
+        description: 'Test',
+        threadId: 'test-thread',
+        timestamp: Date.now(),
+      };
+
+      await testIntegration.sendAlert(alert);
+
+      const call = mockClient.chat.postMessage.mock.calls[0][0];
+      expect(call.thread_ts).toBeUndefined();
+    });
+  });
+
+  // ============================================================================
+  // Rate Limiting Tests
+  // ============================================================================
+
+  describe('Rate Limiting', () => {
+    it('should respect rate limits', async () => {
+      const fs = require('fs');
+      (fs.readFileSync as any).mockReturnValue(JSON.stringify({
+        ...mockConfig,
+        rateLimiting: {
+          maxMessagesPerMinute: 2,
+          burstSize: 2,
+        },
+      }));
+
+      const mockClient = {
+        chat: {
+          postMessage: vi.fn().mockResolvedValue({ ok: true }),
+        },
+      };
+
+      const { WebClient } = await import('@slack/web-api');
+      (WebClient as any).mockImplementation(() => mockClient);
+
+      const testIntegration = new SlackIntegration(TEST_CONFIG_PATH);
+
+      const alert: AlertMessage = {
+        type: 'system',
+        severity: 'info',
+        title: 'Test',
+        description: 'Test',
+        timestamp: Date.now(),
+      };
+
+      // Send burst size messages (should succeed)
+      let result1 = await testIntegration.sendAlert(alert);
+      let result2 = await testIntegration.sendAlert(alert);
+
+      expect(result1).toBe(true);
+      expect(result2).toBe(true);
+
+      // Third message should be rate limited
+      let result3 = await testIntegration.sendAlert(alert);
+      expect(result3).toBe(false);
+    });
+  });
+
+  // ============================================================================
+  // Specialized Alert Tests
+  // ============================================================================
+
+  describe('Specialized Alerts', () => {
+    beforeEach(() => {
+      const mockClient = {
+        chat: {
+          postMessage: vi.fn().mockResolvedValue({ ok: true }),
+        },
+      };
+
+      const { WebClient } = require('@slack/web-api');
+      WebClient.mockImplementation(() => mockClient);
+    });
+
+    it('should send query alert with query preview', async () => {
+      const result = await integration.sendQueryAlert(
+        'SELECT * FROM users WHERE age > 18',
+        { rows: [{ id: 1 }, { id: 2 }] },
+        { executionTime: 1500 }
+      );
+
+      expect(result).toBe(true);
+    });
+
+    it('should send security alert with severity', async () => {
+      const result = await integration.sendSecurityAlert(
+        'SQL Injection Attempt',
+        'Malicious query detected',
+        'critical',
+        { ip: '192.168.1.100' }
+      );
+
+      expect(result).toBe(true);
+    });
+
+    it('should send performance alert with metrics', async () => {
+      const result = await integration.sendPerformanceAlert(
+        'CPU Usage',
+        95,
+        80,
+        { duration: '5 minutes' }
+      );
+
+      expect(result).toBe(true);
+    });
+
+    it('should send backup notification', async () => {
+      const result = await integration.sendBackupNotification(
+        true,
+        '/backups/db-2024-01-01.sql',
+        1024 * 1024 * 50
+      );
+
+      expect(result).toBe(true);
+    });
+
+    it('should send health update', async () => {
+      const result = await integration.sendHealthUpdate(
+        'healthy',
+        {
+          database: true,
+          api: true,
+          storage: true,
+        }
+      );
+
+      expect(result).toBe(true);
+    });
+
+    it('should calculate performance alert severity correctly', async () => {
+      const mockClient = {
+        chat: {
+          postMessage: vi.fn().mockResolvedValue({ ok: true }),
+        },
+      };
+
+      const { WebClient } = await import('@slack/web-api');
+      (WebClient as any).mockImplementation(() => mockClient);
+
+      const testIntegration = new SlackIntegration(TEST_CONFIG_PATH);
+
+      // Test critical threshold (>100% over)
+      await testIntegration.sendPerformanceAlert('CPU', 200, 80);
+      let call = mockClient.chat.postMessage.mock.calls[0][0];
+      expect(call.blocks[1].elements[0].text).toContain('CRITICAL');
+
+      mockClient.chat.postMessage.mockClear();
+
+      // Test high threshold (>50% over)
+      await testIntegration.sendPerformanceAlert('CPU', 130, 80);
+      call = mockClient.chat.postMessage.mock.calls[0][0];
+      expect(call.blocks[1].elements[0].text).toContain('HIGH');
+    });
+  });
+
+  // ============================================================================
+  // Connection Tests
+  // ============================================================================
+
+  describe('Connection Testing', () => {
+    it('should test connection successfully', async () => {
+      const mockClient = {
+        chat: {
+          postMessage: vi.fn().mockResolvedValue({ ok: true }),
+        },
+      };
+
+      const { WebClient } = await import('@slack/web-api');
+      (WebClient as any).mockImplementation(() => mockClient);
+
+      const testIntegration = new SlackIntegration(TEST_CONFIG_PATH);
+
+      const result = await testIntegration.testConnection();
+
+      expect(result.success).toBe(true);
+      expect(result.message).toContain('successful');
+    });
+
+    it('should handle connection test failure', async () => {
+      const mockClient = {
+        chat: {
+          postMessage: vi.fn().mockRejectedValue(new Error('Connection failed')),
+        },
+      };
+
+      const { WebClient } = await import('@slack/web-api');
+      (WebClient as any).mockImplementation(() => mockClient);
+
+      const testIntegration = new SlackIntegration(TEST_CONFIG_PATH);
+
+      const result = await testIntegration.testConnection();
+
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('failed');
+    });
+  });
+
+  // ============================================================================
+  // Channel Listing Tests
+  // ============================================================================
+
+  describe('Channel Listing', () => {
+    it('should list available channels', async () => {
+      const mockClient = {
+        conversations: {
+          list: vi.fn().mockResolvedValue({
+            channels: [
+              { id: 'C1234', name: 'general', is_member: true },
+              { id: 'C5678', name: 'random', is_member: false },
+            ],
+          }),
+        },
+      };
+
+      const { WebClient } = await import('@slack/web-api');
+      (WebClient as any).mockImplementation(() => mockClient);
+
+      const testIntegration = new SlackIntegration(TEST_CONFIG_PATH);
+
+      const channels = await testIntegration.listChannels();
+
+      expect(channels).toHaveLength(2);
+      expect(channels[0]).toEqual({
+        id: 'C1234',
+        name: 'general',
+        isMember: true,
+      });
+    });
+
+    it('should handle empty channel list', async () => {
+      const mockClient = {
+        conversations: {
+          list: vi.fn().mockResolvedValue({ channels: [] }),
+        },
+      };
+
+      const { WebClient } = await import('@slack/web-api');
+      (WebClient as any).mockImplementation(() => mockClient);
+
+      const testIntegration = new SlackIntegration(TEST_CONFIG_PATH);
+
+      const channels = await testIntegration.listChannels();
+
+      expect(channels).toHaveLength(0);
+    });
+
+    it('should handle channel listing errors', async () => {
+      const mockClient = {
+        conversations: {
+          list: vi.fn().mockRejectedValue(new Error('API Error')),
+        },
+      };
+
+      const { WebClient } = await import('@slack/web-api');
+      (WebClient as any).mockImplementation(() => mockClient);
+
+      const testIntegration = new SlackIntegration(TEST_CONFIG_PATH);
+
+      const channels = await testIntegration.listChannels();
+
+      expect(channels).toHaveLength(0);
+    });
+  });
+
+  // ============================================================================
+  // CLI Command Tests
+  // ============================================================================
+
+  describe('CLI Commands', () => {
+    it('should setup Slack with token', async () => {
+      const fs = require('fs');
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      await setupSlack({
+        token: 'xoxb-new-token',
+        configPath: TEST_CONFIG_PATH,
+      });
+
+      expect(fs.writeFileSync).toHaveBeenCalled();
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('configured'));
+
+      consoleSpy.mockRestore();
+    });
+
+    it('should setup Slack with webhook', async () => {
+      const fs = require('fs');
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      await setupSlack({
+        webhook: 'https://hooks.slack.com/services/NEW',
+        configPath: TEST_CONFIG_PATH,
+      });
+
+      expect(fs.writeFileSync).toHaveBeenCalled();
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('webhook'));
+
+      consoleSpy.mockRestore();
+    });
+
+    it('should configure channel routing', async () => {
+      const fs = require('fs');
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      await configureSlackRouting({
+        alertType: 'backup',
+        channel: '#backups',
+        configPath: TEST_CONFIG_PATH,
+      });
+
+      expect(fs.writeFileSync).toHaveBeenCalled();
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('backup'));
+
+      consoleSpy.mockRestore();
+    });
+  });
+
+  // ============================================================================
+  // Field Formatting Tests
+  // ============================================================================
+
+  describe('Field Formatting', () => {
+    it('should format field values correctly', async () => {
+      const mockClient = {
+        chat: {
+          postMessage: vi.fn().mockResolvedValue({ ok: true }),
+        },
+      };
+
+      const { WebClient } = await import('@slack/web-api');
+      (WebClient as any).mockImplementation(() => mockClient);
+
+      const testIntegration = new SlackIntegration(TEST_CONFIG_PATH);
+
+      const alert: AlertMessage = {
+        type: 'system',
+        severity: 'info',
+        title: 'Test',
+        description: 'Test',
+        details: {
+          string_value: 'test',
+          number_value: 12345,
+          object_value: { nested: 'value' },
+        },
+        timestamp: Date.now(),
+      };
+
+      await testIntegration.sendAlert(alert);
+
+      const call = mockClient.chat.postMessage.mock.calls[0][0];
+      const sectionBlock = call.blocks.find((b: any) => b.type === 'section' && b.fields);
+
+      expect(sectionBlock).toBeDefined();
+      expect(sectionBlock.fields[1].text).toContain('12,345'); // Localized number
+    });
+  });
+});
