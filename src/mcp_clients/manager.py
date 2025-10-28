@@ -12,6 +12,12 @@ from .base import BaseMCPClient, ConnectionConfig, MCPClientError, ConnectionSta
 from .oracle_client import OracleClient
 from .postgresql_client import PostgreSQLClient
 from .mysql_client import MySQLClient
+from .mongodb_client import MongoDBClient
+from .redis_client import RedisClient
+from .sqlite_client import SQLiteClient
+from .neo4j_client import Neo4jClient
+from .cassandra_client import CassandraClient
+from .dynamodb_client import DynamoDBClient
 
 
 @dataclass
@@ -39,6 +45,12 @@ class ConnectionManager:
         'oracle': OracleClient,
         'postgresql': PostgreSQLClient,
         'mysql': MySQLClient,
+        'mongodb': MongoDBClient,
+        'redis': RedisClient,
+        'sqlite': SQLiteClient,
+        'neo4j': Neo4jClient,
+        'cassandra': CassandraClient,
+        'dynamodb': DynamoDBClient,
     }
 
     def __init__(self, max_connections: int = 10) -> None:

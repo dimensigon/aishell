@@ -345,12 +345,17 @@ class EnhancedConnectionManager(ConnectionManager):
         'kafka': MessageQueueClient,
     }
 
-    def __init__(self, max_connections: int = 20):
+    def __init__(self, max_connections: int = 20,
+                 health_check_interval: int = 60,
+                 auto_reconnect: bool = True):
         super().__init__(max_connections)
         # Merge registries
         self.CLIENT_REGISTRY.update(self.EXTENDED_CLIENT_REGISTRY)
         self._resources: List[MCPResource] = []
         self._tools: List[MCPTool] = []
+        self._health_check_interval = health_check_interval
+        self._auto_reconnect = auto_reconnect
+        self._health_check_task: Optional[asyncio.Task] = None
         self._initialize_resources()
 
     def _initialize_resources(self):
@@ -508,3 +513,140 @@ class EnhancedConnectionManager(ConnectionManager):
             stats["connections_by_state"][state] = stats["connections_by_state"].get(state, 0) + 1
 
         return stats
+
+    # Health Monitoring and Auto-Reconnection
+
+    async def start_health_monitoring(self) -> None:
+        """Start background health monitoring task"""
+        if self._health_check_task and not self._health_check_task.done():
+            logger.warning("Health monitoring already running")
+            return
+
+        self._health_check_task = asyncio.create_task(self._health_monitor_loop())
+        logger.info("Started health monitoring")
+
+    async def stop_health_monitoring(self) -> None:
+        """Stop background health monitoring task"""
+        if self._health_check_task and not self._health_check_task.done():
+            self._health_check_task.cancel()
+            try:
+                await self._health_check_task
+            except asyncio.CancelledError:
+                pass
+            logger.info("Stopped health monitoring")
+
+    async def _health_monitor_loop(self) -> None:
+        """Background loop for health monitoring"""
+        while True:
+            try:
+                await asyncio.sleep(self._health_check_interval)
+                await self._check_all_connections()
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.error(f"Health monitor error: {e}")
+
+    async def _check_all_connections(self) -> None:
+        """Check health of all connections and reconnect if needed"""
+        for conn_id, conn_info in list(self._connections.items()):
+            try:
+                health = await conn_info.client.health_check()
+
+                if not health.get('connected', False) or not health.get('ping_successful', True):
+                    logger.warning(f"Connection {conn_id} unhealthy: {health}")
+
+                    if self._auto_reconnect:
+                        logger.info(f"Attempting to reconnect: {conn_id}")
+                        try:
+                            await self.reconnect(conn_id)
+                            logger.info(f"Successfully reconnected: {conn_id}")
+                        except Exception as reconnect_error:
+                            logger.error(f"Failed to reconnect {conn_id}: {reconnect_error}")
+
+            except Exception as e:
+                logger.error(f"Health check failed for {conn_id}: {e}")
+
+    async def get_connection_health(self, connection_id: str) -> Dict[str, Any]:
+        """
+        Get health status for a specific connection
+
+        Args:
+            connection_id: Connection identifier
+
+        Returns:
+            Health status dictionary
+
+        Raises:
+            MCPClientError: If connection not found
+        """
+        async with self._lock:
+            conn_info = self._connections.get(connection_id)
+            if not conn_info:
+                raise MCPClientError(
+                    f"Connection '{connection_id}' not found",
+                    "CONNECTION_NOT_FOUND"
+                )
+
+            return await conn_info.client.health_check()
+
+    async def get_all_connection_health(self) -> Dict[str, Dict[str, Any]]:
+        """
+        Get health status for all connections
+
+        Returns:
+            Dictionary mapping connection_id to health status
+        """
+        health_status = {}
+
+        for conn_id in list(self._connections.keys()):
+            try:
+                health_status[conn_id] = await self.get_connection_health(conn_id)
+            except Exception as e:
+                health_status[conn_id] = {
+                    'error': str(e),
+                    'connected': False
+                }
+
+        return health_status
+
+    async def resize_pool(self, new_max: int) -> None:
+        """
+        Resize connection pool
+
+        Args:
+            new_max: New maximum connections
+
+        Raises:
+            MCPClientError: If new size is smaller than current connections
+        """
+        async with self._lock:
+            current_count = len(self._connections)
+
+            if new_max < current_count:
+                raise MCPClientError(
+                    f"Cannot resize pool to {new_max}, currently have {current_count} connections",
+                    "INVALID_POOL_SIZE"
+                )
+
+            self._max_connections = new_max
+            logger.info(f"Resized connection pool to {new_max}")
+
+    def get_pool_stats(self) -> Dict[str, Any]:
+        """
+        Get connection pool statistics
+
+        Returns:
+            Pool statistics dictionary
+        """
+        return {
+            'current_connections': len(self._connections),
+            'max_connections': self._max_connections,
+            'utilization_percent': (len(self._connections) / self._max_connections * 100)
+                if self._max_connections > 0 else 0,
+            'health_check_interval': self._health_check_interval,
+            'auto_reconnect_enabled': self._auto_reconnect,
+            'health_monitoring_active': (
+                self._health_check_task is not None and
+                not self._health_check_task.done()
+            )
+        }
