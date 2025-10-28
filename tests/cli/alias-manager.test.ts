@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { AliasManager, Alias, AliasParameter, AliasTemplate } from '../../src/cli/alias-manager';
 import * as fs from 'fs/promises';
 import * as path from 'path';

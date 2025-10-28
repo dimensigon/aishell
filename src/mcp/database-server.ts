@@ -51,7 +51,7 @@ export class MCPDatabaseServer {
     this.connectionManager = new DatabaseConnectionManager(this.stateManager);
 
     // Initialize tool providers
-    this.commonTools = new CommonDatabaseTools(this.connectionManager);
+    this.commonTools = new CommonDatabaseTools(this.connectionManager, this.stateManager);
     this.postgresTools = new PostgreSQLTools(this.connectionManager);
     this.mysqlTools = new MySQLTools(this.connectionManager);
     this.mongoTools = new MongoDBTools(this.connectionManager);
@@ -103,9 +103,8 @@ export class MCPDatabaseServer {
         let result: any;
 
         // Route to appropriate tool provider
-        if (name.startsWith('db_') && !name.startsWith('db_')) {
-          result = await this.commonTools.executeTool(name, args);
-        } else if (name.startsWith('pg_')) {
+        // Fixed logic error: removed contradictory condition that prevented db_ tools from routing
+        if (name.startsWith('pg_')) {
           result = await this.postgresTools.executeTool(name, args);
         } else if (name.startsWith('mysql_')) {
           result = await this.mysqlTools.executeTool(name, args);

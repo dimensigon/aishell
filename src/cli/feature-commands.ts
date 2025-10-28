@@ -9,6 +9,7 @@ import { QueryOptimizer } from './query-optimizer';
 import { HealthMonitor } from './health-monitor';
 import { BackupSystem } from './backup-system';
 import { QueryFederation } from './query-federation';
+import { FederationEngine } from './federation-engine';
 import { SchemaDesigner } from './schema-designer';
 import { QueryCache } from './query-cache';
 import { MigrationTester } from './migration-tester';
@@ -27,6 +28,7 @@ export class FeatureCommands {
   private healthMonitor?: HealthMonitor;
   private backupSystem?: BackupSystem;
   private queryFederation?: QueryFederation;
+  private federationEngine?: FederationEngine;
   private schemaDesigner?: SchemaDesigner;
   private queryCache?: QueryCache;
   private migrationTester?: MigrationTester;
@@ -286,20 +288,88 @@ export class FeatureCommands {
 
     // Handle --explain flag
     if (options.explain) {
-      console.log(chalk.blue('\n📊 Federated Query Execution Plan...\n'));
-      console.log(`  Databases: ${databases.join(', ')}`);
-      console.log(`  Query: ${query}`);
-      console.log(chalk.yellow('\n⚠️  Detailed explain for federated queries coming soon'));
+      await this.explainFederatedQuery(query);
       return;
     }
 
-    console.log(chalk.blue('\n🔗 Executing federated query...\n'));
+    console.log(chalk.blue('\n🌐 Executing federated query with cross-database JOINs...\n'));
 
-    const result = await this.queryFederation.executeFederatedQuery(query, databases);
+    // Use new FederationEngine for true cross-database JOINs
+    if (!this.federationEngine) {
+      this.federationEngine = new FederationEngine(this.dbManager, this.stateManager);
+    }
 
-    console.log(chalk.green(`✅ Query completed in ${result.duration}ms`));
-    console.log(`  Steps: ${result.executionPlan.steps.length}`);
-    console.log(`  Results: ${result.results?.length || 0} rows`);
+    const result = await this.federationEngine.executeFederatedQuery(query);
+
+    console.log(chalk.green(`✅ Query completed in ${result.executionTime}ms`));
+    console.log(`  Databases: ${result.plan.databases.join(', ')}`);
+    console.log(`  Strategy: ${result.plan.strategy}`);
+    console.log(`  Steps: ${result.plan.steps.length}`);
+    console.log(`  Results: ${result.rowCount} rows`);
+    console.log(`  Queries Executed: ${result.statistics.queriesExecuted}`);
+    console.log(`  Cache Hits: ${result.statistics.cacheHits}/${result.statistics.cacheHits + result.statistics.cacheMisses}`);
+  }
+
+  /**
+   * Explain federated query execution plan
+   */
+  async explainFederatedQuery(query: string): Promise<void> {
+    if (!this.federationEngine) {
+      this.federationEngine = new FederationEngine(this.dbManager, this.stateManager);
+    }
+
+    console.log(chalk.blue('\n📊 Generating execution plan...\n'));
+
+    const explanation = await this.federationEngine.explainQuery(query);
+    console.log(explanation);
+  }
+
+  /**
+   * Show federation statistics
+   */
+  async showFederationStats(): Promise<void> {
+    if (!this.federationEngine) {
+      console.log(chalk.yellow('No federation engine initialized'));
+      return;
+    }
+
+    const stats = this.federationEngine.getStatistics();
+
+    const table = new Table({
+      head: [chalk.cyan('Metric'), chalk.cyan('Value')],
+      colWidths: [30, 20]
+    });
+
+    table.push(
+      ['Total Data Transferred', stats.totalDataTransferred.toLocaleString()],
+      ['Queries Executed', stats.queriesExecuted.toString()],
+      ['Cache Hits', stats.cacheHits.toString()],
+      ['Cache Misses', stats.cacheMisses.toString()],
+      ['Cache Hit Rate', `${(stats.cacheHits / (stats.cacheHits + stats.cacheMisses || 1) * 100).toFixed(1)}%`]
+    );
+
+    console.log('\n' + chalk.bold('Federation Statistics'));
+    console.log(table.toString());
+
+    if (Object.keys(stats.databases).length > 0) {
+      console.log('\n' + chalk.bold('Per-Database Statistics'));
+
+      const dbTable = new Table({
+        head: [chalk.cyan('Database'), chalk.cyan('Queries'), chalk.cyan('Rows'), chalk.cyan('Time (ms)')],
+        colWidths: [20, 15, 15, 15]
+      });
+
+      Object.entries(stats.databases).forEach(([db, dbStats]) => {
+        dbTable.push([
+          db,
+          dbStats.queries.toString(),
+          dbStats.rows.toLocaleString(),
+          dbStats.time.toFixed(2)
+        ]);
+      });
+
+      console.log(dbTable.toString());
+    }
   }
 
   /**

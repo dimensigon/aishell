@@ -25,10 +25,20 @@ import { OptimizationCLI } from './optimization-cli';
 import { registerOptimizationCommands } from './optimization-commands';
 import { ContextManager } from './context-manager';
 import { setupBackupCommands } from './backup-cli';
+import { createSSOCLI } from './sso-cli';
 
 const logger = createLogger('CLI');
 const program = new Command();
 const contextManager = new ContextManager();
+
+// SSO CLI instance
+let ssoCli: ReturnType<typeof createSSOCLI> | null = null;
+function getSSOCLI() {
+  if (!ssoCli) {
+    ssoCli = createSSOCLI();
+  }
+  return ssoCli;
+}
 
 // Lazy-load features to avoid initialization at module load time
 let features: FeatureCommands | null = null;
@@ -1493,6 +1503,9 @@ process.on('SIGINT', async () => {
     if (cliWrapper) {
       await cliWrapper.cleanup();
     }
+    if (ssoCli) {
+      await ssoCli.cleanup();
+    }
     console.log(chalk.green('✅ Cleanup complete'));
     process.exit(0);
   } catch (error) {
@@ -1509,6 +1522,9 @@ process.on('SIGTERM', async () => {
     }
     if (cliWrapper) {
       await cliWrapper.cleanup();
+    }
+    if (ssoCli) {
+      await ssoCli.cleanup();
     }
     process.exit(0);
   } catch (error) {
@@ -1528,6 +1544,193 @@ setupBackupCommands(program);
 if (typeof registerOptimizationCommands === 'function') {
   registerOptimizationCommands(program, getOptimizationCLI());
 }
+
+// ============================================================================
+// SSO COMMANDS
+// ============================================================================
+
+const ssoCommand = program
+  .command('sso')
+  .description('Single Sign-On (SSO) management');
+
+ssoCommand
+  .command('configure <provider>')
+  .description('Configure SSO provider')
+  .option('--template <type>', 'Use provider template (okta, auth0, azure-ad, google, generic)')
+  .addHelpText('after', `
+${chalk.bold('Examples:')}
+  ${chalk.dim('$')} ai-shell sso configure okta-prod --template okta
+  ${chalk.dim('$')} ai-shell sso configure auth0-prod --template auth0
+  ${chalk.dim('$')} ai-shell sso configure custom-provider
+`)
+  .action(async (provider: string, options: { template?: string }) => {
+    try {
+      const cli = getSSOCLI();
+      await cli.initialize();
+      await cli.configure(provider, options.template);
+    } catch (error) {
+      logger.error('SSO configure failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+ssoCommand
+  .command('login [provider]')
+  .description('Authenticate with SSO provider')
+  .addHelpText('after', `
+${chalk.bold('Examples:')}
+  ${chalk.dim('$')} ai-shell sso login
+  ${chalk.dim('$')} ai-shell sso login okta-prod
+`)
+  .action(async (provider?: string) => {
+    try {
+      const cli = getSSOCLI();
+      await cli.initialize();
+      await cli.login(provider);
+    } catch (error) {
+      logger.error('SSO login failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+ssoCommand
+  .command('logout')
+  .description('End SSO session')
+  .addHelpText('after', `
+${chalk.bold('Example:')}
+  ${chalk.dim('$')} ai-shell sso logout
+`)
+  .action(async () => {
+    try {
+      const cli = getSSOCLI();
+      await cli.initialize();
+      await cli.logout();
+      await cli.cleanup();
+    } catch (error) {
+      logger.error('SSO logout failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+ssoCommand
+  .command('status')
+  .description('Show current SSO status')
+  .addHelpText('after', `
+${chalk.bold('Example:')}
+  ${chalk.dim('$')} ai-shell sso status
+`)
+  .action(async () => {
+    try {
+      const cli = getSSOCLI();
+      await cli.initialize();
+      await cli.status();
+    } catch (error) {
+      logger.error('SSO status failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+ssoCommand
+  .command('refresh-token [session-id]')
+  .description('Refresh access token')
+  .addHelpText('after', `
+${chalk.bold('Examples:')}
+  ${chalk.dim('$')} ai-shell sso refresh-token
+  ${chalk.dim('$')} ai-shell sso refresh-token abc123xyz789
+`)
+  .action(async (sessionId?: string) => {
+    try {
+      const cli = getSSOCLI();
+      await cli.initialize();
+      await cli.refreshToken(sessionId);
+    } catch (error) {
+      logger.error('SSO refresh-token failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+ssoCommand
+  .command('map-roles')
+  .description('Configure role mappings')
+  .addHelpText('after', `
+${chalk.bold('Example:')}
+  ${chalk.dim('$')} ai-shell sso map-roles
+`)
+  .action(async () => {
+    try {
+      const cli = getSSOCLI();
+      await cli.initialize();
+      await cli.mapRoles();
+    } catch (error) {
+      logger.error('SSO map-roles failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+ssoCommand
+  .command('list-providers')
+  .description('List all configured SSO providers')
+  .alias('providers')
+  .addHelpText('after', `
+${chalk.bold('Example:')}
+  ${chalk.dim('$')} ai-shell sso list-providers
+  ${chalk.dim('$')} ai-shell sso providers
+`)
+  .action(async () => {
+    try {
+      const cli = getSSOCLI();
+      await cli.initialize();
+      await cli.listProviders();
+    } catch (error) {
+      logger.error('SSO list-providers failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+ssoCommand
+  .command('show-config <provider>')
+  .description('Show provider configuration')
+  .addHelpText('after', `
+${chalk.bold('Example:')}
+  ${chalk.dim('$')} ai-shell sso show-config okta-prod
+`)
+  .action(async (provider: string) => {
+    try {
+      const cli = getSSOCLI();
+      await cli.initialize();
+      await cli.showProviderConfig(provider);
+    } catch (error) {
+      logger.error('SSO show-config failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+ssoCommand
+  .command('remove-provider <provider>')
+  .description('Remove SSO provider')
+  .addHelpText('after', `
+${chalk.bold('Example:')}
+  ${chalk.dim('$')} ai-shell sso remove-provider okta-old
+`)
+  .action(async (provider: string) => {
+    try {
+      const cli = getSSOCLI();
+      await cli.initialize();
+      await cli.removeProvider(provider);
+    } catch (error) {
+      logger.error('SSO remove-provider failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
 
 // ============================================================================
 // MAIN EXECUTION

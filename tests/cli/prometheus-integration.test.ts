@@ -9,9 +9,11 @@ import { HealthMonitor } from '../../src/cli/health-monitor';
 import { DatabaseConnectionManager } from '../../src/cli/database-manager';
 import axios from 'axios';
 
+import { describe, it, test, expect, beforeEach, afterEach, vi } from 'vitest';
+
 // Mock dependencies
-jest.mock('../../src/core/logger');
-jest.mock('axios');
+vi.mock('../../src/core/logger');
+vi.mock('axios');
 
 describe('PrometheusMetricsCollector', () => {
   let collector: PrometheusMetricsCollector;
@@ -523,7 +525,7 @@ describe('PrometheusServer', () => {
   describe('Health Monitor Integration', () => {
     test('should integrate with health monitor', async () => {
       const mockHealthMonitor = {
-        on: jest.fn()
+        on: vi.fn()
       } as any;
 
       const integratedServer = new PrometheusServer(config, mockHealthMonitor);
@@ -542,8 +544,8 @@ describe('PrometheusIntegration', () => {
 
   beforeEach(() => {
     mockStateManager = {
-      get: jest.fn().mockReturnValue(null),
-      set: jest.fn()
+      get: vi.fn().mockReturnValue(null),
+      set: vi.fn()
     } as any;
 
     integration = new PrometheusIntegration(mockStateManager);

@@ -4,19 +4,75 @@
  */
 
 import { DatabaseConnectionManager, DatabaseType, ConnectionConfig } from '../../cli/database-manager';
+import { FederationEngine } from '../../cli/federation-engine';
+import { StateManager } from '../../core/state-manager';
 import { MCPTool } from '../types';
 
 /**
  * Common MCP tools for database operations
  */
 export class CommonDatabaseTools {
-  constructor(private connectionManager: DatabaseConnectionManager) {}
+  private federationEngine?: FederationEngine;
+
+  constructor(
+    private connectionManager: DatabaseConnectionManager,
+    private stateManager?: StateManager
+  ) {}
 
   /**
    * Get tool definitions
    */
   getToolDefinitions(): MCPTool[] {
     return [
+      {
+        name: 'db_federated_query',
+        description: 'Execute a cross-database JOIN query using AI-Shell federation engine. Supports INNER, LEFT, RIGHT, and FULL OUTER JOINs across PostgreSQL, MySQL, MongoDB, and other databases.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            query: {
+              type: 'string',
+              description: 'SQL query with database.table notation (e.g., "SELECT u.name FROM db1.users u JOIN db2.orders o ON u.id = o.user_id")'
+            },
+            explain: {
+              type: 'boolean',
+              description: 'Show execution plan instead of executing (default: false)'
+            },
+            cache: {
+              type: 'boolean',
+              description: 'Enable result caching (default: true)'
+            }
+          },
+          required: ['query']
+        }
+      },
+      {
+        name: 'db_federated_explain',
+        description: 'Get execution plan for a federated query without executing it',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            query: {
+              type: 'string',
+              description: 'SQL query to explain'
+            }
+          },
+          required: ['query']
+        }
+      },
+      {
+        name: 'db_federated_stats',
+        description: 'Get federation engine statistics including cache hit rates and per-database metrics',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            reset: {
+              type: 'boolean',
+              description: 'Reset statistics after retrieving (default: false)'
+            }
+          }
+        }
+      },
       {
         name: 'db_connect',
         description: 'Connect to a database with specified configuration',
@@ -236,6 +292,12 @@ export class CommonDatabaseTools {
    */
   async executeTool(name: string, args: any): Promise<any> {
     switch (name) {
+      case 'db_federated_query':
+        return this.federatedQuery(args);
+      case 'db_federated_explain':
+        return this.federatedExplain(args);
+      case 'db_federated_stats':
+        return this.federatedStats(args);
       case 'db_connect':
         return this.connect(args);
       case 'db_disconnect':
@@ -567,6 +629,105 @@ export class CommonDatabaseTools {
       table: args.table,
       indexes: rows,
       indexCount: rows.length
+    };
+  }
+
+  /**
+   * Execute federated query across multiple databases
+   */
+  private async federatedQuery(args: any): Promise<any> {
+    if (!this.federationEngine) {
+      if (!this.stateManager) {
+        throw new Error('StateManager required for federation engine');
+      }
+      this.federationEngine = new FederationEngine(this.connectionManager, this.stateManager);
+    }
+
+    // Handle explain flag
+    if (args.explain) {
+      const explanation = await this.federationEngine.explainQuery(args.query);
+      return {
+        success: true,
+        explanation,
+        query: args.query
+      };
+    }
+
+    // Handle cache flag
+    if (args.cache === false) {
+      this.federationEngine.clearCaches();
+    }
+
+    // Execute federated query
+    const result = await this.federationEngine.executeFederatedQuery(args.query);
+
+    return {
+      success: true,
+      rows: result.rows,
+      rowCount: result.rowCount,
+      executionTime: result.executionTime,
+      plan: {
+        id: result.plan.id,
+        databases: result.plan.databases,
+        steps: result.plan.steps.length,
+        strategy: result.plan.strategy,
+        estimatedCost: result.plan.estimatedCost
+      },
+      statistics: result.statistics
+    };
+  }
+
+  /**
+   * Explain federated query execution plan
+   */
+  private async federatedExplain(args: any): Promise<any> {
+    if (!this.federationEngine) {
+      if (!this.stateManager) {
+        throw new Error('StateManager required for federation engine');
+      }
+      this.federationEngine = new FederationEngine(this.connectionManager, this.stateManager);
+    }
+
+    const explanation = await this.federationEngine.explainQuery(args.query);
+
+    return {
+      success: true,
+      query: args.query,
+      explanation
+    };
+  }
+
+  /**
+   * Get federation engine statistics
+   */
+  private async federatedStats(args: any): Promise<any> {
+    if (!this.federationEngine) {
+      return {
+        success: true,
+        message: 'Federation engine not initialized',
+        statistics: {
+          totalDataTransferred: 0,
+          queriesExecuted: 0,
+          cacheHits: 0,
+          cacheMisses: 0,
+          databases: {}
+        }
+      };
+    }
+
+    const stats = this.federationEngine.getStatistics();
+
+    // Reset if requested
+    if (args.reset) {
+      this.federationEngine.resetStatistics();
+    }
+
+    return {
+      success: true,
+      statistics: stats,
+      cacheHitRate: stats.cacheHits / (stats.cacheHits + stats.cacheMisses || 1),
+      totalQueries: stats.queriesExecuted,
+      databaseCount: Object.keys(stats.databases).length
     };
   }
 }

@@ -8,7 +8,9 @@ rich==13.7.0
 
 # Database Clients (Thin/Pure Python)
 oracledb==2.0.0
-psycopg2-binary==2.9.9
+psycopg2-binary==2.9.10  # Updated from 2.9.9
+psycopg[binary]==3.2.12  # psycopg3 for async PostgreSQL (MCP tests)
+aiosqlite==0.21.0  # Async SQLite for integration tests
 
 # MongoDB Support (v1.2.0)
 motor==3.3.2
@@ -26,7 +28,8 @@ transformers==4.53.0  # Security: Updated from 4.36.2 to fix CVE vulnerabilities
 faiss-cpu==1.12.0
 
 # Security
-cryptography==44.0.1  # Security: Updated from 41.0.7 to fix high severity CVEs
+cryptography==46.0.3  # Security: Updated from 44.0.1 for pyOpenSSL compatibility
+pyOpenSSL==25.3.0  # Security: Updated from 21.0.0 for cryptography compatibility
 keyring==24.3.0
 
 # Configuration

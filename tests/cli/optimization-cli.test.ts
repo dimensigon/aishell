@@ -3,24 +3,24 @@
  * Comprehensive test suite for query optimization CLI commands
  */
 
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { OptimizationCLI, OptimizationResult, SlowQuery, IndexRecommendation } from '../../src/cli/optimization-cli';
 import { StateManager } from '../../src/core/state-manager';
 import { DatabaseConnectionManager } from '../../src/cli/database-manager';
 
 // Mock dependencies
-jest.mock('../../src/core/state-manager');
-jest.mock('../../src/cli/database-manager');
-jest.mock('../../src/cli/query-optimizer');
+vi.mock('../../src/core/state-manager');
+vi.mock('../../src/cli/database-manager');
+vi.mock('../../src/cli/query-optimizer');
 
 describe('OptimizationCLI', () => {
   let cli: OptimizationCLI;
-  let mockStateManager: jest.Mocked<StateManager>;
-  let mockDbManager: jest.Mocked<DatabaseConnectionManager>;
+  let mockStateManager: any;
+  let mockDbManager: any;
 
   beforeEach(() => {
-    mockStateManager = new StateManager() as jest.Mocked<StateManager>;
-    mockDbManager = new DatabaseConnectionManager(mockStateManager) as jest.Mocked<DatabaseConnectionManager>;
+    mockStateManager = new StateManager() as any;
+    mockDbManager = new DatabaseConnectionManager(mockStateManager) as any;
 
     // Set required environment variable
     process.env.ANTHROPIC_API_KEY = 'test-api-key';
@@ -29,7 +29,7 @@ describe('OptimizationCLI', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     delete process.env.ANTHROPIC_API_KEY;
   });
 

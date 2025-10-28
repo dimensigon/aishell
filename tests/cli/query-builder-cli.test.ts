@@ -3,7 +3,7 @@
  * Comprehensive tests for NL Query Translator, Query Logger, Query Executor, and related features
  */
 
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { NLQueryTranslator, TranslationResult, SchemaInfo } from '../../src/cli/nl-query-translator';
 import { QueryLogger, QueryLog, QueryAnalytics } from '../../src/cli/query-logger';
 import { QueryExecutor, QueryResult, ExecutionPlan } from '../../src/cli/query-executor';
@@ -17,13 +17,13 @@ import * as fs from 'fs/promises';
 
 describe('NLQueryTranslator', () => {
   let translator: NLQueryTranslator;
-  let mockLLMBridge: jest.Mocked<LLMMCPBridge>;
+  let mockLLMBridge: any;
   let errorHandler: ErrorHandler;
   let testSchema: SchemaInfo;
 
   beforeEach(() => {
     mockLLMBridge = {
-      generate: jest.fn()
+      generate: vi.fn()
     } as any;
 
     errorHandler = new ErrorHandler();
@@ -274,7 +274,7 @@ describe('QueryLogger', () => {
     });
 
     it('should emit slowQuery event for slow queries', async () => {
-      const slowQueryHandler = jest.fn();
+      const slowQueryHandler = vi.fn();
       queryLogger.on('slowQuery', slowQueryHandler);
 
       await queryLogger.logQuery('SELECT * FROM huge_table', 2000);
@@ -283,7 +283,7 @@ describe('QueryLogger', () => {
     });
 
     it('should emit queryError event for failed queries', async () => {
-      const errorHandler = jest.fn();
+      const errorHandler = vi.fn();
       queryLogger.on('queryError', errorHandler);
 
       await queryLogger.logQuery('SELECT invalid', 50, { error: new Error('Syntax error') });
@@ -459,13 +459,13 @@ describe('QueryLogger', () => {
 
 describe('QueryExecutor', () => {
   let executor: QueryExecutor;
-  let mockConnectionManager: jest.Mocked<DatabaseConnectionManager>;
+  let mockConnectionManager: any;
   let errorHandler: ErrorHandler;
 
   beforeEach(() => {
     mockConnectionManager = {
-      getActive: jest.fn(),
-      executeQuery: jest.fn()
+      getActive: vi.fn(),
+      executeQuery: vi.fn()
     } as any;
 
     errorHandler = new ErrorHandler();
