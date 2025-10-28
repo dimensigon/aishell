@@ -1,0 +1,27 @@
+[
+  [
+    "11d44200-a9d6-4ecb-93f2-143dc1ca8de4",
+    {
+      "message": {
+        "id": "11d44200-a9d6-4ecb-93f2-143dc1ca8de4",
+        "to": [
+          "test@test.com"
+        ],
+        "subject": "Test",
+        "html": "<html><body>Test</body></html>",
+        "text": "Test",
+        "templateId": "custom",
+        "severity": "info",
+        "category": "custom",
+        "priority": "normal",
+        "metadata": {
+          "subject": "Test",
+          "body": "Test"
+        },
+        "createdAt": "2025-10-28T09:12:48.138Z"
+      },
+      "attempts": 0,
+      "status": "pending"
+    }
+  ]
+]

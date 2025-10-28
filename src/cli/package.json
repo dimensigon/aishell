@@ -1,0 +1,21 @@
+{
+  "name": "@aishell/cli",
+  "version": "1.0.0",
+  "description": "AI Shell CLI - Alias management system",
+  "main": "index.ts",
+  "scripts": {
+    "test": "jest",
+    "build": "tsc",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "commander": "^11.1.0",
+    "chalk": "^4.1.2",
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/js-yaml": "^4.0.9",
+    "typescript": "^5.0.0"
+  }
+}
