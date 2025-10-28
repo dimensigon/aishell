@@ -128,7 +128,7 @@ credential_id = vault.store_credential(
     name='${name}',
     credential_type=CredentialType.STANDARD,
     data={'value': '${value}'},
-    metadata={'encrypted': ${options.encrypt || false}}
+    metadata={'encrypted': ${options.encrypt ? 'True' : 'False'}}
 )
 
 print(json.dumps({
@@ -170,12 +170,12 @@ from security.vault import SecureVault
 vault = SecureVault(
     vault_path='${this.vaultPath}',
     master_password='${process.env.VAULT_PASSWORD || 'default-password'}',
-    auto_redact=${!options.showPasswords}
+    auto_redact=${!options.showPasswords ? 'True' : 'False'}
 )
 
 credentials = []
 for cred_id in vault.list_credentials():
-    cred = vault.get_credential(cred_id, redact=${!options.showPasswords})
+    cred = vault.get_credential(cred_id, redact=${!options.showPasswords ? 'True' : 'False'})
     if cred:
         credentials.append({
             'id': cred.id,
