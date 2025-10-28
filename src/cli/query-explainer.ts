@@ -489,7 +489,9 @@ export class QueryExplainer {
       }
 
       // Nested loop joins with high row count
-      if (node.joinType?.toLowerCase().includes('nested') && node.rows > 10000) {
+      const isNestedLoop = node.joinType?.toLowerCase().includes('nested') ||
+                          node.nodeType?.toLowerCase().includes('nested loop');
+      if (isNestedLoop && node.rows > 1000) {
         bottlenecks.push({
           type: 'nested_loop',
           severity: 'high',
