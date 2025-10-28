@@ -7,6 +7,18 @@ export default defineConfig({
     environment: 'node',
     include: ['tests/**/*.{test,spec}.{js,ts}'],
     exclude: ['**/node_modules/**', '**/dist/**'],
+
+    // Enable parallel execution for faster tests
+    threads: true,
+    maxThreads: 4,  // Use up to 4 CPU cores
+    minThreads: 2,  // Minimum 2 threads
+
+    // Isolate tests properly for parallel execution
+    isolate: true,
+
+    // Optimize file parallelization
+    fileParallelism: true,
+
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],

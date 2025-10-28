@@ -315,6 +315,18 @@ ${chalk.bold('Examples:')}
 // PHASE 2 COMMANDS - Advanced Features
 // ============================================================================
 
+// Import Phase 2 command modules
+import { registerOptimizeCommand } from './commands/optimize';
+import { registerSlowQueriesCommand } from './commands/slow-queries';
+import { registerIndexesCommand } from './commands/indexes';
+import { registerRiskCheckCommand } from './commands/risk-check';
+
+// Register Phase 2 Query Optimization commands
+registerOptimizeCommand(program);
+registerSlowQueriesCommand(program);
+registerIndexesCommand(program);
+registerRiskCheckCommand(program);
+
 const phase2 = program
   .command('phase2')
   .description(chalk.cyan('Phase 2 Commands - Advanced Features'));
@@ -324,9 +336,13 @@ phase2
   .description('Show Phase 2 features')
   .action(() => {
     console.log(chalk.cyan.bold('\n📋 Phase 2 Features:\n'));
-    console.log('  4. Query Federation - Cross-database queries');
-    console.log('  5. Schema Designer - AI-powered schema design');
-    console.log('  6. Query Cache - Redis-based caching\n');
+    console.log('  4. Query Optimization - AI-powered optimization suite');
+    console.log('  5. Slow Query Analysis - Performance monitoring');
+    console.log('  6. Index Management - Smart index recommendations');
+    console.log('  7. Risk Analysis - Query safety checks');
+    console.log('  8. Query Federation - Cross-database queries');
+    console.log('  9. Schema Designer - AI-powered schema design');
+    console.log(' 10. Query Cache - Redis-based caching\n');
   });
 
 // Query Federation Commands

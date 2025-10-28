@@ -9,10 +9,11 @@
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 import { MongoClient, Db, Collection, ObjectId, GridFSBucket, ChangeStream } from 'mongodb';
+import { testDatabaseConfig } from '../../config/databases.test';
 
-// MongoDB connection configuration
-const MONGO_URI = 'mongodb://admin:MyMongoPass123@localhost:27017';
-const TEST_DB = 'test_integration_db';
+// MongoDB connection configuration from centralized config
+const MONGO_URI = testDatabaseConfig.mongodb.url;
+const TEST_DB = testDatabaseConfig.mongodb.database!;
 const TIMEOUT = 30000;
 
 describe('MongoDB Integration Tests', () => {

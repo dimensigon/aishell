@@ -7,8 +7,15 @@ for SQL queries across different database systems.
 
 from typing import Dict, List, Any, Optional, Tuple
 import re
+import hashlib
 from dataclasses import dataclass
 from enum import Enum
+import sys
+import os
+
+# Add performance module to path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+from performance.cache import QueryCache
 
 
 class OptimizationLevel(Enum):
@@ -45,23 +52,30 @@ class OptimizationSuggestion:
 
 class QueryOptimizer:
     """
-    Query optimization engine with pattern-based analysis
+    Query optimization engine with pattern-based analysis and caching.
 
     Detects common performance issues and suggests improvements.
     """
 
     def __init__(self, database_type: str = 'postgresql'):
         """
-        Initialize query optimizer
+        Initialize query optimizer with cache integration.
 
         Args:
             database_type: Target database type (postgresql, mysql, oracle)
         """
         self.database_type = database_type.lower()
+        # Initialize query cache with 5 minute TTL
+        self.cache = QueryCache(ttl=300)
+
+        # Pre-compile regex patterns for better performance
+        self._select_star_pattern = re.compile(r'SELECT\s+\*\s+FROM', re.IGNORECASE)
+        self._like_leading_wildcard_pattern = re.compile(r"LIKE\s+['\"]%", re.IGNORECASE)
+        self._function_in_where_pattern = re.compile(r'WHERE\s+\w+\s*\((\w+)\)', re.IGNORECASE)
 
     def analyze_query(self, query: str) -> List[OptimizationSuggestion]:
         """
-        Analyze query for optimization opportunities
+        Analyze query for optimization opportunities with caching.
 
         Args:
             query: SQL query string
@@ -69,6 +83,12 @@ class QueryOptimizer:
         Returns:
             List of optimization suggestions
         """
+        # Check cache first
+        cache_key = hashlib.md5(query.encode()).hexdigest()
+        cached_result = self.cache.get(cache_key)
+        if cached_result is not None:
+            return cached_result
+
         suggestions = []
         query_clean = query.strip()
         query_upper = query_clean.upper()
@@ -97,13 +117,16 @@ class QueryOptimizer:
         # Check for Cartesian products
         suggestions.extend(self._check_cartesian_product(query_clean, query_upper))
 
+        # Cache the result with extended TTL (10 minutes)
+        self.cache.set(cache_key, suggestions, ttl=600)
+
         return suggestions
 
     def _check_select_star(self, query: str, query_upper: str) -> List[OptimizationSuggestion]:
-        """Check for SELECT * usage"""
+        """Check for SELECT * usage with pre-compiled regex"""
         suggestions = []
 
-        if re.search(r'SELECT\s+\*\s+FROM', query_upper):
+        if self._select_star_pattern.search(query):
             suggestions.append(OptimizationSuggestion(
                 type=OptimizationType.SELECT_STAR,
                 level=OptimizationLevel.WARNING,
@@ -189,11 +212,11 @@ class QueryOptimizer:
         return suggestions
 
     def _check_full_table_scan(self, query: str, query_upper: str) -> List[OptimizationSuggestion]:
-        """Detect queries likely to cause full table scans"""
+        """Detect queries likely to cause full table scans with pre-compiled regex"""
         suggestions = []
 
         # Check for LIKE with leading wildcard
-        if re.search(r"LIKE\s+['\"]%", query_upper):
+        if self._like_leading_wildcard_pattern.search(query):
             suggestions.append(OptimizationSuggestion(
                 type=OptimizationType.FULL_TABLE_SCAN,
                 level=OptimizationLevel.WARNING,
@@ -206,7 +229,7 @@ class QueryOptimizer:
             ))
 
         # Check for function calls on indexed columns
-        if re.search(r'WHERE\s+\w+\s*\((\w+)\)', query_upper):
+        if self._function_in_where_pattern.search(query):
             suggestions.append(OptimizationSuggestion(
                 type=OptimizationType.FULL_TABLE_SCAN,
                 level=OptimizationLevel.WARNING,

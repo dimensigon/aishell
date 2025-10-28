@@ -113,6 +113,12 @@ export class OptimizationCLI {
     stateManager?: StateManager,
     dbManager?: DatabaseConnectionManager
   ) {
+    // Check API key immediately for better error handling
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      throw new Error('ANTHROPIC_API_KEY environment variable not set');
+    }
+
     this.stateManager = stateManager || new StateManager();
     this.dbManager = dbManager || new DatabaseConnectionManager(this.stateManager);
   }
@@ -147,14 +153,19 @@ export class OptimizationCLI {
     // Get optimization analysis
     const analysis = await optimizer.optimizeQuery(query);
 
+    // Handle case where analysis is undefined
+    if (!analysis) {
+      throw new Error('Failed to analyze query');
+    }
+
     // Build result
     const result: OptimizationResult = {
       originalQuery: query,
-      optimizedQuery: analysis.optimizedQuery,
+      optimizedQuery: analysis.optimizedQuery || query,
       improvementPercent: this.parseImprovement(analysis.estimatedImprovement),
       estimatedTimeSavings: this.estimateTimeSavings(analysis.estimatedImprovement),
-      recommendations: analysis.suggestions,
-      appliedOptimizations: options.apply ? analysis.suggestions : []
+      recommendations: analysis.suggestions || [],
+      appliedOptimizations: options.apply ? (analysis.suggestions || []) : []
     };
 
     // Get execution plans if explain flag is set
@@ -192,6 +203,11 @@ export class OptimizationCLI {
     // Get slow queries from optimizer
     const analyses = await optimizer.analyzeSlowQueries();
 
+    // Handle case where analyses is undefined or not an array
+    if (!analyses || !Array.isArray(analyses)) {
+      return [];
+    }
+
     // Convert to SlowQuery format
     const slowQueries: SlowQuery[] = analyses.map(analysis => ({
       query: analysis.query,
@@ -227,6 +243,11 @@ export class OptimizationCLI {
 
     const optimizer = this.getOptimizer();
     const analyses = await optimizer.analyzeSlowQueries();
+
+    // Handle case where analyses is undefined or not an array
+    if (!analyses || !Array.isArray(analyses)) {
+      return [];
+    }
 
     // Extract index recommendations
     const recommendations: IndexRecommendation[] = [];
@@ -371,6 +392,11 @@ export class OptimizationCLI {
       suboptimalJoins: 0,
       selectStar: 0
     };
+
+    // Handle case where analyses is undefined or not an array
+    if (!analyses || !Array.isArray(analyses)) {
+      return patterns;
+    }
 
     // Analyze patterns
     for (const analysis of analyses) {
@@ -564,9 +590,25 @@ export class OptimizationCLI {
   async configureAutoOptimization(config: Partial<AutoOptimizeConfig>): Promise<void> {
     const currentConfig = await this.getAutoOptimizeConfig();
     const newConfig = { ...currentConfig, ...config };
-    await this.stateManager.set('autoOptimizeConfig', newConfig);
+
+    // Ensure all settings are properly merged
+    await this.stateManager.set('autoOptimizeConfig', newConfig, {
+      metadata: { type: 'auto-optimize-config' }
+    });
 
     console.log(chalk.green('\n✅ Auto-optimization configuration updated'));
+
+    // Show the updated configuration
+    const table = new Table({
+      head: ['Setting', 'New Value'],
+      colWidths: [35, 20]
+    });
+
+    Object.entries(config).forEach(([key, value]) => {
+      table.push([key, String(value)]);
+    });
+
+    console.log(table.toString());
   }
 
   // Private helper methods

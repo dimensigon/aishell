@@ -20,6 +20,10 @@
     "test:watch": "vitest watch",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
+    "test:integration": "npm run test:db:setup && npm test tests/integration/ && npm run test:db:teardown",
+    "test:db:setup": "bash scripts/setup-test-dbs.sh",
+    "test:db:teardown": "bash scripts/teardown-test-dbs.sh",
+    "test:db:clean": "bash scripts/teardown-test-dbs.sh --volumes",
     "lint": "eslint src/**/*.ts",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"

@@ -14,20 +14,10 @@
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 import Redis from 'ioredis';
+import { testDatabaseConfig } from '../../config/databases.test';
 
-// Test configuration
-const REDIS_CONFIG = {
-  host: 'localhost',
-  port: 6379,
-  db: 15, // Use a dedicated test database
-  maxRetriesPerRequest: 3,
-  retryStrategy: (times: number) => {
-    const delay = Math.min(times * 50, 2000);
-    return delay;
-  },
-  enableOfflineQueue: false,
-  lazyConnect: true,
-};
+// Test configuration from centralized config
+const REDIS_CONFIG = testDatabaseConfig.redis;
 
 // Test timeout for operations
 const OPERATION_TIMEOUT = 5000;

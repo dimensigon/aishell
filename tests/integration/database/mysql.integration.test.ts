@@ -24,16 +24,10 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import * as mysql from 'mysql2/promise';
 import * as fs from 'fs';
 import * as path from 'path';
+import { testDatabaseConfig } from '../../config/databases.test';
 
-// Connection configuration
-const MYSQL_CONFIG = {
-  host: 'localhost',
-  port: 3307,
-  user: 'root',
-  password: 'MyMySQLPass123',
-  database: 'test_db',
-  multipleStatements: true,
-};
+// Connection configuration from centralized config
+const MYSQL_CONFIG = testDatabaseConfig.mysql;
 
 // Connection pool configuration
 const POOL_CONFIG = {
