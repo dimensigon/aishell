@@ -5,7 +5,7 @@
  */
 
 import { AnthropicProvider } from '../llm/anthropic-provider';
-import { DatabaseConnectionManager, DatabaseType } from './db-connection-manager';
+import { DatabaseConnectionManager, DatabaseType } from './database-manager';
 import { createLogger } from '../core/logger';
 import { StateManager } from '../core/state-manager';
 import * as fs from 'fs/promises';

@@ -19,6 +19,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { FeatureCommands } from './feature-commands';
+import { CLIWrapper, CLIOptions } from './cli-wrapper';
 import { createLogger } from '../core/logger';
 
 const logger = createLogger('CLI');
@@ -31,6 +32,15 @@ function getFeatures(): FeatureCommands {
     features = new FeatureCommands();
   }
   return features;
+}
+
+// CLI Wrapper instance for enhanced command execution
+let cliWrapper: CLIWrapper | null = null;
+function getCLIWrapper(): CLIWrapper {
+  if (!cliWrapper) {
+    cliWrapper = new CLIWrapper();
+  }
+  return cliWrapper;
 }
 
 // CLI metadata
@@ -66,6 +76,13 @@ program
   .option('-v, --verbose', 'Enable verbose logging')
   .option('-j, --json', 'Output results in JSON format')
   .option('-c, --config <path>', 'Path to configuration file')
+  .option('-f, --format <type>', 'Output format (json, table, csv)', 'table')
+  .option('--explain', 'Show AI explanation of what will happen')
+  .option('--dry-run', 'Simulate command without making changes')
+  .option('--output <file>', 'Write output to file')
+  .option('--limit <count>', 'Limit results count', parseInt)
+  .option('--timeout <ms>', 'Command timeout in milliseconds', parseInt)
+  .option('--timestamps', 'Show timestamps in output')
   .hook('preAction', (thisCommand) => {
     const opts = thisCommand.opts();
     if (opts.verbose) {
@@ -100,14 +117,19 @@ program
   .command('optimize <query>')
   .description('Optimize a SQL query using AI analysis')
   .alias('opt')
+  .option('--explain', 'Show query execution plan')
+  .option('--dry-run', 'Validate without executing')
+  .option('--format <type>', 'Output format (text, json)', 'text')
   .addHelpText('after', `
 ${chalk.bold('Examples:')}
   ${chalk.dim('$')} ai-shell optimize "SELECT * FROM users WHERE id > 100"
   ${chalk.dim('$')} ai-shell opt "SELECT u.*, o.* FROM users u JOIN orders o ON u.id = o.user_id"
+  ${chalk.dim('$')} ai-shell optimize "SELECT * FROM users" --explain
+  ${chalk.dim('$')} ai-shell optimize "DELETE FROM users" --dry-run
 `)
-  .action(async (query: string) => {
+  .action(async (query: string, options) => {
     try {
-      await getFeatures().optimizeQuery(query);
+      await getFeatures().optimizeQuery(query, options);
     } catch (error) {
       logger.error('Optimization failed', error);
       console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
@@ -290,15 +312,19 @@ program
   .alias('fed')
   .option('-d, --databases <list>', 'Comma-separated list of database names')
   .requiredOption('-d, --databases <list>', 'Databases to query (required)')
+  .option('--explain', 'Show execution plan for federated query')
+  .option('--dry-run', 'Validate without executing')
   .addHelpText('after', `
 ${chalk.bold('Examples:')}
   ${chalk.dim('$')} ai-shell federate "SELECT * FROM users" --databases db1,db2,db3
   ${chalk.dim('$')} ai-shell fed "SELECT u.*, o.* FROM users u JOIN orders o" -d production,analytics
+  ${chalk.dim('$')} ai-shell federate "SELECT * FROM users" -d db1,db2 --explain
+  ${chalk.dim('$')} ai-shell federate "DELETE FROM users" -d db1,db2 --dry-run
 `)
   .action(async (query: string, options) => {
     try {
       const databases = options.databases.split(',').map((s: string) => s.trim());
-      await getFeatures().federateQuery(query, databases);
+      await getFeatures().federateQuery(query, databases, options);
     } catch (error) {
       logger.error('Federation failed', error);
       console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
@@ -478,14 +504,19 @@ program
   .command('explain <query>')
   .description('Get AI-powered explanation of SQL query')
   .alias('exp')
+  .option('--format <type>', 'Output format (text, json)', 'text')
+  .option('--analyze', 'Include performance analysis')
+  .option('--dry-run', 'Validate query without execution')
   .addHelpText('after', `
 ${chalk.bold('Examples:')}
   ${chalk.dim('$')} ai-shell explain "SELECT * FROM users WHERE created_at > NOW() - INTERVAL 7 DAY"
   ${chalk.dim('$')} ai-shell exp "SELECT u.*, COUNT(o.id) FROM users u LEFT JOIN orders o GROUP BY u.id"
+  ${chalk.dim('$')} ai-shell explain "SELECT * FROM users" --format json
+  ${chalk.dim('$')} ai-shell explain "UPDATE users SET active = false" --dry-run
 `)
-  .action(async (query: string) => {
+  .action(async (query: string, options) => {
     try {
-      await getFeatures().explainSQL(query);
+      await getFeatures().explainSQL(query, options);
     } catch (error) {
       logger.error('Explanation failed', error);
       console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
@@ -582,6 +613,226 @@ ${chalk.bold('Examples:')}
   });
 
 // ============================================================================
+// DATABASE CONNECTION COMMANDS
+// ============================================================================
+
+program
+  .command('connect <connection-string>')
+  .description('Connect to a database (postgresql://, mysql://, mongodb://, redis://)')
+  .option('--name <name>', 'Connection name (default: auto-generated)')
+  .option('--test', 'Test connection only without saving')
+  .option('--set-active', 'Set as active connection', true)
+  .addHelpText('after', `
+${chalk.bold('Examples:')}
+  ${chalk.dim('$')} ai-shell connect postgresql://user:pass@localhost:5432/mydb --name production
+  ${chalk.dim('$')} ai-shell connect mysql://root:secret@localhost:3306/testdb
+  ${chalk.dim('$')} ai-shell connect mongodb://localhost:27017/appdb --name mongo
+  ${chalk.dim('$')} ai-shell connect redis://localhost:6379 --name cache
+  ${chalk.dim('$')} ai-shell connect postgresql://localhost/mydb --test
+
+${chalk.bold('Supported Protocols:')}
+  • postgresql:// or postgres://
+  • mysql://
+  • mongodb:// or mongodb+srv://
+  • redis:// or rediss:// (SSL)
+  • sqlite://path/to/db.sqlite
+
+${chalk.bold('Environment Variable:')}
+  Set DATABASE_URL to use as default connection
+`)
+  .action(async (connectionString: string, options) => {
+    try {
+      const { DatabaseConnectionManager } = await import('./database-manager');
+      const { StateManager } = await import('../core/state-manager');
+      const dbManager = new DatabaseConnectionManager(new StateManager());
+
+      // Parse connection string
+      const parsed = DatabaseConnectionManager.parseConnectionString(connectionString);
+
+      // Generate name if not provided
+      const name = options.name || `${parsed.type}-${Date.now()}`;
+
+      const config = {
+        ...parsed,
+        name,
+        connectionString
+      };
+
+      if (options.test) {
+        console.log(chalk.blue('\n🔍 Testing connection...\n'));
+        const result = await dbManager.testConnection(config as any);
+
+        if (result.healthy) {
+          console.log(chalk.green('✅ Connection successful!'));
+          console.log(`   Latency: ${result.latency}ms`);
+        } else {
+          console.log(chalk.red('❌ Connection failed:'));
+          console.log(`   ${result.error}`);
+          process.exit(1);
+        }
+      } else {
+        console.log(chalk.blue('\n🔌 Connecting to database...\n'));
+        const connection = await dbManager.connect(config as any);
+
+        console.log(chalk.green('✅ Connected successfully!'));
+        console.log(`   Name: ${name}`);
+        console.log(`   Type: ${connection.type}`);
+        console.log(`   Database: ${config.database || 'N/A'}`);
+        console.log(`   Host: ${config.host || 'N/A'}`);
+
+        if (options.setActive) {
+          await dbManager.switchActive(name);
+          console.log(chalk.cyan('\n   Set as active connection'));
+        }
+      }
+    } catch (error) {
+      logger.error('Connection failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+program
+  .command('disconnect [name]')
+  .description('Disconnect from database (disconnect all if no name provided)')
+  .addHelpText('after', `
+${chalk.bold('Examples:')}
+  ${chalk.dim('$')} ai-shell disconnect production
+  ${chalk.dim('$')} ai-shell disconnect           ${chalk.dim('# Disconnect all')}
+`)
+  .action(async (name?: string) => {
+    try {
+      const { DatabaseConnectionManager } = await import('./database-manager');
+      const { StateManager } = await import('../core/state-manager');
+      const dbManager = new DatabaseConnectionManager(new StateManager());
+
+      if (name) {
+        console.log(chalk.blue(`\n🔌 Disconnecting from: ${name}\n`));
+        await dbManager.disconnect(name);
+        console.log(chalk.green('✅ Disconnected successfully'));
+      } else {
+        console.log(chalk.blue('\n🔌 Disconnecting all connections...\n'));
+        await dbManager.disconnectAll();
+        console.log(chalk.green('✅ All connections disconnected'));
+      }
+    } catch (error) {
+      logger.error('Disconnect failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+program
+  .command('connections')
+  .description('List active database connections')
+  .alias('conns')
+  .option('--verbose', 'Show detailed connection information')
+  .option('--health', 'Run health checks on all connections')
+  .addHelpText('after', `
+${chalk.bold('Examples:')}
+  ${chalk.dim('$')} ai-shell connections
+  ${chalk.dim('$')} ai-shell conns --verbose
+  ${chalk.dim('$')} ai-shell connections --health
+`)
+  .action(async (options) => {
+    try {
+      const { DatabaseConnectionManager } = await import('./database-manager');
+      const { StateManager } = await import('../core/state-manager');
+      const dbManager = new DatabaseConnectionManager(new StateManager());
+
+      const connections = dbManager.listConnections();
+
+      if (connections.length === 0) {
+        console.log(chalk.yellow('\nNo active connections'));
+        console.log(chalk.dim('Use: ai-shell connect <connection-string> to create a connection\n'));
+        return;
+      }
+
+      console.log(chalk.blue(`\n📊 Active Connections (${connections.length})\n`));
+
+      if (options.health) {
+        console.log(chalk.dim('Running health checks...\n'));
+      }
+
+      const Table = (await import('cli-table3')).default;
+      const table = new Table({
+        head: [
+          chalk.bold('Name'),
+          chalk.bold('Type'),
+          chalk.bold('Database'),
+          chalk.bold('Host:Port'),
+          chalk.bold('Active'),
+          ...(options.health ? [chalk.bold('Health')] : [])
+        ],
+        colWidths: [20, 15, 20, 25, 10, ...(options.health ? [15] : [])]
+      });
+
+      for (const conn of connections) {
+        let healthStatus = '';
+
+        if (options.health) {
+          const health = await dbManager.healthCheck(conn.name);
+          healthStatus = health.healthy
+            ? chalk.green(`✓ ${health.latency}ms`)
+            : chalk.red(`✗ ${health.error?.substring(0, 20) || 'Failed'}`);
+        }
+
+        table.push([
+          conn.name,
+          conn.type,
+          conn.database || 'N/A',
+          conn.host ? `${conn.host}:${conn.port || 'default'}` : 'N/A',
+          conn.isActive ? chalk.green('✓') : '',
+          ...(options.health ? [healthStatus] : [])
+        ]);
+      }
+
+      console.log(table.toString());
+
+      if (options.verbose) {
+        const stats = dbManager.getStatistics();
+        console.log(chalk.bold('\nStatistics:'));
+        console.log(`  Total Connections: ${stats.totalConnections}`);
+        console.log(`  Healthy Connections: ${stats.healthyConnections}`);
+        console.log(`  Active: ${stats.activeConnection || 'None'}`);
+        console.log(chalk.bold('\nBy Type:'));
+        Object.entries(stats.connectionsByType).forEach(([type, count]) => {
+          console.log(`  ${type}: ${count}`);
+        });
+      }
+
+      console.log('');
+    } catch (error) {
+      logger.error('Failed to list connections', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+program
+  .command('use <connection-name>')
+  .description('Switch active database connection')
+  .addHelpText('after', `
+${chalk.bold('Examples:')}
+  ${chalk.dim('$')} ai-shell use production
+  ${chalk.dim('$')} ai-shell use staging
+`)
+  .action(async (connectionName: string) => {
+    try {
+      const { DatabaseConnectionManager } = await import('./database-manager');
+      const { StateManager } = await import('../core/state-manager');
+      const dbManager = new DatabaseConnectionManager(new StateManager());
+
+      await dbManager.switchActive(connectionName);
+      console.log(chalk.green(`\n✅ Active connection switched to: ${connectionName}\n`));
+    } catch (error) {
+      logger.error('Switch failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+// ============================================================================
 // UTILITY COMMANDS
 // ============================================================================
 
@@ -656,6 +907,52 @@ program
     console.log('  ai-shell translate "Show all users created last week"');
     console.log('  ai-shell diff production staging');
     console.log('  ai-shell analyze-costs aws us-east-1\n');
+
+    console.log(chalk.bold('Global Flags (use with any command):'));
+    console.log('  --format json       Output in JSON format');
+    console.log('  --format csv        Output in CSV format');
+    console.log('  --verbose          Enable verbose logging');
+    console.log('  --explain          Show AI explanation before execution');
+    console.log('  --dry-run          Simulate without making changes');
+    console.log('  --output file.json Write output to file');
+    console.log('  --limit 10         Limit results to 10 items');
+    console.log('  --timestamps       Show timestamps in output\n');
+
+    console.log(chalk.bold('CLI Wrapper Examples:'));
+    console.log('  ai-shell optimize "SELECT * FROM users" --format json --output result.json');
+    console.log('  ai-shell backup --explain --dry-run');
+    console.log('  ai-shell health-check --format csv --output health.csv');
+    console.log('  ai-shell backup-list --limit 5 --timestamps\n');
+  });
+
+program
+  .command('wrapper-demo')
+  .description('Demonstrate CLI wrapper capabilities')
+  .action(async () => {
+    console.log(chalk.cyan.bold('\n🚀 CLI Wrapper Framework Demo\n'));
+
+    const wrapper = getCLIWrapper();
+    const commands = wrapper.getRegisteredCommands();
+
+    console.log(chalk.bold(`Total Commands: ${commands.length}\n`));
+
+    console.log(chalk.bold('Available Commands:\n'));
+    commands.forEach(cmd => {
+      console.log(chalk.green(`  ${cmd.name.padEnd(20)}`), chalk.dim(`- ${cmd.description}`));
+      if (cmd.aliases.length > 0) {
+        console.log(chalk.dim(`    Aliases: ${cmd.aliases.join(', ')}`));
+      }
+    });
+
+    console.log(chalk.bold('\n\nKey Features:\n'));
+    console.log('  ✓ Command routing and execution');
+    console.log('  ✓ Multiple output formats (JSON, table, CSV)');
+    console.log('  ✓ Global flags (--format, --verbose, --explain, --dry-run)');
+    console.log('  ✓ Environment variable integration');
+    console.log('  ✓ Timeout handling');
+    console.log('  ✓ Comprehensive error handling');
+    console.log('  ✓ File output support');
+    console.log('  ✓ Command aliases\n');
   });
 
 // ============================================================================
@@ -679,7 +976,12 @@ process.on('unhandledRejection', (reason) => {
 process.on('SIGINT', async () => {
   console.log(chalk.yellow('\n\n⏹️  Shutting down gracefully...'));
   try {
-    await getFeatures().cleanup();
+    if (features) {
+      await features.cleanup();
+    }
+    if (cliWrapper) {
+      await cliWrapper.cleanup();
+    }
     console.log(chalk.green('✅ Cleanup complete'));
     process.exit(0);
   } catch (error) {
@@ -691,7 +993,12 @@ process.on('SIGINT', async () => {
 process.on('SIGTERM', async () => {
   console.log(chalk.yellow('\n⏹️  Received SIGTERM, shutting down...'));
   try {
-    await getFeatures().cleanup();
+    if (features) {
+      await features.cleanup();
+    }
+    if (cliWrapper) {
+      await cliWrapper.cleanup();
+    }
     process.exit(0);
   } catch (error) {
     console.error(chalk.red('Cleanup failed:'), error);

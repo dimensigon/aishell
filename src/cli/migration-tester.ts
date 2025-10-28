@@ -4,7 +4,7 @@
  * Commands: ai-shell test-migration <file>, ai-shell validate-migration
  */
 
-import { DatabaseConnectionManager, DatabaseType, ConnectionConfig } from './db-connection-manager';
+import { DatabaseConnectionManager, DatabaseType, ConnectionConfig } from './database-manager';
 import { createLogger } from '../core/logger';
 import { StateManager } from '../core/state-manager';
 import * as fs from 'fs/promises';

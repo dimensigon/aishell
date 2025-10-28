@@ -3,7 +3,7 @@
  * Inspects database schema using natural language and SQL introspection
  */
 
-import { DatabaseConnectionManager, DatabaseType } from './db-connection-manager';
+import { DatabaseConnectionManager, DatabaseType } from './database-manager';
 import { LLMMCPBridge } from '../llm/mcp-bridge';
 import { ErrorHandler } from '../core/error-handler';
 import { TableInfo, ColumnInfo, Relationship } from './nl-query-translator';

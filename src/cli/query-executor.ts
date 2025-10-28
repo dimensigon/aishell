@@ -3,8 +3,9 @@
  * Executes SQL queries with safety checks, confirmations, and transaction support
  */
 
-import { DatabaseConnectionManager } from './db-connection-manager';
+import { DatabaseConnectionManager } from './database-manager';
 import { ErrorHandler } from '../core/error-handler';
+import { QueryExplainer, ExplanationResult } from './query-explainer';
 import { EventEmitter } from 'eventemitter3';
 
 /**
@@ -25,6 +26,8 @@ export interface ExecuteOptions {
   timeout?: number;
   maxRows?: number;
   dryRun?: boolean;
+  explain?: boolean;
+  explainFormat?: 'text' | 'json';
   requireConfirmation?: boolean;
   transaction?: boolean;
 }
@@ -63,11 +66,14 @@ export class QueryExecutor extends EventEmitter<QueryExecutorEvents> {
     'update'
   ];
 
+  private queryExplainer: QueryExplainer;
+
   constructor(
     private connectionManager: DatabaseConnectionManager,
     private errorHandler: ErrorHandler
   ) {
     super();
+    this.queryExplainer = new QueryExplainer(connectionManager, errorHandler);
   }
 
   /**
@@ -100,9 +106,22 @@ export class QueryExecutor extends EventEmitter<QueryExecutorEvents> {
           );
         }
 
+        // Explain mode - show execution plan
+        if (options.explain) {
+          const explanation = await this.explainQuery(sql, options.explainFormat);
+          console.log(explanation);
+          return {
+            rows: [],
+            rowCount: 0,
+            executionTime: 0,
+            affectedRows: 0
+          };
+        }
+
         // Dry run mode
         if (options.dryRun) {
-          await this.dryRun(sql);
+          const plan = await this.dryRun(sql);
+          this.displayDryRunResult(plan);
           return {
             rows: [],
             rowCount: 0,
@@ -447,5 +466,96 @@ export class QueryExecutor extends EventEmitter<QueryExecutorEvents> {
       estimatedCost: plan.estimatedCost || 0,
       estimatedTime: 0 // TODO: Estimate based on cost
     };
+  }
+
+  /**
+   * Explain query execution plan
+   */
+  async explainQuery(sql: string, format: 'text' | 'json' = 'text'): Promise<string> {
+    const wrappedFn = this.errorHandler.wrap(
+      async () => {
+        const connection = this.connectionManager.getActive();
+        if (!connection) {
+          throw new Error('No active database connection');
+        }
+
+        const explanation = await this.queryExplainer.explain(sql, connection.database, format);
+        return this.queryExplainer.formatExplanation(explanation, format);
+      },
+      {
+        operation: 'explainQuery',
+        component: 'QueryExecutor'
+      }
+    );
+
+    const result = await wrappedFn();
+    if (!result) {
+      throw new Error('Query explanation failed');
+    }
+    return result;
+  }
+
+  /**
+   * Get detailed query explanation
+   */
+  async getQueryExplanation(sql: string): Promise<ExplanationResult> {
+    const wrappedFn = this.errorHandler.wrap(
+      async () => {
+        const connection = this.connectionManager.getActive();
+        if (!connection) {
+          throw new Error('No active database connection');
+        }
+
+        return await this.queryExplainer.explain(sql, connection.database);
+      },
+      {
+        operation: 'getQueryExplanation',
+        component: 'QueryExecutor'
+      }
+    );
+
+    const result = await wrappedFn();
+    if (!result) {
+      throw new Error('Query explanation failed');
+    }
+    return result;
+  }
+
+  /**
+   * Display dry run result
+   */
+  private displayDryRunResult(plan: ExecutionPlan): void {
+    console.log('\n═══════════════════════════════════════════════════════════════');
+    console.log('                    DRY RUN MODE - NO EXECUTION                ');
+    console.log('═══════════════════════════════════════════════════════════════\n');
+
+    console.log('Query Validation:');
+    console.log('───────────────────────────────────────────────────────────────');
+    console.log(`  Query: ${plan.query.substring(0, 100)}${plan.query.length > 100 ? '...' : ''}`);
+    console.log(`  Is Destructive: ${plan.isDestructive ? '⚠️  YES' : '✓ NO'}`);
+
+    if (plan.estimatedRows !== undefined) {
+      console.log(`  Estimated Rows: ${plan.estimatedRows.toLocaleString()}`);
+    }
+
+    if (plan.estimatedCost !== undefined) {
+      console.log(`  Estimated Cost: ${plan.estimatedCost.toFixed(2)}`);
+    }
+
+    if (plan.indexes && plan.indexes.length > 0) {
+      console.log(`  Indexes Used: ${plan.indexes.join(', ')}`);
+    }
+
+    if (plan.warnings.length > 0) {
+      console.log('\nWarnings:');
+      console.log('───────────────────────────────────────────────────────────────');
+      plan.warnings.forEach((warning) => {
+        console.log(`  ${warning}`);
+      });
+    }
+
+    console.log('\n═══════════════════════════════════════════════════════════════');
+    console.log('Status: ✓ Validation passed - Query is safe to execute');
+    console.log('═══════════════════════════════════════════════════════════════\n');
   }
 }

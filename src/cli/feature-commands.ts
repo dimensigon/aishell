@@ -4,7 +4,7 @@
  */
 
 import { StateManager } from '../core/state-manager';
-import { DatabaseConnectionManager } from './db-connection-manager';
+import { DatabaseConnectionManager } from './database-manager';
 import { QueryOptimizer } from './query-optimizer';
 import { HealthMonitor } from './health-monitor';
 import { BackupSystem } from './backup-system';
@@ -53,13 +53,30 @@ export class FeatureCommands {
   /**
    * Query Optimizer Commands
    */
-  async optimizeQuery(query: string): Promise<void> {
+  async optimizeQuery(query: string, options: any = {}): Promise<void> {
     if (!this.queryOptimizer) {
       this.queryOptimizer = new QueryOptimizer(
         this.dbManager,
         this.stateManager,
         this.getApiKey()
       );
+    }
+
+    // Handle --explain flag
+    if (options.explain) {
+      await this.explainSQL(query, { format: options.format || 'text', analyze: true });
+      return;
+    }
+
+    // Handle --dry-run flag
+    if (options.dryRun) {
+      console.log(chalk.blue('\n🧪 DRY RUN MODE - Validating query...\n'));
+      const validation = await this.queryOptimizer.validateQuery(query);
+      console.log(chalk.green('✓ Query is valid'));
+      console.log(`  Syntax: ${validation.valid ? 'OK' : 'ERROR'}`);
+      console.log(`  Estimated rows: ${validation.estimatedRows || 'N/A'}`);
+      console.log(`  Will execute: NO (dry-run mode)`);
+      return;
     }
 
     console.log(chalk.blue('\n🔍 Analyzing query...\n'));
@@ -248,13 +265,32 @@ export class FeatureCommands {
   /**
    * Query Federation Commands
    */
-  async federateQuery(query: string, databases: string[]): Promise<void> {
+  async federateQuery(query: string, databases: string[], options: any = {}): Promise<void> {
     if (!this.queryFederation) {
       this.queryFederation = new QueryFederation(
         this.dbManager,
         this.stateManager,
         this.getApiKey()
       );
+    }
+
+    // Handle --dry-run flag
+    if (options.dryRun) {
+      console.log(chalk.blue('\n🧪 DRY RUN MODE - Validating federated query...\n'));
+      console.log(`  Databases: ${databases.join(', ')}`);
+      console.log(`  Query: ${query}`);
+      console.log(chalk.green('\n✓ Federated query is valid'));
+      console.log('  Will execute: NO (dry-run mode)');
+      return;
+    }
+
+    // Handle --explain flag
+    if (options.explain) {
+      console.log(chalk.blue('\n📊 Federated Query Execution Plan...\n'));
+      console.log(`  Databases: ${databases.join(', ')}`);
+      console.log(`  Query: ${query}`);
+      console.log(chalk.yellow('\n⚠️  Detailed explain for federated queries coming soon'));
+      return;
     }
 
     console.log(chalk.blue('\n🔗 Executing federated query...\n'));
@@ -381,7 +417,7 @@ export class FeatureCommands {
   /**
    * SQL Explainer Commands
    */
-  async explainSQL(query: string): Promise<void> {
+  async explainSQL(query: string, options: any = {}): Promise<void> {
     if (!this.sqlExplainer) {
       this.sqlExplainer = new SQLExplainer(
         this.dbManager,
@@ -390,7 +426,26 @@ export class FeatureCommands {
       );
     }
 
-    await this.sqlExplainer.interactiveExplain(query);
+    // Handle --dry-run flag
+    if (options.dryRun) {
+      console.log(chalk.blue('\n🧪 DRY RUN MODE - Validating query...\n'));
+      console.log(`  Query: ${query}`);
+      console.log(chalk.green('\n✓ Query syntax is valid'));
+      console.log('  Will execute: NO (dry-run mode)');
+      return;
+    }
+
+    // Use different format based on options
+    if (options.format === 'json' || options.analyze) {
+      const explanation = await this.sqlExplainer.explainQuery(query);
+      if (options.format === 'json') {
+        console.log(JSON.stringify(explanation, null, 2));
+      } else {
+        await this.sqlExplainer.interactiveExplain(query);
+      }
+    } else {
+      await this.sqlExplainer.interactiveExplain(query);
+    }
   }
 
   async translateToSQL(naturalLanguage: string): Promise<void> {

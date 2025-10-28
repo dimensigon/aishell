@@ -5,7 +5,7 @@
  */
 
 import { Command } from 'commander';
-import { DatabaseConnectionManager, DatabaseType, ConnectionConfig } from './db-connection-manager';
+import { DatabaseConnectionManager, DatabaseType, ConnectionConfig } from './database-manager';
 import { NLQueryTranslator } from './nl-query-translator';
 import { SchemaInspector } from './schema-inspector';
 import { QueryExecutor } from './query-executor';

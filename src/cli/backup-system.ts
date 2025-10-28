@@ -4,7 +4,7 @@
  * Commands: ai-shell backup, ai-shell restore <backup-id>, ai-shell backup schedule
  */
 
-import { DatabaseConnectionManager, DatabaseType } from './db-connection-manager';
+import { DatabaseConnectionManager, DatabaseType } from './database-manager';
 import { createLogger } from '../core/logger';
 import { StateManager } from '../core/state-manager';
 import { exec } from 'child_process';

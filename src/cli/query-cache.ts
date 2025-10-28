@@ -4,7 +4,7 @@
  * Commands: ai-shell cache enable, ai-shell cache stats, ai-shell cache clear
  */
 
-import { DatabaseConnectionManager } from './db-connection-manager';
+import { DatabaseConnectionManager } from './database-manager';
 import { createLogger } from '../core/logger';
 import { StateManager } from '../core/state-manager';
 import Redis from 'ioredis';
