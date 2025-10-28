@@ -21,9 +21,14 @@ import chalk from 'chalk';
 import { FeatureCommands } from './feature-commands';
 import { CLIWrapper, CLIOptions } from './cli-wrapper';
 import { createLogger } from '../core/logger';
+import { OptimizationCLI } from './optimization-cli';
+import { registerOptimizationCommands } from './optimization-commands';
+import { ContextManager } from './context-manager';
+import { setupBackupCommands } from './backup-cli';
 
 const logger = createLogger('CLI');
 const program = new Command();
+const contextManager = new ContextManager();
 
 // Lazy-load features to avoid initialization at module load time
 let features: FeatureCommands | null = null;
@@ -32,6 +37,15 @@ function getFeatures(): FeatureCommands {
     features = new FeatureCommands();
   }
   return features;
+}
+
+// Optimization CLI instance
+let optimizationCli: OptimizationCLI | null = null;
+function getOptimizationCLI(): OptimizationCLI {
+  if (!optimizationCli) {
+    optimizationCli = new OptimizationCLI();
+  }
+  return optimizationCli;
 }
 
 // CLI Wrapper instance for enhanced command execution
@@ -833,6 +847,85 @@ ${chalk.bold('Examples:')}
   });
 
 // ============================================================================
+// OPTIMIZATION COMMANDS (Extended Features)
+// ============================================================================
+registerOptimizationCommands(program, getOptimizationCLI);
+
+// ============================================================================
+// SECURITY COMMANDS
+// ============================================================================
+
+// Vault Commands
+program
+  .command('vault-add <name> <value>')
+  .description('Add credential to secure vault')
+  .option('--encrypt', 'Encrypt the value')
+  .action(async (name: string, value: string, options) => {
+    try {
+      const { SecurityCLI } = await import('./security-cli');
+      const securityCLI = new SecurityCLI();
+      await securityCLI.addVaultEntry(name, value, options);
+    } catch (error) {
+      logger.error('Vault add failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+program
+  .command('vault-list')
+  .description('List all vault entries')
+  .option('--show-passwords', 'Show actual passwords')
+  .option('--format <type>', 'Output format (json, table)', 'table')
+  .action(async (options) => {
+    try {
+      const { SecurityCLI } = await import('./security-cli');
+      const securityCLI = new SecurityCLI();
+      await securityCLI.listVaultEntries(options);
+    } catch (error) {
+      logger.error('Vault list failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+program
+  .command('audit-show')
+  .description('Show audit log entries')
+  .option('--limit <n>', 'Limit entries', '100')
+  .option('--user <user>', 'Filter by user')
+  .action(async (options) => {
+    try {
+      const { SecurityCLI } = await import('./security-cli');
+      const securityCLI = new SecurityCLI();
+      await securityCLI.showAuditLog({
+        limit: parseInt(options.limit),
+        user: options.user
+      });
+    } catch (error) {
+      logger.error('Audit show failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+program
+  .command('security-scan')
+  .description('Run security scan')
+  .option('--deep', 'Deep scan')
+  .action(async (options) => {
+    try {
+      const { SecurityCLI } = await import('./security-cli');
+      const securityCLI = new SecurityCLI();
+      await securityCLI.runSecurityScan({ deep: options.deep });
+    } catch (error) {
+      logger.error('Security scan failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+// ============================================================================
 // UTILITY COMMANDS
 // ============================================================================
 
@@ -956,6 +1049,424 @@ program
   });
 
 // ============================================================================
+// CONTEXT MANAGEMENT COMMANDS
+// ============================================================================
+
+const contextCmd = program
+  .command('context')
+  .description('Manage query contexts and configurations');
+
+contextCmd
+  .command('save <name>')
+  .description('Save current context')
+  .option('-d, --description <text>', 'Context description')
+  .option('--include-history', 'Include query history')
+  .option('--include-aliases', 'Include aliases')
+  .option('--include-config', 'Include configuration')
+  .option('--include-variables', 'Include variables')
+  .option('--include-connections', 'Include connection info')
+  .addHelpText('after', `
+${chalk.bold('Examples:')}
+  ${chalk.dim('$')} ai-shell context save my-project --description "Production context"
+  ${chalk.dim('$')} ai-shell context save dev-env --include-history --include-config
+  ${chalk.dim('$')} ai-shell context save prod --include-all
+`)
+  .action(async (name: string, options) => {
+    try {
+      await contextManager.initialize();
+      await contextManager.saveContext(name, {
+        description: options.description,
+        includeHistory: options.includeHistory,
+        includeAliases: options.includeAliases,
+        includeConfig: options.includeConfig,
+        includeVariables: options.includeVariables,
+        includeConnections: options.includeConnections
+      });
+      console.log(chalk.green(`\n✅ Context "${name}" saved successfully\n`));
+    } catch (error) {
+      logger.error('Context save failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+contextCmd
+  .command('load <name>')
+  .description('Load saved context')
+  .option('--merge', 'Merge with current context')
+  .option('--overwrite', 'Overwrite current context (default)')
+  .addHelpText('after', `
+${chalk.bold('Examples:')}
+  ${chalk.dim('$')} ai-shell context load my-project
+  ${chalk.dim('$')} ai-shell context load dev-env --merge
+`)
+  .action(async (name: string, options) => {
+    try {
+      await contextManager.initialize();
+      await contextManager.loadContext(name, options.merge || false);
+      console.log(chalk.green(`\n✅ Context "${name}" loaded successfully\n`));
+    } catch (error) {
+      logger.error('Context load failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+contextCmd
+  .command('list')
+  .description('List all saved contexts')
+  .option('-v, --verbose', 'Show detailed information')
+  .option('-f, --format <type>', 'Output format (table, json)', 'table')
+  .addHelpText('after', `
+${chalk.bold('Examples:')}
+  ${chalk.dim('$')} ai-shell context list
+  ${chalk.dim('$')} ai-shell context list --verbose
+  ${chalk.dim('$')} ai-shell context list --format json
+`)
+  .action(async (options) => {
+    try {
+      await contextManager.initialize();
+      const contexts = await contextManager.listContexts(options.verbose);
+
+      if (options.format === 'json') {
+        console.log(JSON.stringify(contexts, null, 2));
+      } else {
+        console.log(chalk.cyan.bold('\n📋 Saved Contexts\n'));
+        if (contexts.length === 0) {
+          console.log(chalk.yellow('No contexts saved yet\n'));
+        } else {
+          contexts.forEach(ctx => {
+            console.log(chalk.bold(ctx.name));
+            if (ctx.description) {
+              console.log(chalk.dim(`  ${ctx.description}`));
+            }
+            console.log(chalk.dim(`  Created: ${ctx.createdAt.toLocaleString()}`));
+            console.log(chalk.dim(`  Updated: ${ctx.updatedAt.toLocaleString()}`));
+            if (options.verbose) {
+              console.log(chalk.dim(`  Size: ${(ctx.size / 1024).toFixed(2)} KB`));
+              if (ctx.queryCount !== undefined) {
+                console.log(chalk.dim(`  Queries: ${ctx.queryCount}`));
+              }
+              if (ctx.aliasCount !== undefined) {
+                console.log(chalk.dim(`  Aliases: ${ctx.aliasCount}`));
+              }
+            }
+            console.log('');
+          });
+        }
+      }
+    } catch (error) {
+      logger.error('Context list failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+contextCmd
+  .command('delete <name>')
+  .description('Delete saved context')
+  .option('--force', 'Force deletion even if current context')
+  .addHelpText('after', `
+${chalk.bold('Examples:')}
+  ${chalk.dim('$')} ai-shell context delete old-project
+  ${chalk.dim('$')} ai-shell context delete test --force
+`)
+  .action(async (name: string, options) => {
+    try {
+      await contextManager.initialize();
+      await contextManager.deleteContext(name, options.force);
+      console.log(chalk.green(`\n✅ Context "${name}" deleted successfully\n`));
+    } catch (error) {
+      logger.error('Context delete failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+contextCmd
+  .command('export <name> <file>')
+  .description('Export context to file')
+  .option('-f, --format <type>', 'Export format (json, yaml)', 'json')
+  .addHelpText('after', `
+${chalk.bold('Examples:')}
+  ${chalk.dim('$')} ai-shell context export my-project context.json
+  ${chalk.dim('$')} ai-shell context export prod context.yaml --format yaml
+`)
+  .action(async (name: string, file: string, options) => {
+    try {
+      await contextManager.initialize();
+      await contextManager.exportContext(name, file, options.format);
+      console.log(chalk.green(`\n✅ Context exported to "${file}"\n`));
+    } catch (error) {
+      logger.error('Context export failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+contextCmd
+  .command('import <file>')
+  .description('Import context from file')
+  .option('-n, --name <name>', 'Import with new name')
+  .addHelpText('after', `
+${chalk.bold('Examples:')}
+  ${chalk.dim('$')} ai-shell context import context.json
+  ${chalk.dim('$')} ai-shell context import backup.yaml --name restored
+`)
+  .action(async (file: string, options) => {
+    try {
+      await contextManager.initialize();
+      await contextManager.importContext(file, options.name);
+      console.log(chalk.green(`\n✅ Context imported from "${file}"\n`));
+    } catch (error) {
+      logger.error('Context import failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+contextCmd
+  .command('show [name]')
+  .description('Show context details')
+  .addHelpText('after', `
+${chalk.bold('Examples:')}
+  ${chalk.dim('$')} ai-shell context show
+  ${chalk.dim('$')} ai-shell context show my-project
+`)
+  .action(async (name?: string) => {
+    try {
+      await contextManager.initialize();
+      const context = await contextManager.showContext(name);
+      console.log(chalk.cyan.bold('\n📄 Context Details\n'));
+      console.log(chalk.bold('Name:'), context.name);
+      if (context.description) {
+        console.log(chalk.bold('Description:'), context.description);
+      }
+      console.log(chalk.bold('Created:'), context.createdAt.toLocaleString());
+      console.log(chalk.bold('Updated:'), context.updatedAt.toLocaleString());
+      if (context.database) {
+        console.log(chalk.bold('Database:'), context.database);
+      }
+      console.log(chalk.bold('Query History:'), (context.queryHistory?.length || 0), 'entries');
+      console.log(chalk.bold('Aliases:'), Object.keys(context.aliases || {}).length);
+      console.log(chalk.bold('Configuration:'), Object.keys(context.configuration || {}).length, 'settings');
+      console.log(chalk.bold('Variables:'), Object.keys(context.variables || {}).length);
+      console.log('');
+    } catch (error) {
+      logger.error('Context show failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+contextCmd
+  .command('diff <context1> <context2>')
+  .description('Compare two contexts')
+  .addHelpText('after', `
+${chalk.bold('Examples:')}
+  ${chalk.dim('$')} ai-shell context diff production staging
+  ${chalk.dim('$')} ai-shell context diff v1 v2
+`)
+  .action(async (context1: string, context2: string) => {
+    try {
+      await contextManager.initialize();
+      const diff = await contextManager.diffContexts(context1, context2);
+      console.log(chalk.cyan.bold('\n🔍 Context Comparison\n'));
+      console.log(chalk.bold(`${context1} vs ${context2}\n`));
+
+      if (diff.differences.database) {
+        console.log(chalk.yellow('Database:'));
+        console.log(`  ${context1}: ${diff.differences.database.context1}`);
+        console.log(`  ${context2}: ${diff.differences.database.context2}\n`);
+      }
+
+      if (diff.differences.aliases) {
+        const { added, removed, modified } = diff.differences.aliases;
+        if (added.length || removed.length || modified.length) {
+          console.log(chalk.yellow('Aliases:'));
+          if (added.length) console.log(chalk.green(`  Added: ${added.join(', ')}`));
+          if (removed.length) console.log(chalk.red(`  Removed: ${removed.join(', ')}`));
+          if (modified.length) {
+            console.log(chalk.blue('  Modified:'));
+            modified.forEach(m => console.log(`    ${m.key}: "${m.value1}" → "${m.value2}"`));
+          }
+          console.log('');
+        }
+      }
+
+      if (diff.differences.configuration) {
+        const { added, removed, modified } = diff.differences.configuration;
+        if (added.length || removed.length || modified.length) {
+          console.log(chalk.yellow('Configuration:'));
+          if (added.length) console.log(chalk.green(`  Added: ${added.join(', ')}`));
+          if (removed.length) console.log(chalk.red(`  Removed: ${removed.join(', ')}`));
+          if (modified.length) console.log(chalk.blue(`  Modified: ${modified.length} settings`));
+          console.log('');
+        }
+      }
+
+      if (diff.differences.historyCount) {
+        console.log(chalk.yellow('Query History:'));
+        console.log(`  ${context1}: ${diff.differences.historyCount.context1} queries`);
+        console.log(`  ${context2}: ${diff.differences.historyCount.context2} queries\n`);
+      }
+    } catch (error) {
+      logger.error('Context diff failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+contextCmd
+  .command('current')
+  .description('Show current active context')
+  .action(async () => {
+    try {
+      await contextManager.initialize();
+      const context = await contextManager.getCurrentContext();
+      if (!context) {
+        console.log(chalk.yellow('\nNo active context\n'));
+      } else {
+        console.log(chalk.cyan.bold('\n📌 Current Context\n'));
+        console.log(chalk.bold('Name:'), context.name);
+        if (context.description) {
+          console.log(chalk.bold('Description:'), context.description);
+        }
+        if (context.database) {
+          console.log(chalk.bold('Database:'), context.database);
+        }
+        console.log('');
+      }
+    } catch (error) {
+      logger.error('Get current context failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+// ============================================================================
+// SESSION MANAGEMENT COMMANDS
+// ============================================================================
+
+const sessionCmd = program
+  .command('session')
+  .description('Manage query sessions');
+
+sessionCmd
+  .command('start <name>')
+  .description('Start a new session')
+  .addHelpText('after', `
+${chalk.bold('Examples:')}
+  ${chalk.dim('$')} ai-shell session start debug-session
+  ${chalk.dim('$')} ai-shell session start production-analysis
+`)
+  .action(async (name: string) => {
+    try {
+      await contextManager.initialize();
+      const sessionId = await contextManager.startSession(name);
+      console.log(chalk.green(`\n✅ Session "${name}" started`));
+      console.log(chalk.dim(`Session ID: ${sessionId}\n`));
+    } catch (error) {
+      logger.error('Session start failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+sessionCmd
+  .command('end')
+  .description('End current session')
+  .action(async () => {
+    try {
+      await contextManager.initialize();
+      await contextManager.endSession();
+      console.log(chalk.green('\n✅ Session ended successfully\n'));
+    } catch (error) {
+      logger.error('Session end failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+sessionCmd
+  .command('list')
+  .description('List all sessions')
+  .option('-f, --format <type>', 'Output format (table, json)', 'table')
+  .action(async (options) => {
+    try {
+      await contextManager.initialize();
+      const sessions = await contextManager.listSessions();
+
+      if (options.format === 'json') {
+        console.log(JSON.stringify(sessions, null, 2));
+      } else {
+        console.log(chalk.cyan.bold('\n📋 Sessions\n'));
+        if (sessions.length === 0) {
+          console.log(chalk.yellow('No sessions found\n'));
+        } else {
+          sessions.forEach(session => {
+            console.log(chalk.bold(session.name), chalk.dim(`(${session.id})`));
+            console.log(chalk.dim(`  Started: ${session.startTime.toLocaleString()}`));
+            if (session.endTime) {
+              console.log(chalk.dim(`  Ended: ${session.endTime.toLocaleString()}`));
+            } else {
+              console.log(chalk.green('  Status: Active'));
+            }
+            if (session.statistics) {
+              console.log(chalk.dim(`  Queries: ${session.statistics.queriesExecuted}`));
+              console.log(chalk.dim(`  Success Rate: ${session.statistics.successRate.toFixed(1)}%`));
+            }
+            console.log('');
+          });
+        }
+      }
+    } catch (error) {
+      logger.error('Session list failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+sessionCmd
+  .command('restore <name>')
+  .description('Restore a previous session')
+  .addHelpText('after', `
+${chalk.bold('Examples:')}
+  ${chalk.dim('$')} ai-shell session restore debug-session
+  ${chalk.dim('$')} ai-shell session restore session_1234567890_abc
+`)
+  .action(async (name: string) => {
+    try {
+      await contextManager.initialize();
+      await contextManager.restoreSession(name);
+      console.log(chalk.green(`\n✅ Session "${name}" restored\n`));
+    } catch (error) {
+      logger.error('Session restore failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+sessionCmd
+  .command('export <name> <file>')
+  .description('Export session to file')
+  .addHelpText('after', `
+${chalk.bold('Examples:')}
+  ${chalk.dim('$')} ai-shell session export my-session session.json
+`)
+  .action(async (name: string, file: string) => {
+    try {
+      await contextManager.initialize();
+      await contextManager.exportSession(name, file);
+      console.log(chalk.green(`\n✅ Session exported to "${file}"\n`));
+    } catch (error) {
+      logger.error('Session export failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+// ============================================================================
 // ERROR HANDLING & CLEANUP
 // ============================================================================
 
@@ -1005,6 +1516,18 @@ process.on('SIGTERM', async () => {
     process.exit(1);
   }
 });
+
+// ============================================================================
+// REGISTER ADDITIONAL COMMANDS
+// ============================================================================
+
+// Register backup CLI commands
+setupBackupCommands(program);
+
+// Register optimization commands (if available)
+if (typeof registerOptimizationCommands === 'function') {
+  registerOptimizationCommands(program, getOptimizationCLI());
+}
 
 // ============================================================================
 // MAIN EXECUTION
