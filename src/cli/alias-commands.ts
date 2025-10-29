@@ -47,7 +47,7 @@ export function registerAliasCommands(program: Command): void {
 
         console.log(chalk.gray(`\nRun with: ai-shell alias run ${name} [args...]`));
       } catch (error) {
-        console.error(chalk.red(`Error: ${error.message}`));
+        console.error(chalk.red(`Error: ${(error as Error).message}`));
         process.exit(1);
       }
     });
@@ -63,7 +63,7 @@ export function registerAliasCommands(program: Command): void {
         await aliasManager.removeAlias(name);
         console.log(chalk.green(`✓ Alias '${name}' removed successfully`));
       } catch (error) {
-        console.error(chalk.red(`Error: ${error.message}`));
+        console.error(chalk.red(`Error: ${(error as Error).message}`));
         process.exit(1);
       }
     });
@@ -140,7 +140,7 @@ export function registerAliasCommands(program: Command): void {
           console.log(chalk.gray(`Total: ${aliases.length} aliases\n`));
         }
       } catch (error) {
-        console.error(chalk.red(`Error: ${error.message}`));
+        console.error(chalk.red(`Error: ${(error as Error).message}`));
         process.exit(1);
       }
     });
@@ -199,7 +199,7 @@ export function registerAliasCommands(program: Command): void {
         console.log(chalk.cyan(`  ai-shell alias run ${name} ${args}`));
         console.log();
       } catch (error) {
-        console.error(chalk.red(`Error: ${error.message}`));
+        console.error(chalk.red(`Error: ${(error as Error).message}`));
         process.exit(1);
       }
     });
@@ -244,7 +244,7 @@ export function registerAliasCommands(program: Command): void {
         await aliasManager.editAlias(name, updates);
         console.log(chalk.green(`✓ Alias '${name}' updated successfully`));
       } catch (error) {
-        console.error(chalk.red(`Error: ${error.message}`));
+        console.error(chalk.red(`Error: ${(error as Error).message}`));
         process.exit(1);
       }
     });
@@ -260,7 +260,7 @@ export function registerAliasCommands(program: Command): void {
         await aliasManager.renameAlias(oldName, newName);
         console.log(chalk.green(`✓ Alias renamed from '${oldName}' to '${newName}'`));
       } catch (error) {
-        console.error(chalk.red(`Error: ${error.message}`));
+        console.error(chalk.red(`Error: ${(error as Error).message}`));
         process.exit(1);
       }
     });
@@ -313,7 +313,7 @@ export function registerAliasCommands(program: Command): void {
         // Note: Actual query execution would be handled by the query-executor
         console.log(chalk.gray('\nNote: Query execution would be handled by query-executor'));
       } catch (error) {
-        console.error(chalk.red(`Error: ${error.message}`));
+        console.error(chalk.red(`Error: ${(error as Error).message}`));
         process.exit(1);
       }
     });
@@ -329,7 +329,7 @@ export function registerAliasCommands(program: Command): void {
         await aliasManager.exportAliases(file, options.format);
         console.log(chalk.green(`✓ Aliases exported to ${file}`));
       } catch (error) {
-        console.error(chalk.red(`Error: ${error.message}`));
+        console.error(chalk.red(`Error: ${(error as Error).message}`));
         process.exit(1);
       }
     });
@@ -345,7 +345,7 @@ export function registerAliasCommands(program: Command): void {
         await aliasManager.importAliases(file, options.merge || false);
         console.log(chalk.green(`✓ Aliases imported from ${file}`));
       } catch (error) {
-        console.error(chalk.red(`Error: ${error.message}`));
+        console.error(chalk.red(`Error: ${(error as Error).message}`));
         process.exit(1);
       }
     });
@@ -393,7 +393,7 @@ export function registerAliasCommands(program: Command): void {
         console.log(chalk.gray('\n' + '─'.repeat(80)));
         console.log(chalk.gray(`Total: ${templates.length} templates\n`));
       } catch (error) {
-        console.error(chalk.red(`Error: ${error.message}`));
+        console.error(chalk.red(`Error: ${(error as Error).message}`));
         process.exit(1);
       }
     });
@@ -430,7 +430,7 @@ export function registerAliasCommands(program: Command): void {
 
         console.log(chalk.green(`✓ Template '${name}' created successfully`));
       } catch (error) {
-        console.error(chalk.red(`Error: ${error.message}`));
+        console.error(chalk.red(`Error: ${(error as Error).message}`));
         process.exit(1);
       }
     });
@@ -445,7 +445,7 @@ export function registerAliasCommands(program: Command): void {
         await aliasManager.fromTemplate(template, aliasName);
         console.log(chalk.green(`✓ Alias '${aliasName}' created from template '${template}'`));
       } catch (error) {
-        console.error(chalk.red(`Error: ${error.message}`));
+        console.error(chalk.red(`Error: ${(error as Error).message}`));
         process.exit(1);
       }
     });
@@ -488,7 +488,7 @@ export function registerAliasCommands(program: Command): void {
 
         console.log(chalk.gray('\n' + '─'.repeat(80) + '\n'));
       } catch (error) {
-        console.error(chalk.red(`Error: ${error.message}`));
+        console.error(chalk.red(`Error: ${(error as Error).message}`));
         process.exit(1);
       }
     });

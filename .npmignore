@@ -1,0 +1,102 @@
+# Development files
+src/
+tests/
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+vitest.config.ts
+tsconfig.json
+
+# Documentation (keep only essential)
+docs/
+*.md
+!README.md
+
+# Scripts and configuration
+scripts/
+.eslintrc*
+.prettierrc*
+.editorconfig
+.gitignore
+
+# Environment and secrets
+.env
+.env.*
+*.env
+.vault/
+credentials.vault
+config/*.json
+!config/default.json
+
+# Test and coverage
+coverage/
+.nyc_output/
+.vitest/
+node_modules/.vite/
+
+# Build artifacts
+*.tsbuildinfo
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git
+.git/
+.gitattributes
+.github/
+
+# CI/CD
+.travis.yml
+.circleci/
+.gitlab-ci.yml
+azure-pipelines.yml
+Jenkinsfile
+
+# Package management
+yarn.lock
+package-lock.json
+pnpm-lock.yaml
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# AI Shell specific
+.hive-mind/
+.aishell/
+.claude-flow/
+.state
+examples/
+benchmarks/
+
+# MCP server files (development only)
+src/mcp/
+!dist/mcp/
+
+# Backup files
+backups/
+*.backup
+*.bak
+
+# Grafana configurations (keep compiled only)
+grafana/dashboards/*.json
+!grafana/dashboards/ai-shell-*.json

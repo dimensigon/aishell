@@ -1,0 +1,151 @@
+Category,Command,File,Status,Has Code,Compilable,Executable,Production Ready,Severity,Notes
+Query Optimization,optimize <query>,commands/optimize.ts,PARTIAL,Yes,No,No,No,HIGH,Registered but build fails
+Query Optimization,slow-queries,commands/slow-queries.ts,PARTIAL,Yes,No,No,No,HIGH,Registered but build fails
+Query Optimization,indexes recommend,commands/indexes.ts,PARTIAL,Yes,No,No,No,HIGH,Registered but build fails
+Query Optimization,indexes apply,commands/indexes.ts,PARTIAL,Yes,No,No,No,HIGH,Registered but build fails
+Query Optimization,indexes list,commands/indexes.ts,PARTIAL,Yes,No,No,No,HIGH,Registered but build fails
+Query Optimization,indexes rebuild,commands/indexes.ts,PARTIAL,Yes,No,No,No,HIGH,Registered but build fails
+Query Optimization,risk-check <query>,commands/risk-check.ts,PARTIAL,Yes,No,No,No,HIGH,Registered but build fails
+Query Optimization,analyze-query,optimization-cli.ts,PLACEHOLDER,Partial,No,No,No,HIGH,Class method exists but no CLI registration
+Query Optimization,detect-patterns,optimization-cli.ts,PLACEHOLDER,Partial,No,No,No,HIGH,Class method exists but no CLI registration
+Query Optimization,analyze-workload,optimization-cli.ts,PLACEHOLDER,Partial,No,No,No,HIGH,Class method exists but no CLI registration
+Query Optimization,detect-bottlenecks,optimization-cli.ts,PLACEHOLDER,Partial,No,No,No,HIGH,Class method exists but no CLI registration
+Query Optimization,auto-optimize enable,optimization-cli.ts,PLACEHOLDER,Partial,No,No,No,HIGH,Class method exists but no CLI registration
+Query Optimization,auto-optimize disable,optimization-cli.ts,PLACEHOLDER,Partial,No,No,No,HIGH,Class method exists but no CLI registration
+Query Optimization,auto-optimize status,optimization-cli.ts,PLACEHOLDER,Partial,No,No,No,HIGH,Class method exists but no CLI registration
+MySQL,mysql connect,mysql-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Complete MySQLCLI class with 9 command registrations
+MySQL,mysql disconnect,mysql-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Registered with full implementation
+MySQL,mysql query,mysql-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Registered with multiple output formats
+MySQL,mysql status,mysql-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Registered with connection info
+MySQL,mysql tables,mysql-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Registered with schema listing
+MySQL,mysql describe,mysql-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Registered with table structure
+MySQL,mysql import,mysql-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Registered with SQL/CSV/JSON support
+MySQL,mysql export,mysql-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Registered with multiple formats
+MongoDB,mongo connect,mongodb-commands.ts,PARTIAL,Yes,No,No,No,HIGH,11 command registrations via MongoDBCLI
+MongoDB,mongo disconnect,mongodb-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Complete implementation
+MongoDB,mongo query,mongodb-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Find operations with filter/projection
+MongoDB,mongo aggregate,mongodb-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Aggregation pipeline support
+MongoDB,mongo insert,mongodb-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Document insertion
+MongoDB,mongo update,mongodb-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Document updates
+MongoDB,mongo delete,mongodb-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Document deletion
+MongoDB,mongo collections,mongodb-commands.ts,PARTIAL,Yes,No,No,No,HIGH,List all collections
+MongoDB,mongo indexes,mongodb-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Index management
+MongoDB,mongo export,mongodb-commands.ts,PARTIAL,Yes,No,No,No,HIGH,JSON/CSV export
+MongoDB,mongo import,mongodb-commands.ts,PARTIAL,Yes,No,No,No,HIGH,JSON/CSV import with options
+Redis,redis connect,redis-commands.ts,PARTIAL,Yes,No,No,No,HIGH,12 registrations via comprehensive RedisCLI
+Redis,redis disconnect,redis-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Connection management
+Redis,redis get,redis-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Key retrieval with type detection
+Redis,redis set,redis-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Key-value setting with TTL
+Redis,redis delete,redis-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Key deletion
+Redis,redis keys,redis-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Pattern-based key listing
+Redis,redis info,redis-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Server information
+Redis,redis flush,redis-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Database flushing
+Redis,redis ttl,redis-commands.ts,PARTIAL,Yes,No,No,No,HIGH,TTL management
+Redis,redis expire,redis-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Key expiration setting
+Redis,redis monitor,redis-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Real-time monitoring
+Redis,redis pipeline,redis-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Pipelined operations
+Redis,redis transaction,redis-commands.ts,PARTIAL,Yes,No,No,No,HIGH,MULTI/EXEC transactions
+PostgreSQL Advanced,postgres vacuum,postgres-advanced-commands.ts,PLACEHOLDER,Partial,No,No,No,CRITICAL,Builder class only - no CLI registration
+PostgreSQL Advanced,postgres analyze,postgres-advanced-commands.ts,PLACEHOLDER,Partial,No,No,No,CRITICAL,Builder class only - no CLI registration
+PostgreSQL Advanced,postgres reindex,N/A,MISSING,No,No,No,No,CRITICAL,Not implemented
+PostgreSQL Advanced,postgres locks,postgres-advanced-cli.ts,MISSING,No,No,No,No,CRITICAL,CLI file exists with no commands
+PostgreSQL Advanced,postgres connections,postgres-advanced-cli.ts,MISSING,No,No,No,No,CRITICAL,Not implemented
+PostgreSQL Advanced,postgres stats,postgres-advanced-cli.ts,MISSING,No,No,No,No,CRITICAL,Not implemented
+PostgreSQL Advanced,postgres explain-analyze,N/A,MISSING,No,No,No,No,CRITICAL,Not implemented
+PostgreSQL Advanced,postgres partition,N/A,MISSING,No,No,No,No,CRITICAL,Not implemented
+Backup & Recovery,backup create,backup-commands.ts,PARTIAL,Yes,No,No,No,HIGH,12 registrations - most comprehensive
+Backup & Recovery,backup restore,backup-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Complete with dry-run
+Backup & Recovery,backup list,backup-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Filtering and sorting
+Backup & Recovery,backup status,backup-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Progress monitoring
+Backup & Recovery,backup schedule,backup-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Cron-based scheduling
+Backup & Recovery,backup verify,backup-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Integrity checking
+Backup & Recovery,backup delete,backup-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Safe deletion with confirmation
+Backup & Recovery,backup export,backup-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Cloud export (S3/GCS/Azure)
+Backup & Recovery,backup import,backup-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Cloud import
+Backup & Recovery,backup config,backup-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Configuration management
+Migration,migrate create,migration-commands.ts,FAKE,No,No,No,No,CRITICAL,File exists with 0 command registrations
+Migration,migrate run,migration-commands.ts,FAKE,No,No,No,No,CRITICAL,Not implemented
+Migration,migrate rollback,migration-commands.ts,FAKE,No,No,No,No,CRITICAL,Not implemented
+Migration,migrate status,migration-commands.ts,FAKE,No,No,No,No,CRITICAL,Not implemented
+Migration,migrate validate,migration-commands.ts,FAKE,No,No,No,No,CRITICAL,Not implemented
+Migration,migrate dry-run,migration-commands.ts,FAKE,No,No,No,No,CRITICAL,Not implemented
+Migration,migrate history,migration-commands.ts,FAKE,No,No,No,No,CRITICAL,Not implemented
+Migration,migrate reset,migration-commands.ts,FAKE,No,No,No,No,CRITICAL,Not implemented
+Security,security scan,security-commands.ts,FAKE,No,No,No,No,CRITICAL,File exists with 0 command registrations
+Security,security audit,security-commands.ts,FAKE,No,No,No,No,CRITICAL,Not implemented
+Security,security encrypt,security-commands.ts,FAKE,No,No,No,No,CRITICAL,Not implemented
+Security,security permissions,security-commands.ts,FAKE,No,No,No,No,CRITICAL,Not implemented (vault commands in index.ts)
+Security,security roles,security-commands.ts,FAKE,No,No,No,No,CRITICAL,Not implemented
+Security,security policies,security-commands.ts,FAKE,No,No,No,No,CRITICAL,Not implemented
+Security,security compliance,security-commands.ts,FAKE,No,No,No,No,CRITICAL,Not implemented
+Monitoring,monitor start,monitoring-commands.ts,FAKE,No,No,No,No,CRITICAL,Export file only - no actual commands
+Monitoring,monitor stop,monitoring-commands.ts,FAKE,No,No,No,No,CRITICAL,Documentation only
+Monitoring,monitor status,monitoring-commands.ts,FAKE,No,No,No,No,CRITICAL,Not implemented
+Monitoring,health check,monitoring-commands.ts,FAKE,No,No,No,No,CRITICAL,Not implemented
+Monitoring,metrics show,monitoring-commands.ts,FAKE,No,No,No,No,CRITICAL,Not implemented
+Monitoring,metrics export,monitoring-commands.ts,FAKE,No,No,No,No,CRITICAL,Not implemented
+Monitoring,alerts setup,monitoring-commands.ts,FAKE,No,No,No,No,CRITICAL,Not implemented
+Monitoring,alerts list,monitoring-commands.ts,FAKE,No,No,No,No,CRITICAL,Not implemented
+Monitoring,alerts clear,monitoring-commands.ts,FAKE,No,No,No,No,CRITICAL,Not implemented
+Monitoring,dashboard start,monitoring-commands.ts,FAKE,No,No,No,No,CRITICAL,Not implemented
+Monitoring,dashboard stop,monitoring-commands.ts,FAKE,No,No,No,No,CRITICAL,Not implemented
+Monitoring,logs tail,monitoring-commands.ts,FAKE,No,No,No,No,CRITICAL,Not implemented
+Monitoring,logs search,monitoring-commands.ts,FAKE,No,No,No,No,CRITICAL,Not implemented
+Monitoring,performance analyze,monitoring-commands.ts,FAKE,No,No,No,No,CRITICAL,Not implemented
+Monitoring,performance report,monitoring-commands.ts,FAKE,No,No,No,No,CRITICAL,Not implemented
+Integration,integration setup,integration-commands.ts,PARTIAL,Yes,No,No,No,HIGH,25 registrations - most complete category
+Integration,integration sync,integration-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Cross-database synchronization
+Integration,integration query,integration-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Federated queries
+Integration,integration migrate,integration-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Data migration between DBs
+Integration,integration validate,integration-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Schema validation
+Integration,integration compare,integration-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Schema comparison
+Integration,integration status,integration-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Integration status
+Integration,integration config,integration-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Configuration management
+Integration,integration test,integration-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Connection testing
+Integration,integration export,integration-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Export configurations
+Integration,integration import,integration-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Import configurations
+Integration,integration list,integration-commands.ts,PARTIAL,Yes,No,No,No,HIGH,List all integrations
+Integration,integration remove,integration-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Remove integration
+Integration,integration enable,integration-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Enable integration
+Integration,integration disable,integration-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Disable integration
+Integration,integration health,integration-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Health check
+Integration,integration logs,integration-commands.ts,PARTIAL,Yes,No,No,No,HIGH,View logs
+Integration,integration metrics,integration-commands.ts,PARTIAL,Yes,No,No,No,HIGH,View metrics
+Integration,integration backup,integration-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Backup configuration
+Integration,integration restore,integration-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Restore configuration
+Integration,integration optimize,integration-commands.ts,PARTIAL,Yes,No,No,No,HIGH,Optimize queries
+
+SUMMARY
+Total Commands Claimed,105
+Commands with Code (PARTIAL),64
+Commands Placeholder,9
+Commands Fake,30
+Commands Missing,8
+Commands Compilable,0
+Commands Executable,0
+Commands Production Ready,0
+
+BUILD STATUS
+TypeScript Compilation,FAILED
+Primary Issue,Chalk v5 ESM incompatibility
+Blocking Errors,25+
+Executable Commands,0
+
+CATEGORY SUMMARY
+Query Optimization,13 claimed: 4 PARTIAL + 7 PLACEHOLDER + 2 MISSING
+MySQL,8 claimed: 8 PARTIAL
+MongoDB,10 claimed: 10 PARTIAL (11 registrations)
+Redis,12 claimed: 12 PARTIAL (comprehensive)
+PostgreSQL Advanced,8 claimed: 0 COMPLETE + 2 PLACEHOLDER + 6 MISSING
+Backup & Recovery,10 claimed: 10 PARTIAL (most comprehensive)
+Migration,8 claimed: 8 FAKE
+Security,7 claimed: 7 FAKE
+Monitoring,15 claimed: 15 FAKE
+Integration,20 claimed: 20 PARTIAL (most complete)
+
+PRODUCTION READINESS
+Actual vs Claimed,64 vs 105 (61%)
+Code Quality,Good where implemented
+Build Status,BROKEN (critical)
+Executable,0% (critical)
+Production Ready,0% NOT 58%

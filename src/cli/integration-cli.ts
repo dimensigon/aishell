@@ -14,16 +14,15 @@ import chalk from 'chalk';
 import ora from 'ora';
 import Table from 'cli-table3';
 import inquirer from 'inquirer';
-import { SlackClient } from '../integrations/slack-client.js';
-import { EmailClient } from '../integrations/email-client.js';
-import { FederationEngine } from '../federation/federation-engine.js';
-import { SchemaManager } from '../schema/schema-manager.js';
-import { ADAAgent } from '../agents/ada-agent.js';
-import { Logger } from '../utils/logger.js';
+import { SlackClient } from './notification-slack';
+import { EmailClient } from './notification-email';
+import { FederationEngine } from './federation-engine';
+import { SchemaManager } from './schema-inspector';
+import { createLogger } from '../core/logger';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
-const logger = new Logger('IntegrationCLI');
+const logger = createLogger('IntegrationCLI');
 
 // Singleton instances
 let slackClient: SlackClient | null = null;

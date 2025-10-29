@@ -1,0 +1,171 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-shell-py"
+version = "1.0.0"
+description = "AI-Shell Python SDK - Database clients, MCP integration, and AI agents for database management"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "AIShell Contributors", email = "aishell@example.com"}
+]
+maintainers = [
+    {name = "AIShell Contributors", email = "aishell@example.com"}
+]
+keywords = [
+    "ai-shell", "database", "mcp", "postgresql", "mysql", "mongodb",
+    "oracle", "redis", "cassandra", "neo4j", "dynamodb", "ai", "llm",
+    "database-client", "database-management", "automation", "sdk"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Database",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Systems Administration",
+    "Framework :: AsyncIO",
+]
+
+dependencies = [
+    # Core async & utilities
+    "aiofiles>=23.2.1",
+    "psutil>=5.9.0",
+
+    # Configuration
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0.0",
+
+    # Database drivers (optional, installed per need)
+    "asyncpg>=0.29.0; extra == 'postgresql'",
+    "aiomysql>=0.2.0; extra == 'mysql'",
+    "motor>=3.3.0; extra == 'mongodb'",
+    "redis>=5.0.0; extra == 'redis'",
+    "oracledb>=2.0.0; extra == 'oracle'",
+    "cassandra-driver>=3.28.0; extra == 'cassandra'",
+    "neo4j>=5.14.0; extra == 'neo4j'",
+    "boto3>=1.34.0; extra == 'dynamodb'",
+
+    # Security
+    "cryptography>=41.0.0",
+    "pydantic>=2.5.0",
+]
+
+[project.optional-dependencies]
+# Individual database support
+postgresql = ["asyncpg>=0.29.0"]
+mysql = ["aiomysql>=0.2.0"]
+mongodb = ["motor>=3.3.0"]
+redis = ["redis>=5.0.0"]
+oracle = ["oracledb>=2.0.0"]
+cassandra = ["cassandra-driver>=3.28.0"]
+neo4j = ["neo4j>=5.14.0"]
+dynamodb = ["boto3>=1.34.0"]
+
+# All databases
+all-databases = [
+    "asyncpg>=0.29.0",
+    "aiomysql>=0.2.0",
+    "motor>=3.3.0",
+    "redis>=5.0.0",
+    "oracledb>=2.0.0",
+    "cassandra-driver>=3.28.0",
+    "neo4j>=5.14.0",
+    "boto3>=1.34.0",
+]
+
+# MCP integration
+mcp = [
+    "asyncio-mqtt>=0.16.0",
+]
+
+# AI/LLM features
+ai = [
+    "openai>=1.7.0",
+    "anthropic>=0.8.0",
+]
+
+# Development dependencies
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.12.0",
+    "black>=23.12.0",
+    "ruff>=0.1.0",
+    "mypy>=1.8.0",
+    "build>=1.0.0",
+    "twine>=4.0.0",
+]
+
+# Documentation
+docs = [
+    "sphinx>=7.2.0",
+    "sphinx-rtd-theme>=2.0.0",
+    "sphinx-autodoc-typehints>=1.25.0",
+]
+
+# Everything
+all = [
+    "ai-shell-py[all-databases,mcp,ai,dev,docs]",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/AIShell"
+Documentation = "https://ai-shell-py.readthedocs.io"
+Repository = "https://github.com/yourusername/AIShell"
+Issues = "https://github.com/yourusername/AIShell/issues"
+Changelog = "https://github.com/yourusername/AIShell/blob/main/CHANGELOG.md"
+"PyPI" = "https://pypi.org/project/ai-shell-py/"
+
+[tool.setuptools]
+package-dir = {"" = "."}
+packages = {find = {where = ["."], include = ["ai_shell_py*"]}}
+
+[tool.setuptools.package-data]
+ai_shell_py = ["py.typed", "**/*.yaml", "**/*.json", "**/*.sql"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short --strict-markers"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+
+[tool.black]
+line-length = 100
+target-version = ['py39', 'py310', 'py311', 'py312']
+include = '\.pyi?$'
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "COM", "C4", "ISC", "PT", "Q", "RET", "SIM", "ARG", "PLE", "PLR", "PLW", "RUF"]
+ignore = ["ANN101", "ANN102", "ANN401", "PLR0913", "PLR2004"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+follow_imports = "normal"
+ignore_missing_imports = true

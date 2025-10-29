@@ -449,7 +449,7 @@ export class AliasManager {
           return String(value);
       }
     } catch (error) {
-      throw new Error(`Failed to convert value '${value}' to type '${type}': ${error.message}`);
+      throw new Error(`Failed to convert value '${value}' to type '${type}': ${(error as Error).message}`);
     }
   }
 
