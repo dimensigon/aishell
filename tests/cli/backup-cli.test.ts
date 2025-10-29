@@ -7,33 +7,164 @@ import { BackupCLI, BackupFilter, BackupResult, VerificationResult } from '../..
 import { BackupInfo } from '../../src/cli/backup-manager';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { vi, Mock } from 'vitest';
+
+// Mock database manager at module level
+vi.mock('../../src/cli/database-manager', () => {
+  return {
+    DatabaseConnectionManager: class {
+      constructor() {}
+      getConnection(name: string) {
+        return { database: name, connected: true };
+      }
+    }
+  };
+});
+
+// Mock backup manager
+vi.mock('../../src/cli/backup-manager', () => {
+  return {
+    BackupManager: class {
+      createBackup = vi.fn();
+      restoreBackup = vi.fn();
+      listBackups = vi.fn(() => Promise.resolve([]));
+      verifyBackup = vi.fn(() => Promise.resolve(true));
+      shutdown = vi.fn();
+      constructor() {}
+    }
+  };
+});
+
+// Mock backup system
+vi.mock('../../src/cli/backup-system', () => {
+  return {
+    BackupSystem: class {
+      constructor() {}
+    }
+  };
+});
+
+// Mock state manager
+vi.mock('../../src/core/state-manager', () => {
+  return {
+    StateManager: class {
+      private state = new Map();
+      get(key: string) { return this.state.get(key); }
+      set(key: string, value: any) { this.state.set(key, value); }
+    }
+  };
+});
+
+// Mock node-cron
+vi.mock('node-cron', () => ({
+  default: {
+    schedule: vi.fn(() => ({ stop: vi.fn() })),
+    validate: vi.fn(() => true)
+  }
+}));
+import { vi } from 'vitest';
+
+// Mock modules
+vi.mock('../../src/cli/backup-manager', () => {
+  const mockBackupManager = {
+    createBackup: vi.fn(),
+    restoreBackup: vi.fn(),
+    listBackups: vi.fn(),
+    verifyBackup: vi.fn(),
+    shutdown: vi.fn()
+  };
+  return {
+    BackupManager: vi.fn(() => mockBackupManager)
+  };
+});
+
+vi.mock('../../src/cli/backup-system', () => {
+  return {
+    BackupSystem: vi.fn(() => ({}))
+  };
+});
+
+vi.mock('../../src/cli/database-manager', () => {
+  return {
+    DatabaseConnectionManager: vi.fn(() => ({
+      getConnection: vi.fn((dbName: string) => ({ database: dbName, connected: true }))
+    }))
+  };
+});
+
+vi.mock('../../src/core/state-manager', () => {
+  return {
+    StateManager: vi.fn(() => ({
+      get: vi.fn(),
+      set: vi.fn()
+    }))
+  };
+});
+
+// Mock fs operations
+vi.mock('fs/promises', async () => {
+  const actual = await vi.importActual('fs/promises') as any;
+  return {
+    ...actual,
+    access: vi.fn(),
+    stat: vi.fn(),
+    mkdir: vi.fn(),
+    rm: vi.fn(),
+    readdir: vi.fn(),
+    readFile: vi.fn(),
+    writeFile: vi.fn(),
+    unlink: vi.fn(),
+    copyFile: vi.fn()
+  };
+});
 
 describe('BackupCLI', () => {
   let backupCLI: BackupCLI;
   let testBackupDir: string;
+  let mockBackupManager: any;
 
   beforeEach(() => {
+    vi.clearAllMocks();
+
     testBackupDir = path.join(__dirname, '..', '..', 'test-backups');
     backupCLI = new BackupCLI({
       backupDir: testBackupDir,
       retentionDays: 7,
       maxBackups: 10
     });
+
+    // Get the mock instance
+    const { BackupManager } = require('../../src/cli/backup-manager');
+    mockBackupManager = BackupManager.mock.results[BackupManager.mock.results.length - 1].value;
+
+    // Setup default mock responses
+    (fs.mkdir as any).mockResolvedValue(undefined);
+    (fs.rm as any).mockResolvedValue(undefined);
+    (fs.access as any).mockResolvedValue(undefined);
+    (fs.stat as any).mockResolvedValue({ size: 1024 });
   });
 
   afterEach(async () => {
     await backupCLI.cleanup();
-
-    // Clean up test backups
-    try {
-      await fs.rm(testBackupDir, { recursive: true, force: true });
-    } catch (error) {
-      // Ignore cleanup errors
-    }
+    vi.clearAllMocks();
   });
 
   describe('createBackup', () => {
     it('should create a backup successfully', async () => {
+      const mockBackupInfo: BackupInfo = {
+        id: 'test-backup-id',
+        timestamp: Date.now(),
+        database: 'test_db',
+        format: 'sql',
+        compressed: true,
+        size: 1024,
+        tables: ['users', 'posts'],
+        path: '/path/to/backup.sql.gz',
+        metadata: { checksum: 'abc123' }
+      };
+
+      mockBackupManager.createBackup.mockResolvedValue(mockBackupInfo);
+
       const result = await backupCLI.createBackup({
         database: 'test_db',
         name: 'test_backup',
@@ -48,6 +179,21 @@ describe('BackupCLI', () => {
     });
 
     it('should create backup with verification', async () => {
+      const mockBackupInfo: BackupInfo = {
+        id: 'verified-backup-id',
+        timestamp: Date.now(),
+        database: 'test_db',
+        format: 'sql',
+        compressed: true,
+        size: 2048,
+        tables: ['users'],
+        path: '/path/to/verified.sql.gz',
+        metadata: { checksum: 'def456' }
+      };
+
+      mockBackupManager.createBackup.mockResolvedValue(mockBackupInfo);
+      mockBackupManager.verifyBackup.mockResolvedValue(true);
+
       const result = await backupCLI.createBackup({
         database: 'test_db',
         name: 'verified_backup',
@@ -60,6 +206,34 @@ describe('BackupCLI', () => {
     });
 
     it('should create incremental backup', async () => {
+      const baseBackupInfo: BackupInfo = {
+        id: 'base-backup-id',
+        timestamp: Date.now(),
+        database: 'test_db',
+        format: 'sql',
+        compressed: false,
+        size: 1024,
+        tables: ['users'],
+        path: '/path/to/base.sql',
+        metadata: {}
+      };
+
+      const incrementalBackupInfo: BackupInfo = {
+        id: 'incremental-backup-id',
+        timestamp: Date.now(),
+        database: 'test_db',
+        format: 'sql',
+        compressed: false,
+        size: 512,
+        tables: ['users'],
+        path: '/path/to/incremental.sql',
+        metadata: { incremental: true, baseBackupId: 'base-backup-id' }
+      };
+
+      mockBackupManager.createBackup
+        .mockResolvedValueOnce(baseBackupInfo)
+        .mockResolvedValueOnce(incrementalBackupInfo);
+
       // Create base backup
       const baseBackup = await backupCLI.createBackup({
         database: 'test_db',
@@ -85,6 +259,20 @@ describe('BackupCLI', () => {
       const formats = ['sql', 'json', 'csv'];
 
       for (const format of formats) {
+        const mockBackupInfo: BackupInfo = {
+          id: `backup-${format}-id`,
+          timestamp: Date.now(),
+          database: 'test_db',
+          format,
+          compressed: false,
+          size: 1024,
+          tables: ['users'],
+          path: `/path/to/backup.${format}`,
+          metadata: {}
+        };
+
+        mockBackupManager.createBackup.mockResolvedValue(mockBackupInfo);
+
         const result = await backupCLI.createBackup({
           database: 'test_db',
           name: `backup_${format}`,
@@ -96,6 +284,11 @@ describe('BackupCLI', () => {
     });
 
     it('should handle backup creation failure', async () => {
+      // Mock database connection not found by returning null
+      const { DatabaseConnectionManager } = require('../../src/cli/database-manager');
+      const mockDbManager = DatabaseConnectionManager.mock.results[DatabaseConnectionManager.mock.results.length - 1].value;
+      mockDbManager.getConnection.mockReturnValueOnce(null);
+
       const result = await backupCLI.createBackup({
         database: 'nonexistent_db',
         name: 'failed_backup',
@@ -107,6 +300,20 @@ describe('BackupCLI', () => {
     });
 
     it('should create compressed backup', async () => {
+      const mockBackupInfo: BackupInfo = {
+        id: 'compressed-backup-id',
+        timestamp: Date.now(),
+        database: 'test_db',
+        format: 'sql',
+        compressed: true,
+        size: 512,
+        tables: ['users'],
+        path: '/path/to/backup.sql.gz',
+        metadata: {}
+      };
+
+      mockBackupManager.createBackup.mockResolvedValue(mockBackupInfo);
+
       const result = await backupCLI.createBackup({
         database: 'test_db',
         name: 'compressed_backup',
@@ -121,8 +328,25 @@ describe('BackupCLI', () => {
 
   describe('restoreBackup', () => {
     let backupId: string;
+    let mockBackupInfo: BackupInfo;
 
     beforeEach(async () => {
+      mockBackupInfo = {
+        id: 'restore-test-id',
+        timestamp: Date.now(),
+        database: 'test_db',
+        format: 'sql',
+        compressed: false,
+        size: 1024,
+        tables: ['users', 'posts'],
+        path: '/path/to/restore.sql',
+        metadata: { checksum: 'xyz789' }
+      };
+
+      mockBackupManager.createBackup.mockResolvedValue(mockBackupInfo);
+      mockBackupManager.listBackups.mockResolvedValue([mockBackupInfo]);
+      mockBackupManager.restoreBackup.mockResolvedValue(undefined);
+
       const result = await backupCLI.createBackup({
         database: 'test_db',
         name: 'restore_test',
@@ -133,24 +357,36 @@ describe('BackupCLI', () => {
 
     it('should restore backup successfully', async () => {
       await expect(backupCLI.restoreBackup(backupId, {})).resolves.not.toThrow();
+      expect(mockBackupManager.restoreBackup).toHaveBeenCalled();
     });
 
     it('should perform dry-run restore', async () => {
+      mockBackupManager.verifyBackup.mockResolvedValue(true);
+
       await expect(
         backupCLI.restoreBackup(backupId, { dryRun: true })
       ).resolves.not.toThrow();
+
+      expect(mockBackupManager.restoreBackup).not.toHaveBeenCalled();
     });
 
     it('should restore to different database', async () => {
       await expect(
         backupCLI.restoreBackup(backupId, { targetDatabase: 'target_db' })
       ).resolves.not.toThrow();
+
+      expect(mockBackupManager.restoreBackup).toHaveBeenCalledWith(
+        mockBackupInfo.path,
+        expect.objectContaining({ targetDatabase: 'target_db' })
+      );
     });
 
     it('should fail restore for nonexistent backup', async () => {
+      mockBackupManager.listBackups.mockResolvedValue([]);
+
       await expect(
         backupCLI.restoreBackup('nonexistent-id', {})
-      ).rejects.toThrow();
+      ).rejects.toThrow('Backup not found');
     });
 
     it('should restore with point-in-time', async () => {
@@ -164,10 +400,43 @@ describe('BackupCLI', () => {
 
   describe('listBackups', () => {
     beforeEach(async () => {
-      // Create test backups
-      await backupCLI.createBackup({ database: 'db1', name: 'backup1', format: 'sql' });
-      await backupCLI.createBackup({ database: 'db2', name: 'backup2', format: 'sql' });
-      await backupCLI.createBackup({ database: 'db1', name: 'backup3', format: 'json' });
+      const mockBackups: BackupInfo[] = [
+        {
+          id: 'backup1-id',
+          timestamp: Date.now(),
+          database: 'db1',
+          format: 'sql',
+          compressed: false,
+          size: 1024,
+          tables: ['users'],
+          path: '/path/to/backup1.sql',
+          metadata: {}
+        },
+        {
+          id: 'backup2-id',
+          timestamp: Date.now(),
+          database: 'db2',
+          format: 'sql',
+          compressed: false,
+          size: 2048,
+          tables: ['posts'],
+          path: '/path/to/backup2.sql',
+          metadata: {}
+        },
+        {
+          id: 'backup3-id',
+          timestamp: Date.now(),
+          database: 'db1',
+          format: 'json',
+          compressed: false,
+          size: 512,
+          tables: ['comments'],
+          path: '/path/to/backup3.json',
+          metadata: {}
+        }
+      ];
+
+      mockBackupManager.listBackups.mockResolvedValue(mockBackups);
     });
 
     it('should list all backups', async () => {

@@ -65,6 +65,25 @@ export interface ScheduleInfo {
 /**
  * Backup CLI - Main class for backup operations
  */
+/**
+ * Dependency injection configuration
+ */
+export interface BackupCLIDependencies {
+  backupManager?: BackupManager;
+  backupSystem?: BackupSystem;
+  dbManager?: DatabaseConnectionManager;
+  stateManager?: StateManager;
+}
+
+/**
+ * BackupCLI configuration
+ */
+export interface BackupCLIConfig {
+  backupDir?: string;
+  retentionDays?: number;
+  maxBackups?: number;
+}
+
 export class BackupCLI {
   private logger = createLogger('BackupCLI');
   private backupManager: BackupManager;
@@ -74,18 +93,42 @@ export class BackupCLI {
   private backupDir: string;
   private schedules = new Map<string, { task: cron.ScheduledTask; config: ScheduleInfo }>();
 
-  constructor(config?: { backupDir?: string; retentionDays?: number; maxBackups?: number }) {
+  /**
+   * Constructor with dependency injection support
+   * @param config - Configuration options
+   * @param dependencies - Optional injected dependencies for testing
+   */
+  constructor(config?: BackupCLIConfig, dependencies?: BackupCLIDependencies) {
     this.backupDir = config?.backupDir || path.join(process.env.HOME || '/tmp', '.ai-shell', 'backups');
 
-    this.backupManager = new BackupManager({
-      defaultBackupDir: this.backupDir,
-      retentionDays: config?.retentionDays || 30,
-      maxBackups: config?.maxBackups || 50
-    });
+    // Use injected dependencies or create new instances
+    if (dependencies?.stateManager) {
+      this.stateManager = dependencies.stateManager;
+    } else {
+      this.stateManager = new StateManager();
+    }
 
-    this.stateManager = new StateManager();
-    this.dbManager = new DatabaseConnectionManager(this.stateManager);
-    this.backupSystem = new BackupSystem(this.dbManager, this.stateManager);
+    if (dependencies?.dbManager) {
+      this.dbManager = dependencies.dbManager;
+    } else {
+      this.dbManager = new DatabaseConnectionManager(this.stateManager);
+    }
+
+    if (dependencies?.backupManager) {
+      this.backupManager = dependencies.backupManager;
+    } else {
+      this.backupManager = new BackupManager({
+        defaultBackupDir: this.backupDir,
+        retentionDays: config?.retentionDays || 30,
+        maxBackups: config?.maxBackups || 50
+      });
+    }
+
+    if (dependencies?.backupSystem) {
+      this.backupSystem = dependencies.backupSystem;
+    } else {
+      this.backupSystem = new BackupSystem(this.dbManager, this.stateManager);
+    }
 
     // Load saved schedules
     this.loadSchedules();
@@ -700,9 +743,10 @@ export class BackupCLI {
 
 /**
  * Setup backup CLI commands
+ * @deprecated Use setupBackupCommands from backup-commands.ts instead
  */
-export function setupBackupCommands(program: Command): void {
-  const backupCLI = new BackupCLI();
+export function setupBackupCommands(program: Command, config?: BackupCLIConfig, dependencies?: BackupCLIDependencies): void {
+  const backupCLI = new BackupCLI(config, dependencies);
 
   // Backup create command
   program

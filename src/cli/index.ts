@@ -321,11 +321,42 @@ import { registerSlowQueriesCommand } from './commands/slow-queries';
 import { registerIndexesCommand } from './commands/indexes';
 import { registerRiskCheckCommand } from './commands/risk-check';
 
+// Import all Phase 2 Sprint command modules
+import { registerMySQLCommands } from './mysql-commands';
+import { registerMongoDBCommands } from './mongodb-commands';
+import { registerRedisCommands } from './redis-commands';
+import { registerIntegrationCommands } from './integration-commands';
+import { StateManager } from '../core/state-manager';
+import { RedisCLI } from './redis-cli';
+
+// Import command registry
+import { commandRegistry, CommandCategory } from './command-registry';
+
 // Register Phase 2 Query Optimization commands
 registerOptimizeCommand(program);
 registerSlowQueriesCommand(program);
 registerIndexesCommand(program);
 registerRiskCheckCommand(program);
+
+// ============================================================================
+// PHASE 2 SPRINT COMMANDS - Database Operations
+// ============================================================================
+
+// Register MySQL commands (Sprint 2 - 8 commands)
+registerMySQLCommands(program);
+
+// Register MongoDB commands (Sprint 2 - 10 commands)
+const stateManager = new StateManager();
+registerMongoDBCommands(program, stateManager);
+
+// Register Redis commands (Sprint 2 - 14 commands)
+function getRedisCLI(): RedisCLI {
+  return new RedisCLI(stateManager);
+}
+registerRedisCommands(program, getRedisCLI);
+
+// Register Integration commands (Sprint 5 - 20 commands)
+registerIntegrationCommands(program);
 
 const phase2 = program
   .command('phase2')
@@ -916,6 +947,97 @@ program
   });
 
 program
+  .command('vault-get <name>')
+  .description('Get specific vault entry')
+  .action(async (name: string) => {
+    try {
+      const { SecurityCLI } = await import('./security-cli');
+      const securityCLI = new SecurityCLI();
+      await securityCLI.getVaultEntry(name);
+    } catch (error) {
+      logger.error('Vault get failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+program
+  .command('vault-delete <name>')
+  .description('Delete vault entry')
+  .action(async (name: string) => {
+    try {
+      const { SecurityCLI } = await import('./security-cli');
+      const securityCLI = new SecurityCLI();
+      await securityCLI.removeVaultEntry(name);
+    } catch (error) {
+      logger.error('Vault delete failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+// Permission Commands
+program
+  .command('permissions-grant <role> <resource>')
+  .description('Grant permission to role for a resource')
+  .option('--actions <actions>', 'Comma-separated actions (read,write,delete)', 'read,write')
+  .action(async (role: string, resource: string, options) => {
+    try {
+      const { SecurityCLI } = await import('./security-cli');
+      const securityCLI = new SecurityCLI();
+      const actions = options.actions.split(',').map((a: string) => a.trim());
+      await securityCLI.grantPermission(role, resource, { actions });
+    } catch (error) {
+      logger.error('Permission grant failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+program
+  .command('permissions-revoke <role> <resource>')
+  .description('Revoke permission from role for a resource')
+  .action(async (role: string, resource: string) => {
+    try {
+      const { SecurityCLI } = await import('./security-cli');
+      const securityCLI = new SecurityCLI();
+      await securityCLI.revokePermission(role, resource);
+    } catch (error) {
+      logger.error('Permission revoke failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+// Audit Log Commands
+program
+  .command('audit-log')
+  .description('Show audit log entries')
+  .option('--limit <n>', 'Limit entries', '100')
+  .option('--user <user>', 'Filter by user')
+  .option('--action <action>', 'Filter by action')
+  .option('--resource <resource>', 'Filter by resource')
+  .option('--format <type>', 'Output format (json, csv)', 'table')
+  .action(async (options) => {
+    try {
+      const { SecurityCLI } = await import('./security-cli');
+      const securityCLI = new SecurityCLI();
+      await securityCLI.showAuditLog({
+        limit: parseInt(options.limit),
+        user: options.user,
+        action: options.action,
+        resource: options.resource,
+        format: options.format
+      });
+    } catch (error) {
+      logger.error('Audit log failed', error);
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+// Keep old audit-show as alias for backwards compatibility
+program
   .command('audit-show')
   .description('Show audit log entries')
   .option('--limit <n>', 'Limit entries', '100')
@@ -994,6 +1116,133 @@ program
     console.log('  8. ✓ SQL Explainer        - Natural language explanations');
     console.log('  9. ✓ Schema Diff          - Compare database schemas');
     console.log(' 10. ✓ Cost Optimizer       - Cloud cost optimization\n');
+  });
+
+// ============================================================================
+// COMMAND LISTING & REGISTRY
+// ============================================================================
+
+program
+  .command('commands')
+  .description('List all available commands')
+  .option('-c, --category <category>', 'Filter by category')
+  .option('-p, --phase <phase>', 'Filter by phase (1, 2, or 3)', parseInt)
+  .option('-s, --search <query>', 'Search commands')
+  .option('--json', 'Output as JSON')
+  .option('--count', 'Show command count only')
+  .addHelpText('after', `
+${chalk.bold('Examples:')}
+  ${chalk.dim('$')} ai-shell commands
+  ${chalk.dim('$')} ai-shell commands --category "Query Optimization"
+  ${chalk.dim('$')} ai-shell commands --phase 2
+  ${chalk.dim('$')} ai-shell commands --search backup
+  ${chalk.dim('$')} ai-shell commands --count
+`)
+  .action((options) => {
+    try {
+      if (options.count) {
+        const stats = commandRegistry.getStatistics();
+        console.log(chalk.cyan(`\n📊 Command Statistics:\n`));
+        console.log(`  Total Commands: ${chalk.bold(stats.total)}`);
+        console.log(`\n  By Phase:`);
+        console.log(`    Phase 1: ${stats.byPhase[1]} commands`);
+        console.log(`    Phase 2: ${stats.byPhase[2]} commands`);
+        console.log(`    Phase 3: ${stats.byPhase[3]} commands`);
+        console.log(`\n  By Category:`);
+        Object.entries(stats.byCategory).forEach(([cat, count]) => {
+          console.log(`    ${cat}: ${count} commands`);
+        });
+        console.log('');
+        return;
+      }
+
+      let commands = commandRegistry.getAllCommands();
+
+      if (options.category) {
+        const category = Object.values(CommandCategory).find(
+          c => c.toLowerCase() === options.category.toLowerCase()
+        );
+        if (category) {
+          commands = commandRegistry.getCommandsByCategory(category);
+        }
+      }
+
+      if (options.phase) {
+        commands = commands.filter(cmd => cmd.phase === options.phase);
+      }
+
+      if (options.search) {
+        commands = commandRegistry.searchCommands(options.search);
+      }
+
+      if (options.json) {
+        console.log(JSON.stringify(commands, null, 2));
+        return;
+      }
+
+      console.log(chalk.cyan(`\n📋 Available Commands (${commands.length})\n`));
+
+      // Group by category
+      const byCategory = new Map<CommandCategory, typeof commands>();
+      commands.forEach(cmd => {
+        const catCommands = byCategory.get(cmd.category) || [];
+        catCommands.push(cmd);
+        byCategory.set(cmd.category, catCommands);
+      });
+
+      byCategory.forEach((cmds, category) => {
+        console.log(chalk.bold(`\n${category}:`));
+        cmds.forEach(cmd => {
+          const phaseTag = chalk.dim(`[Phase ${cmd.phase}]`);
+          console.log(`  ${chalk.green(cmd.name.padEnd(30))} ${phaseTag} ${cmd.description}`);
+          if (cmd.aliases && cmd.aliases.length > 0) {
+            console.log(`    ${chalk.dim('Aliases:')} ${cmd.aliases.join(', ')}`);
+          }
+        });
+      });
+
+      console.log('');
+    } catch (error) {
+      console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
+    }
+  });
+
+program
+  .command('version')
+  .description('Show version and command summary')
+  .option('--verbose', 'Show detailed information')
+  .addHelpText('after', `
+${chalk.bold('Examples:')}
+  ${chalk.dim('$')} ai-shell version
+  ${chalk.dim('$')} ai-shell version --verbose
+`)
+  .action((options) => {
+    const stats = commandRegistry.getStatistics();
+
+    console.log(chalk.cyan.bold('\n🤖 AI-Shell Database Management CLI\n'));
+    console.log(`${chalk.bold('Version:')} 1.0.0`);
+    console.log(`${chalk.bold('Total Commands:')} ${stats.total}`);
+    console.log('');
+
+    if (options.verbose) {
+      console.log(chalk.bold('Phase Breakdown:'));
+      console.log(`  Phase 1 (Core Operations):      ${stats.byPhase[1]} commands`);
+      console.log(`  Phase 2 (Advanced Features):    ${stats.byPhase[2]} commands`);
+      console.log(`  Phase 3 (Analysis & Utilities): ${stats.byPhase[3]} commands`);
+      console.log('');
+
+      console.log(chalk.bold('Category Breakdown:'));
+      Object.entries(stats.byCategory).forEach(([cat, count]) => {
+        console.log(`  ${cat.padEnd(30)} ${count} commands`);
+      });
+      console.log('');
+
+      console.log(chalk.dim('Use "ai-shell commands" to see all available commands'));
+      console.log(chalk.dim('Use "ai-shell commands --category <name>" to filter by category'));
+      console.log(chalk.dim('Use "ai-shell help <command>" for detailed help on a specific command'));
+      console.log('');
+    }
   });
 
 program

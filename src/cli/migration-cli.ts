@@ -14,6 +14,7 @@
 import { Command } from 'commander';
 import { AdvancedMigrationEngine } from './migration-engine-advanced';
 import { MigrationBuilder, MigrationPatterns, migration } from './migration-dsl';
+import { MigrationCommands } from './migration-commands';
 import { DatabaseConnectionManager, DatabaseType } from './database-manager';
 import { StateManager } from '../core/state-manager';
 import { BackupSystem } from './backup-system';
@@ -31,6 +32,7 @@ const logger = createLogger('MigrationCLI');
  */
 export class MigrationCLI {
   private engine: AdvancedMigrationEngine;
+  private commands: MigrationCommands;
   private migrationsDir: string;
 
   constructor(
@@ -51,6 +53,12 @@ export class MigrationCLI {
         enableAutoSnapshot: true
       }
     );
+
+    this.commands = new MigrationCommands(
+      dbManager,
+      stateManager,
+      this.migrationsDir
+    );
   }
 
   /**
@@ -61,10 +69,19 @@ export class MigrationCLI {
       .command('migrate')
       .description('Database migration management with zero-downtime support');
 
-    // Create migration
+    // Create migration (standard)
     migrate
       .command('create <name>')
       .description('Create a new migration file')
+      .option('--template <type>', 'Template type (sql, js)', 'sql')
+      .action(async (name, options) => {
+        await this.createMigrationStandard(name, options);
+      });
+
+    // Create migration (advanced DSL)
+    migrate
+      .command('create-advanced <name>')
+      .description('Create advanced migration with DSL')
       .option('-t, --type <type>', 'Migration type (add-column, remove-column, rename-column, change-type, custom)', 'custom')
       .option('--table <table>', 'Table name')
       .option('--column <column>', 'Column name')
@@ -75,6 +92,48 @@ export class MigrationCLI {
       .option('--new-type <type>', 'New data type (for change-type)')
       .action(async (name, options) => {
         await this.createMigration(name, options);
+      });
+
+    // Run pending migrations
+    migrate
+      .command('up [count]')
+      .description('Run pending migrations')
+      .action(async (count) => {
+        await this.runUp(count ? parseInt(count) : undefined);
+      });
+
+    // Rollback migrations
+    migrate
+      .command('down [count]')
+      .description('Rollback migrations')
+      .action(async (count) => {
+        await this.runDown(count ? parseInt(count) : 1);
+      });
+
+    // Reset all migrations
+    migrate
+      .command('reset')
+      .description('Rollback all migrations')
+      .option('-y, --yes', 'Skip confirmation prompt')
+      .action(async (options) => {
+        await this.runReset(options);
+      });
+
+    // Fresh migration (drop all and re-run)
+    migrate
+      .command('fresh')
+      .description('Drop all tables and re-run migrations')
+      .option('-y, --yes', 'Skip confirmation prompt')
+      .action(async (options) => {
+        await this.runFresh(options);
+      });
+
+    // Redo last migration
+    migrate
+      .command('redo')
+      .description('Rollback and re-run the last migration')
+      .action(async () => {
+        await this.runRedo();
       });
 
     // Plan migration
@@ -98,12 +157,17 @@ export class MigrationCLI {
         await this.applyMigration(file, options);
       });
 
-    // Migration status
+    // Migration status (standard)
     migrate
       .command('status')
       .description('Show migration status')
-      .action(async () => {
-        await this.showStatus();
+      .option('--advanced', 'Show advanced migration status')
+      .action(async (options) => {
+        if (options.advanced) {
+          await this.showStatus();
+        } else {
+          await this.showStatusStandard();
+        }
       });
 
     // Rollback
@@ -718,6 +782,191 @@ export class MigrationCLI {
   private getActiveDatabaseType(): DatabaseType {
     const connection = this.dbManager.getActive();
     return connection?.type || DatabaseType.POSTGRESQL;
+  }
+
+  /**
+   * Create migration (standard template)
+   */
+  private async createMigrationStandard(name: string, options: any): Promise<void> {
+    try {
+      console.log(chalk.blue('Creating migration:'), chalk.bold(name));
+
+      const filepath = await this.commands.create(name, {
+        template: options.template
+      });
+
+      console.log(chalk.green('Migration created successfully:'));
+      console.log(chalk.gray('  File:'), filepath);
+      console.log(chalk.gray('  Template:'), options.template);
+    } catch (error) {
+      console.error(chalk.red('Error creating migration:'), error);
+      throw error;
+    }
+  }
+
+  /**
+   * Run up migrations
+   */
+  private async runUp(count?: number): Promise<void> {
+    try {
+      console.log(chalk.blue('Running migrations...'));
+      console.log();
+
+      const result = await this.commands.up(count);
+
+      if (result.executed.length === 0) {
+        console.log(chalk.yellow('Nothing to migrate'));
+      }
+    } catch (error) {
+      console.error(chalk.red('Error running migrations:'), error);
+      throw error;
+    }
+  }
+
+  /**
+   * Run down migrations
+   */
+  private async runDown(count: number): Promise<void> {
+    try {
+      console.log(chalk.yellow('Rolling back migrations...'));
+      console.log();
+
+      const result = await this.commands.down(count);
+
+      if (result.rolledBack.length === 0) {
+        console.log(chalk.yellow('Nothing to rollback'));
+      }
+    } catch (error) {
+      console.error(chalk.red('Error rolling back migrations:'), error);
+      throw error;
+    }
+  }
+
+  /**
+   * Show status (standard)
+   */
+  private async showStatusStandard(): Promise<void> {
+    try {
+      const { executed, pending } = await this.commands.status();
+
+      console.log(chalk.bold('Migration Status'));
+      console.log();
+
+      // Show executed migrations
+      if (executed.length > 0) {
+        console.log(chalk.green.bold('Executed Migrations:'));
+        const table = new Table({
+          head: ['Migration', 'Batch'],
+          colWidths: [60, 10]
+        });
+
+        executed.forEach(m => {
+          table.push([m.name, m.batch?.toString() || '-']);
+        });
+
+        console.log(table.toString());
+        console.log();
+      }
+
+      // Show pending migrations
+      if (pending.length > 0) {
+        console.log(chalk.yellow.bold('Pending Migrations:'));
+        pending.forEach(m => {
+          console.log(chalk.gray('  -'), m.name);
+        });
+        console.log();
+      }
+
+      // Summary
+      console.log(chalk.bold('Summary:'));
+      console.log(chalk.gray('  Executed:'), chalk.green(executed.length));
+      console.log(chalk.gray('  Pending:'), chalk.yellow(pending.length));
+
+      if (executed.length > 0) {
+        const lastBatch = Math.max(...executed.map(m => m.batch || 0));
+        console.log(chalk.gray('  Current batch:'), lastBatch);
+      }
+    } catch (error) {
+      console.error(chalk.red('Error getting status:'), error);
+      throw error;
+    }
+  }
+
+  /**
+   * Reset all migrations
+   */
+  private async runReset(options: any): Promise<void> {
+    try {
+      if (!options.yes) {
+        const answers = await inquirer.prompt([
+          {
+            type: 'confirm',
+            name: 'confirm',
+            message: 'This will rollback ALL migrations. Are you sure?',
+            default: false
+          }
+        ]);
+
+        if (!answers.confirm) {
+          console.log(chalk.yellow('Reset cancelled'));
+          return;
+        }
+      }
+
+      console.log(chalk.yellow('Resetting all migrations...'));
+      console.log();
+
+      await this.commands.reset();
+    } catch (error) {
+      console.error(chalk.red('Error resetting migrations:'), error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fresh migration
+   */
+  private async runFresh(options: any): Promise<void> {
+    try {
+      if (!options.yes) {
+        const answers = await inquirer.prompt([
+          {
+            type: 'confirm',
+            name: 'confirm',
+            message: 'This will DROP ALL TABLES and re-run migrations. Are you sure?',
+            default: false
+          }
+        ]);
+
+        if (!answers.confirm) {
+          console.log(chalk.yellow('Fresh migration cancelled'));
+          return;
+        }
+      }
+
+      console.log(chalk.yellow('Running fresh migration...'));
+      console.log();
+
+      await this.commands.fresh();
+    } catch (error) {
+      console.error(chalk.red('Error running fresh migration:'), error);
+      throw error;
+    }
+  }
+
+  /**
+   * Redo last migration
+   */
+  private async runRedo(): Promise<void> {
+    try {
+      console.log(chalk.blue('Redoing last migration...'));
+      console.log();
+
+      await this.commands.redo();
+    } catch (error) {
+      console.error(chalk.red('Error redoing migration:'), error);
+      throw error;
+    }
   }
 }
 

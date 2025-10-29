@@ -3272,8 +3272,8 @@
       {
         "key": "pattern-clusters",
         "value": [],
-        "version": 280,
-        "timestamp": 1761642866140,
+        "version": 323,
+        "timestamp": 1761721343029,
         "metadata": {
           "type": "pattern-clusters"
         }
@@ -3284,8 +3284,8 @@
       {
         "key": "pattern-anomalies",
         "value": [],
-        "version": 281,
-        "timestamp": 1761642866140,
+        "version": 324,
+        "timestamp": 1761721343029,
         "metadata": {
           "type": "pattern-anomalies"
         }
@@ -3296,8 +3296,8 @@
       {
         "key": "pattern-threats",
         "value": [],
-        "version": 282,
-        "timestamp": 1761642866140,
+        "version": 325,
+        "timestamp": 1761721343029,
         "metadata": {
           "type": "pattern-threats"
         }
@@ -3308,8 +3308,8 @@
       {
         "key": "pattern-learning-model",
         "value": {},
-        "version": 283,
-        "timestamp": 1761642866140,
+        "version": 326,
+        "timestamp": 1761721343029,
         "metadata": {
           "type": "pattern-learning"
         }
@@ -4469,9 +4469,636 @@
         },
         "ttl": 604800000
       }
+    ],
+    [
+      "query:query_1761721342928_3",
+      {
+        "key": "query:query_1761721342928_3",
+        "value": 1761721342928,
+        "version": 284,
+        "timestamp": 1761721342928,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761721342928_3",
+      {
+        "key": "query-log:query_1761721342928_3",
+        "value": {
+          "id": "query_1761721342928_3",
+          "query": "SELECT * FROM users JOIN orders ON users.id = orders.user_id",
+          "duration": 331.0454312039337,
+          "timestamp": 1761721342928,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 285,
+        "timestamp": 1761721342928,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761721342932_4",
+      {
+        "key": "query:query_1761721342932_4",
+        "value": 1761721342932,
+        "version": 286,
+        "timestamp": 1761721342933,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761721342932_4",
+      {
+        "key": "query-log:query_1761721342932_4",
+        "value": {
+          "id": "query_1761721342932_4",
+          "query": "INSERT INTO users (name, email) VALUES (\"test\", \"test@example.com\")",
+          "duration": 112.22477859153541,
+          "timestamp": 1761721342932,
+          "metadata": {
+            "queryType": "INSERT"
+          }
+        },
+        "version": 287,
+        "timestamp": 1761721342933,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761721342938_5",
+      {
+        "key": "query:query_1761721342938_5",
+        "value": 1761721342938,
+        "version": 288,
+        "timestamp": 1761721342938,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761721342938_5",
+      {
+        "key": "query-log:query_1761721342938_5",
+        "value": {
+          "id": "query_1761721342938_5",
+          "query": "UPDATE users SET name = \"updated\" WHERE id = 1",
+          "duration": 197.17965465903927,
+          "timestamp": 1761721342938,
+          "metadata": {
+            "queryType": "UPDATE"
+          }
+        },
+        "version": 289,
+        "timestamp": 1761721342938,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761721342943_6",
+      {
+        "key": "query:query_1761721342943_6",
+        "value": 1761721342943,
+        "version": 290,
+        "timestamp": 1761721342943,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761721342943_6",
+      {
+        "key": "query-log:query_1761721342943_6",
+        "value": {
+          "id": "query_1761721342943_6",
+          "query": "DELETE FROM users WHERE id = 1",
+          "duration": 217.0205595468096,
+          "timestamp": 1761721342943,
+          "metadata": {
+            "queryType": "DELETE"
+          }
+        },
+        "version": 291,
+        "timestamp": 1761721342943,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761721342948_7",
+      {
+        "key": "query:query_1761721342948_7",
+        "value": 1761721342948,
+        "version": 292,
+        "timestamp": 1761721342948,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761721342948_7",
+      {
+        "key": "query-log:query_1761721342948_7",
+        "value": {
+          "id": "query_1761721342948_7",
+          "query": "SELECT COUNT(*) FROM users GROUP BY age",
+          "duration": 314.60192204235244,
+          "timestamp": 1761721342948,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 293,
+        "timestamp": 1761721342948,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761721342954_8",
+      {
+        "key": "query:query_1761721342954_8",
+        "value": 1761721342954,
+        "version": 294,
+        "timestamp": 1761721342954,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761721342954_8",
+      {
+        "key": "query-log:query_1761721342954_8",
+        "value": {
+          "id": "query_1761721342954_8",
+          "query": "SELECT * FROM products WHERE price > 100 ORDER BY price DESC",
+          "duration": 374.7680339825667,
+          "timestamp": 1761721342954,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 295,
+        "timestamp": 1761721342954,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761721342959_9",
+      {
+        "key": "query:query_1761721342959_9",
+        "value": 1761721342959,
+        "version": 296,
+        "timestamp": 1761721342959,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761721342959_9",
+      {
+        "key": "query-log:query_1761721342959_9",
+        "value": {
+          "id": "query_1761721342959_9",
+          "query": "SELECT DISTINCT category FROM products",
+          "duration": 208.873226589881,
+          "timestamp": 1761721342959,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 297,
+        "timestamp": 1761721342959,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761721342964_10",
+      {
+        "key": "query:query_1761721342964_10",
+        "value": 1761721342964,
+        "version": 298,
+        "timestamp": 1761721342964,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761721342964_10",
+      {
+        "key": "query-log:query_1761721342964_10",
+        "value": {
+          "id": "query_1761721342964_10",
+          "query": "SELECT * FROM users LIMIT 10",
+          "duration": 200.57264129385882,
+          "timestamp": 1761721342964,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 299,
+        "timestamp": 1761721342964,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761721342969_11",
+      {
+        "key": "query:query_1761721342969_11",
+        "value": 1761721342969,
+        "version": 300,
+        "timestamp": 1761721342969,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761721342969_11",
+      {
+        "key": "query-log:query_1761721342969_11",
+        "value": {
+          "id": "query_1761721342969_11",
+          "query": "SELECT * FROM users",
+          "duration": 169.5031482343647,
+          "timestamp": 1761721342969,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 301,
+        "timestamp": 1761721342969,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761721342974_12",
+      {
+        "key": "query:query_1761721342974_12",
+        "value": 1761721342974,
+        "version": 302,
+        "timestamp": 1761721342974,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761721342974_12",
+      {
+        "key": "query-log:query_1761721342974_12",
+        "value": {
+          "id": "query_1761721342974_12",
+          "query": "SELECT id, name FROM users WHERE age > 18",
+          "duration": 334.1973830311093,
+          "timestamp": 1761721342974,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 303,
+        "timestamp": 1761721342974,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761721342980_13",
+      {
+        "key": "query:query_1761721342980_13",
+        "value": 1761721342980,
+        "version": 304,
+        "timestamp": 1761721342980,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761721342980_13",
+      {
+        "key": "query-log:query_1761721342980_13",
+        "value": {
+          "id": "query_1761721342980_13",
+          "query": "SELECT * FROM users JOIN orders ON users.id = orders.user_id",
+          "duration": 381.205548076717,
+          "timestamp": 1761721342980,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 305,
+        "timestamp": 1761721342980,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761721342985_14",
+      {
+        "key": "query:query_1761721342985_14",
+        "value": 1761721342985,
+        "version": 306,
+        "timestamp": 1761721342985,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761721342985_14",
+      {
+        "key": "query-log:query_1761721342985_14",
+        "value": {
+          "id": "query_1761721342985_14",
+          "query": "INSERT INTO users (name, email) VALUES (\"test\", \"test@example.com\")",
+          "duration": 220.98793005624623,
+          "timestamp": 1761721342985,
+          "metadata": {
+            "queryType": "INSERT"
+          }
+        },
+        "version": 307,
+        "timestamp": 1761721342985,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761721342990_15",
+      {
+        "key": "query:query_1761721342990_15",
+        "value": 1761721342990,
+        "version": 308,
+        "timestamp": 1761721342990,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761721342990_15",
+      {
+        "key": "query-log:query_1761721342990_15",
+        "value": {
+          "id": "query_1761721342990_15",
+          "query": "UPDATE users SET name = \"updated\" WHERE id = 1",
+          "duration": 187.1398996990959,
+          "timestamp": 1761721342990,
+          "metadata": {
+            "queryType": "UPDATE"
+          }
+        },
+        "version": 309,
+        "timestamp": 1761721342990,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761721342995_16",
+      {
+        "key": "query:query_1761721342995_16",
+        "value": 1761721342995,
+        "version": 310,
+        "timestamp": 1761721342995,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761721342995_16",
+      {
+        "key": "query-log:query_1761721342995_16",
+        "value": {
+          "id": "query_1761721342995_16",
+          "query": "DELETE FROM users WHERE id = 1",
+          "duration": 412.0602470434029,
+          "timestamp": 1761721342995,
+          "metadata": {
+            "queryType": "DELETE"
+          }
+        },
+        "version": 311,
+        "timestamp": 1761721342995,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761721343000_17",
+      {
+        "key": "query:query_1761721343000_17",
+        "value": 1761721343000,
+        "version": 312,
+        "timestamp": 1761721343000,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761721343000_17",
+      {
+        "key": "query-log:query_1761721343000_17",
+        "value": {
+          "id": "query_1761721343000_17",
+          "query": "SELECT COUNT(*) FROM users GROUP BY age",
+          "duration": 336.2716450457908,
+          "timestamp": 1761721343000,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 313,
+        "timestamp": 1761721343000,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761721343006_18",
+      {
+        "key": "query:query_1761721343006_18",
+        "value": 1761721343006,
+        "version": 314,
+        "timestamp": 1761721343006,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761721343006_18",
+      {
+        "key": "query-log:query_1761721343006_18",
+        "value": {
+          "id": "query_1761721343006_18",
+          "query": "SELECT * FROM products WHERE price > 100 ORDER BY price DESC",
+          "duration": 63.68516706716893,
+          "timestamp": 1761721343006,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 315,
+        "timestamp": 1761721343006,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761721343011_19",
+      {
+        "key": "query:query_1761721343011_19",
+        "value": 1761721343011,
+        "version": 316,
+        "timestamp": 1761721343011,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761721343011_19",
+      {
+        "key": "query-log:query_1761721343011_19",
+        "value": {
+          "id": "query_1761721343011_19",
+          "query": "SELECT DISTINCT category FROM products",
+          "duration": 473.1642398328825,
+          "timestamp": 1761721343011,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 317,
+        "timestamp": 1761721343011,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761721343016_20",
+      {
+        "key": "query:query_1761721343016_20",
+        "value": 1761721343016,
+        "version": 318,
+        "timestamp": 1761721343016,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761721343016_20",
+      {
+        "key": "query-log:query_1761721343016_20",
+        "value": {
+          "id": "query_1761721343016_20",
+          "query": "SELECT * FROM users LIMIT 10",
+          "duration": 294.455077336273,
+          "timestamp": 1761721343016,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 319,
+        "timestamp": 1761721343016,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761721343022_21",
+      {
+        "key": "query:query_1761721343022_21",
+        "value": 1761721343022,
+        "version": 320,
+        "timestamp": 1761721343022,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761721343022_21",
+      {
+        "key": "query-log:query_1761721343022_21",
+        "value": {
+          "id": "query_1761721343022_21",
+          "query": "SELECT * FROM users",
+          "duration": 10000,
+          "timestamp": 1761721343022,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 321,
+        "timestamp": 1761721343022,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
     ]
   ],
   "snapshots": [],
-  "version": 283,
-  "timestamp": 1761683067116
+  "version": 326,
+  "timestamp": 1761725678138
 }

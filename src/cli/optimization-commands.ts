@@ -15,6 +15,34 @@ const logger = createLogger('OptimizationCommands');
  */
 export function registerOptimizationCommands(program: Command, getOptimizationCLI: () => OptimizationCLI): void {
   // Extended Optimization Commands
+  // Natural Language Translation Command
+  program
+    .command('translate <query>')
+    .description('Translate natural language to SQL query')
+    .option('-f, --format <type>', 'Output format (json, table, csv)', 'table')
+    .option('-o, --output <file>', 'Export result to file')
+    .option('--execute', 'Execute the generated SQL query')
+    .addHelpText('after', `
+${chalk.bold('Examples:')}
+  ${chalk.dim('$')} ai-shell translate "show me all users"
+  ${chalk.dim('$')} ai-shell translate "find orders from last week" --execute
+  ${chalk.dim('$')} ai-shell translate "count active users by country" --format json
+`)
+    .action(async (query: string, options) => {
+      try {
+        const cli = getOptimizationCLI();
+        await cli.translateNaturalLanguage(query, {
+          format: options.format,
+          output: options.output,
+          execute: options.execute
+        });
+      } catch (error) {
+        logger.error('Translation failed', error);
+        console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+        process.exit(1);
+      }
+    });
+
   program
     .command('optimize-all')
     .description('Optimize all slow queries automatically')
@@ -30,10 +58,10 @@ ${chalk.bold('Examples:')}
     .action(async (options) => {
       try {
         const cli = getOptimizationCLI();
-        await cli.analyzeSlowQueries({
+        await cli.optimizeAllSlowQueries({
           threshold: parseInt(options.threshold),
-          autoFix: options.autoApply,
-          export: options.report
+          autoApply: options.autoApply,
+          report: options.report
         });
       } catch (error) {
         logger.error('Optimization failed', error);
@@ -90,6 +118,30 @@ ${chalk.bold('Examples:')}
         await cli.analyzeIndexes();
       } catch (error) {
         logger.error('Index analysis failed', error);
+        console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+        process.exit(1);
+      }
+    });
+
+  program
+    .command('indexes missing')
+    .description('Detect missing indexes from query patterns')
+    .option('--threshold <ms>', 'Analyze queries slower than threshold', '1000')
+    .option('--limit <n>', 'Maximum number of recommendations', '10')
+    .addHelpText('after', `
+${chalk.bold('Examples:')}
+  ${chalk.dim('$')} ai-shell indexes missing
+  ${chalk.dim('$')} ai-shell indexes missing --threshold 500 --limit 20
+`)
+    .action(async (options) => {
+      try {
+        const cli = getOptimizationCLI();
+        await cli.findMissingIndexes({
+          threshold: parseInt(options.threshold || '1000'),
+          limit: parseInt(options.limit || '10')
+        });
+      } catch (error) {
+        logger.error('Missing index detection failed', error);
         console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
         process.exit(1);
       }

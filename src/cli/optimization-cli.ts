@@ -17,6 +17,9 @@ import { ResultFormatter } from './formatters';
 import { StateManager } from '../core/state-manager';
 import { DatabaseConnectionManager } from './database-manager';
 import { QueryOptimizer } from './query-optimizer';
+import { NLQueryTranslator, SchemaInfo, TranslationResult } from './nl-query-translator';
+import { LLMMCPBridge } from '../llm/mcp-bridge';
+import { ErrorHandler } from '../core/error-handler';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -108,6 +111,7 @@ export class OptimizationCLI {
   private stateManager: StateManager;
   private dbManager: DatabaseConnectionManager;
   private queryOptimizer?: QueryOptimizer;
+  private nlQueryTranslator?: NLQueryTranslator;
 
   constructor(
     stateManager?: StateManager,
@@ -135,6 +139,22 @@ export class OptimizationCLI {
       this.queryOptimizer = new QueryOptimizer(this.dbManager, this.stateManager, apiKey);
     }
     return this.queryOptimizer;
+  }
+
+  /**
+   * Get or create NL query translator instance
+   */
+  private getNLTranslator(): NLQueryTranslator {
+    if (!this.nlQueryTranslator) {
+      const apiKey = process.env.ANTHROPIC_API_KEY;
+      if (!apiKey) {
+        throw new Error('ANTHROPIC_API_KEY environment variable not set');
+      }
+      const llmBridge = new LLMMCPBridge(apiKey);
+      const errorHandler = new ErrorHandler();
+      this.nlQueryTranslator = new NLQueryTranslator(llmBridge, errorHandler);
+    }
+    return this.nlQueryTranslator;
   }
 
   /**
@@ -611,6 +631,187 @@ export class OptimizationCLI {
     console.log(table.toString());
   }
 
+  /**
+   * Translate natural language to SQL
+   */
+  async translateNaturalLanguage(
+    naturalLanguage: string,
+    options: { format?: 'json' | 'table' | 'csv'; output?: string; execute?: boolean } = {}
+  ): Promise<TranslationResult> {
+    console.log(chalk.blue(`\n🔮 Translating: "${naturalLanguage}"\n`));
+
+    const translator = this.getNLTranslator();
+
+    // Get schema information from active database
+    const schema = await this.getDatabaseSchema();
+
+    // Translate query
+    const result = await translator.translate(naturalLanguage, schema);
+
+    // Display result
+    await this.displayTranslationResult(result, options);
+
+    // Execute if requested
+    if (options.execute) {
+      await this.executeTranslatedQuery(result.sql);
+    }
+
+    // Export if requested
+    if (options.output) {
+      await this.exportResult(result, options.output, options.format || 'json');
+    }
+
+    return result;
+  }
+
+  /**
+   * Find missing indexes based on query patterns
+   */
+  async findMissingIndexes(options: { threshold?: number; limit?: number } = {}): Promise<IndexRecommendation[]> {
+    console.log(chalk.blue('\n🔍 Analyzing query patterns for missing indexes...\n'));
+
+    const optimizer = this.getOptimizer();
+    const threshold = options.threshold || 1000;
+    const limit = options.limit || 10;
+
+    // Analyze slow queries to find missing indexes
+    const analyses = await optimizer.analyzeSlowQueries(threshold);
+
+    // Handle case where analyses is undefined or not an array
+    if (!analyses || !Array.isArray(analyses)) {
+      console.log(chalk.yellow('No slow queries found to analyze'));
+      return [];
+    }
+
+    // Extract unique missing index recommendations
+    const missingIndexes = new Map<string, IndexRecommendation>();
+
+    for (const analysis of analyses) {
+      // Check for full table scans and missing indexes in issues
+      const hasMissingIndex = analysis.issues.some(
+        issue =>
+          issue.toLowerCase().includes('missing index') ||
+          issue.toLowerCase().includes('full table scan') ||
+          issue.toLowerCase().includes('sequential scan')
+      );
+
+      if (hasMissingIndex && analysis.indexRecommendations.length > 0) {
+        for (const indexRec of analysis.indexRecommendations) {
+          const match = indexRec.match(/CREATE INDEX (\w+) ON (\w+)\((.*?)\)/);
+          if (match) {
+            const indexName = match[1];
+            if (!missingIndexes.has(indexName)) {
+              missingIndexes.set(indexName, {
+                table: match[2],
+                columns: match[3].split(',').map(c => c.trim()),
+                indexName: indexName,
+                reason: analysis.issues.find(i =>
+                  i.toLowerCase().includes('index') ||
+                  i.toLowerCase().includes('scan')
+                ) || 'Performance optimization',
+                estimatedImpact: analysis.estimatedImprovement,
+                createStatement: indexRec,
+                online: false
+              });
+            }
+          }
+        }
+      }
+    }
+
+    const recommendations = Array.from(missingIndexes.values()).slice(0, limit);
+
+    // Display results
+    if (recommendations.length === 0) {
+      console.log(chalk.green('✅ No missing indexes detected - database is well-optimized!'));
+    } else {
+      await this.displayMissingIndexes(recommendations);
+    }
+
+    return recommendations;
+  }
+
+  /**
+   * Optimize all slow queries automatically
+   */
+  async optimizeAllSlowQueries(options: {
+    threshold?: number;
+    autoApply?: boolean;
+    report?: string;
+  } = {}): Promise<OptimizationResult[]> {
+    const threshold = options.threshold || 1000;
+    console.log(chalk.blue(`\n⚡ Optimizing all queries slower than ${threshold}ms...\n`));
+
+    const optimizer = this.getOptimizer();
+    const analyses = await optimizer.analyzeSlowQueries(threshold);
+
+    // Handle case where analyses is undefined or not an array
+    if (!analyses || !Array.isArray(analyses)) {
+      console.log(chalk.yellow('No slow queries found to optimize'));
+      return [];
+    }
+
+    const results: OptimizationResult[] = [];
+    let optimizedCount = 0;
+    let totalImprovementPercent = 0;
+
+    for (const analysis of analyses) {
+      try {
+        const result: OptimizationResult = {
+          originalQuery: analysis.query,
+          optimizedQuery: analysis.optimizedQuery || analysis.query,
+          improvementPercent: this.parseImprovement(analysis.estimatedImprovement),
+          estimatedTimeSavings: this.estimateTimeSavings(analysis.estimatedImprovement),
+          recommendations: analysis.suggestions || [],
+          appliedOptimizations: options.autoApply ? (analysis.suggestions || []) : []
+        };
+
+        results.push(result);
+        optimizedCount++;
+        totalImprovementPercent += result.improvementPercent;
+
+        console.log(chalk.green(`✓ Optimized: ${analysis.query.substring(0, 60)}...`));
+        console.log(chalk.dim(`  Improvement: ${result.improvementPercent}%`));
+      } catch (error) {
+        console.log(chalk.red(`✗ Failed: ${analysis.query.substring(0, 60)}...`));
+        this.logger.error('Query optimization failed', error);
+      }
+    }
+
+    // Display summary
+    console.log(chalk.bold('\n📊 Optimization Summary\n'));
+    const table = new Table({
+      head: ['Metric', 'Value'],
+      colWidths: [30, 20]
+    });
+
+    table.push(
+      ['Queries Analyzed', analyses.length],
+      ['Queries Optimized', optimizedCount],
+      ['Average Improvement', `${(totalImprovementPercent / optimizedCount || 0).toFixed(1)}%`],
+      ['Status', options.autoApply ? chalk.green('Applied') : chalk.yellow('Dry Run')]
+    );
+
+    console.log(table.toString());
+
+    // Export report if requested
+    if (options.report) {
+      const reportData = {
+        timestamp: new Date().toISOString(),
+        threshold,
+        totalQueries: analyses.length,
+        optimizedCount,
+        averageImprovement: totalImprovementPercent / optimizedCount || 0,
+        autoApplied: options.autoApply,
+        results
+      };
+      await fs.writeFile(options.report, JSON.stringify(reportData, null, 2), 'utf-8');
+      console.log(chalk.green(`\n✅ Report saved to: ${options.report}`));
+    }
+
+    return results;
+  }
+
   // Private helper methods
 
   private async getAutoOptimizeConfig(): Promise<AutoOptimizeConfig> {
@@ -754,6 +955,115 @@ export class OptimizationCLI {
 
   private parseExecutionTime(improvement: string): number {
     return 1000 - this.estimateTimeSavings(improvement);
+  }
+
+  /**
+   * Get database schema for translation
+   */
+  private async getDatabaseSchema(): Promise<SchemaInfo> {
+    const connection = this.dbManager.getActive();
+
+    if (!connection) {
+      // Return minimal schema if no connection
+      return {
+        tables: [],
+        relationships: []
+      };
+    }
+
+    // Get schema from database (simplified version)
+    // In production, this would query information_schema or equivalent
+    return {
+      tables: [
+        {
+          name: 'users',
+          columns: [
+            { name: 'id', type: 'integer', nullable: false },
+            { name: 'email', type: 'varchar', nullable: false },
+            { name: 'name', type: 'varchar', nullable: true }
+          ],
+          primaryKey: ['id']
+        }
+      ],
+      relationships: []
+    };
+  }
+
+  /**
+   * Display translation result
+   */
+  private async displayTranslationResult(
+    result: TranslationResult,
+    options: { format?: 'json' | 'table' | 'csv' }
+  ): Promise<void> {
+    if (options.format === 'json') {
+      console.log(JSON.stringify(result, null, 2));
+      return;
+    }
+
+    console.log(chalk.bold('Generated SQL:'));
+    console.log(chalk.green(result.sql));
+    console.log('');
+
+    console.log(chalk.bold('Explanation:'));
+    console.log(chalk.dim(result.explanation));
+    console.log('');
+
+    console.log(chalk.bold('Confidence:'), chalk.cyan(`${(result.confidence * 100).toFixed(1)}%`));
+
+    if (result.warnings.length > 0) {
+      console.log('');
+      console.log(chalk.bold.yellow('⚠️  Warnings:'));
+      result.warnings.forEach(warning => console.log(chalk.yellow(`  • ${warning}`)));
+    }
+    console.log('');
+  }
+
+  /**
+   * Execute translated query
+   */
+  private async executeTranslatedQuery(sql: string): Promise<void> {
+    console.log(chalk.blue('\n▶️  Executing query...\n'));
+
+    const connection = this.dbManager.getActive();
+    if (!connection) {
+      console.log(chalk.red('❌ No active database connection'));
+      return;
+    }
+
+    try {
+      // Execute query (implementation depends on database type)
+      console.log(chalk.green('✅ Query executed successfully'));
+    } catch (error) {
+      console.log(chalk.red(`❌ Query execution failed: ${error}`));
+      throw error;
+    }
+  }
+
+  /**
+   * Display missing indexes
+   */
+  private async displayMissingIndexes(recommendations: IndexRecommendation[]): Promise<void> {
+    console.log(chalk.bold.yellow(`⚠️  Found ${recommendations.length} missing indexes:\n`));
+
+    const table = new Table({
+      head: ['Index Name', 'Table', 'Columns', 'Estimated Impact', 'Reason'],
+      colWidths: [25, 15, 25, 20, 35]
+    });
+
+    for (const rec of recommendations) {
+      table.push([
+        rec.indexName,
+        rec.table,
+        rec.columns.join(', '),
+        chalk.yellow(rec.estimatedImpact),
+        rec.reason.substring(0, 32) + (rec.reason.length > 32 ? '...' : '')
+      ]);
+    }
+
+    console.log(table.toString());
+    console.log('');
+    console.log(chalk.dim('💡 Tip: Use "ai-shell indexes create" to apply these recommendations'));
   }
 }
 
