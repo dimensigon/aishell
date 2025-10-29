@@ -1,6 +1,12 @@
 -- MySQL Test Database Initialization Script
 -- Includes comprehensive test data and MySQL-specific features
 
+-- Drop existing views, procedures, functions, and triggers
+DROP VIEW IF EXISTS employee_view;
+DROP PROCEDURE IF EXISTS GetEmployeeDetails;
+DROP FUNCTION IF EXISTS GetDepartmentSalaryTotal;
+DROP TRIGGER IF EXISTS audit_salary_changes;
+
 -- Drop existing tables if they exist (in reverse order to handle foreign keys)
 DROP TABLE IF EXISTS employee_audit;
 DROP TABLE IF EXISTS project_assignments;
@@ -8,7 +14,6 @@ DROP TABLE IF EXISTS projects;
 DROP TABLE IF EXISTS employees;
 DROP TABLE IF EXISTS departments;
 DROP TABLE IF EXISTS documents;
-DROP TABLE IF EXISTS employee_view;
 
 -- Create departments table
 CREATE TABLE departments (
@@ -159,8 +164,6 @@ INSERT INTO documents (title, content, author, tags) VALUES
 ('Agile Methodology', 'Introduction to Agile software development practices. Scrum, Kanban, and continuous delivery.', 'Bob Johnson', 'agile,scrum,methodology');
 
 -- Create trigger for salary changes audit
-DELIMITER $$
-
 CREATE TRIGGER audit_salary_changes
 AFTER UPDATE ON employees
 FOR EACH ROW
@@ -169,13 +172,9 @@ BEGIN
         INSERT INTO employee_audit (emp_id, action, old_salary, new_salary, changed_by)
         VALUES (NEW.emp_id, 'SALARY_UPDATE', OLD.salary, NEW.salary, USER());
     END IF;
-END$$
-
-DELIMITER ;
+END;
 
 -- Create stored procedure to get employee details
-DELIMITER $$
-
 CREATE PROCEDURE GetEmployeeDetails(IN empId INT)
 BEGIN
     SELECT
@@ -192,13 +191,9 @@ BEGIN
     LEFT JOIN project_assignments pa ON e.emp_id = pa.emp_id
     WHERE e.emp_id = empId
     GROUP BY e.emp_id, e.emp_name, e.email, e.salary, e.status, d.dept_name, d.location;
-END$$
-
-DELIMITER ;
+END;
 
 -- Create stored function to calculate department total salary
-DELIMITER $$
-
 CREATE FUNCTION GetDepartmentSalaryTotal(deptId INT)
 RETURNS DECIMAL(12, 2)
 DETERMINISTIC
@@ -211,9 +206,7 @@ BEGIN
     WHERE dept_id = deptId AND status = 'active';
 
     RETURN total;
-END$$
-
-DELIMITER ;
+END;
 
 -- Create view for employee summary
 CREATE VIEW employee_view AS

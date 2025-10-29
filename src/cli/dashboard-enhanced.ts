@@ -112,12 +112,25 @@ export class EnhancedDashboard extends EventEmitter<DashboardEvents> {
 
   private alerts: DashboardAlert[] = [];
   private metricsHistory: Map<string, ChartDataPoint[]> = new Map();
-  private stats: DashboardStats;
+  private _stats: DashboardStats;
   private startTime: number = Date.now();
 
   // Panel focus management
   private focusedPanelIndex = 0;
   private panelList: string[] = [];
+
+  // Getter for stats that always returns current uptime
+  private get stats(): DashboardStats {
+    return {
+      ...this._stats,
+      uptime: this.isRunning ? Date.now() - this.startTime : this._stats.uptime
+    };
+  }
+
+  // Setter for stats
+  private set stats(value: DashboardStats) {
+    this._stats = value;
+  }
 
   constructor(
     private performanceMonitor: PerformanceMonitor,
@@ -140,7 +153,7 @@ export class EnhancedDashboard extends EventEmitter<DashboardEvents> {
 
     this.currentLayout = this.getLayout(this.config.layout);
 
-    this.stats = {
+    this._stats = {
       uptime: 0,
       totalQueries: 0,
       activeConnections: 0,
@@ -162,6 +175,14 @@ export class EnhancedDashboard extends EventEmitter<DashboardEvents> {
 
     this.isRunning = true;
     this.startTime = Date.now();
+
+    // Initialize stats immediately
+    try {
+      await this.updateStats();
+    } catch (error) {
+      // Emit error but continue startup
+      this.emit('error', error as Error);
+    }
 
     // Initialize blessed screen
     this.initializeScreen();
@@ -212,10 +233,6 @@ export class EnhancedDashboard extends EventEmitter<DashboardEvents> {
    */
   async changeLayout(layoutName: string): Promise<void> {
     const newLayout = this.getLayout(layoutName);
-
-    if (!newLayout) {
-      throw new Error(`Layout '${layoutName}' not found`);
-    }
 
     this.currentLayout = newLayout;
     this.config.layout = layoutName;
@@ -875,19 +892,19 @@ export class EnhancedDashboard extends EventEmitter<DashboardEvents> {
    * Update dashboard statistics
    */
   private async updateStats(): Promise<void> {
-    this.stats.uptime = Date.now() - this.startTime;
+    this._stats.uptime = Date.now() - this.startTime;
 
     const queryHistory = await this.queryLogger.getHistory(100);
-    this.stats.totalQueries = queryHistory.total;
+    this._stats.totalQueries = queryHistory.total;
 
     const metrics = await this.getCurrentMetrics();
     if (metrics) {
-      this.stats.activeConnections = metrics.activeConnections;
-      this.stats.avgResponseTime = metrics.averageQueryTime;
-      this.stats.cacheHitRate = metrics.cacheHitRate;
+      this._stats.activeConnections = metrics.activeConnections;
+      this._stats.avgResponseTime = metrics.averageQueryTime;
+      this._stats.cacheHitRate = metrics.cacheHitRate;
 
       const errorQueries = queryHistory.logs.filter(q => q.result?.error);
-      this.stats.errorRate = queryHistory.logs.length > 0
+      this._stats.errorRate = queryHistory.logs.length > 0
         ? errorQueries.length / queryHistory.logs.length
         : 0;
 
@@ -1186,7 +1203,12 @@ export class EnhancedDashboard extends EventEmitter<DashboardEvents> {
       }
     };
 
-    return layouts[name] || layouts.default;
+    const layout = layouts[name];
+    if (!layout) {
+      throw new Error(`Layout '${name}' not found`);
+    }
+
+    return layout;
   }
 }
 

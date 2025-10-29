@@ -532,7 +532,7 @@ describe('MySQL Integration Tests', () => {
         'SELECT GetDepartmentSalaryTotal(?) as total_salary',
         [1]
       );
-      expect((rows as any)[0].total_salary).toBeGreaterThan(0);
+      expect(parseFloat((rows as any)[0].total_salary)).toBeGreaterThan(0);
     });
 
     it('should handle stored procedure with no results', async () => {
