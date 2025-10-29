@@ -1,0 +1,14 @@
+{
+  "summary": {
+    "timestamp": "2025-10-29T15:43:44+00:00",
+    "postgresql": {"running": true, "tested": true, "commands": 10, "passed": 10},
+    "mysql": {"running": false, "tested": true, "commands": 9, "passed": 0},
+    "mongodb": {"running": true, "tested": true, "commands": 9, "passed": 9},
+    "redis": {"running": true, "tested": true, "commands": 9, "passed": 9},
+    "oracle": {"running": true, "tested": false, "commands": 0, "passed": 0},
+    "total": 37,
+    "passed": 28,
+    "failed": 9,
+    "successRate": 75.68
+  }
+}
