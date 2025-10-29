@@ -70,8 +70,9 @@ class OracleTestClient {
       return {
         rows: result.rows || [],
         metaData: result.metaData,
-        rowsAffected: result.rowsAffected
-      };
+        rowsAffected: result.rowsAffected,
+        outBinds: result.outBinds
+      } as any;
     } catch (error) {
       throw new Error(`Query execution failed: ${error}`);
     }

@@ -120,6 +120,7 @@ export class LLMMCPBridge extends EventEmitter<BridgeEvents> {
     let messages = [...options.messages];
     const toolCalls: ToolExecutionResult[] = [];
     const resourcesAccessed: string[] = [];
+    let lastResponse: LLMResponse | null = null;
 
     // Add tool context to system message if enabled
     if (options.enableTools && this.context.availableTools.length > 0) {
@@ -135,6 +136,8 @@ export class LLMMCPBridge extends EventEmitter<BridgeEvents> {
         messages
       });
 
+      lastResponse = response;
+
       // Update conversation history
       this.context.conversationHistory.push({
         role: 'assistant',
@@ -146,6 +149,17 @@ export class LLMMCPBridge extends EventEmitter<BridgeEvents> {
 
       if (toolCallsFound.length === 0 || !options.enableTools) {
         // No tool calls, return final response
+        return {
+          ...response,
+          toolCalls,
+          resourcesAccessed,
+          iterations
+        };
+      }
+
+      // Check if max tool calls reached before executing
+      if (this.toolCallCount >= maxToolCalls) {
+        console.warn(`Maximum tool calls (${maxToolCalls}) reached`);
         return {
           ...response,
           toolCalls,
@@ -182,14 +196,26 @@ export class LLMMCPBridge extends EventEmitter<BridgeEvents> {
         });
       }
 
-      // Check if max iterations reached
-      if (iterations >= maxIterations) {
-        console.warn(`Maximum iterations (${maxIterations}) reached`);
+      // Check if max iterations or tool calls reached
+      if (iterations >= maxIterations || this.toolCallCount >= maxToolCalls) {
+        if (iterations >= maxIterations) {
+          console.warn(`Maximum iterations (${maxIterations}) reached`);
+        }
         break;
       }
     }
 
-    // Return final response from last iteration
+    // Return final response using last response or generate new one if needed
+    if (lastResponse) {
+      return {
+        ...lastResponse,
+        toolCalls,
+        resourcesAccessed,
+        iterations
+      };
+    }
+
+    // Fallback - should not reach here
     const finalResponse = await this.llmProvider.generate({
       ...options,
       messages
@@ -199,7 +225,7 @@ export class LLMMCPBridge extends EventEmitter<BridgeEvents> {
       ...finalResponse,
       toolCalls,
       resourcesAccessed,
-      iterations
+      iterations: iterations + 1
     };
   }
 
@@ -216,11 +242,11 @@ export class LLMMCPBridge extends EventEmitter<BridgeEvents> {
     const toolCalls: ToolExecutionResult[] = [];
     let accumulatedContent = '';
 
-    // Stream from LLM
+    // Stream from LLM with yielding chunks
     await this.llmProvider.generateStream(
       { ...options, messages },
       {
-        onChunk: (chunk) => {
+        onChunk: async (chunk) => {
           accumulatedContent += chunk;
           this.emit('streamChunk', chunk);
         },
@@ -233,6 +259,9 @@ export class LLMMCPBridge extends EventEmitter<BridgeEvents> {
         }
       }
     );
+
+    // Yield the accumulated content
+    yield accumulatedContent;
 
     // Check for tool calls in accumulated content
     const toolCallsFound = this.extractToolCalls(accumulatedContent);
@@ -274,33 +303,22 @@ export class LLMMCPBridge extends EventEmitter<BridgeEvents> {
     this.emit('toolCall', toolName, params);
 
     try {
-      // Find the server that has this tool
-      const servers: string[] = [];
-      let result: any = null;
+      // Check if tool exists in available tools
+      const tool = this.context.availableTools.find((t) => t.name === toolName);
 
-      for (const server of servers) {
-        const tools = await this.mcpClient.listTools(server);
-        const tool = tools.find((t) => t.name === toolName);
-
-        if (tool) {
-          // Execute tool call with timeout
-          const executePromise = this.mcpClient.request(server, 'tools/call', {
-            name: toolName,
-            arguments: params
-          });
-
-          if (timeout) {
-            result = await this.executeWithTimeout(executePromise, timeout);
-          } else {
-            result = await executePromise;
-          }
-          break;
-        }
-      }
-
-      if (result === null) {
+      if (!tool) {
         throw new Error(`Tool not found: ${toolName}`);
       }
+
+      // Execute tool call with MCP client
+      const executePromise = this.mcpClient.request('tools/call', {
+        name: toolName,
+        arguments: params
+      });
+
+      const result = timeout
+        ? await this.executeWithTimeout(executePromise, timeout)
+        : await executePromise;
 
       const executionResult: ToolExecutionResult = {
         toolName,
@@ -339,28 +357,24 @@ export class LLMMCPBridge extends EventEmitter<BridgeEvents> {
     }
 
     try {
-      // Find the server that has this resource
-      const servers: string[] = [];
+      // Check if resource exists in available resources
+      const resource = this.context.availableResources.find((r) => r.uri === uri);
 
-      for (const server of servers) {
-        const resources = await this.mcpClient.listResources(server);
-        const resource = resources.find((r) => r.uri === uri);
-
-        if (resource) {
-          const content = await this.mcpClient.request(server, 'resources/read', {
-            uri
-          });
-
-          // Cache if enabled
-          if (this.config.cacheResources) {
-            this.resourceCache.set(uri, content);
-          }
-
-          return content;
-        }
+      if (!resource) {
+        throw new Error(`Resource not found: ${uri}`);
       }
 
-      throw new Error(`Resource not found: ${uri}`);
+      // Read resource from MCP client
+      const content = await this.mcpClient.request('resources/read', {
+        uri
+      });
+
+      // Cache if enabled
+      if (this.config.cacheResources) {
+        this.resourceCache.set(uri, content);
+      }
+
+      return content;
     } catch (error) {
       this.emit('error', error instanceof Error ? error : new Error(String(error)));
       throw error;

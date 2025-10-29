@@ -48,9 +48,9 @@ describe('MongoDB Integration Tests', () => {
         const adminDb = client.db('admin');
         await adminDb.command({ replSetGetStatus: 1 });
         isReplicaSetEnabled = true;
-        console.log('✅ Replica set detected - Change Streams enabled');
+        console.log('✅ Replica set detected - Change Streams and Transactions enabled');
       } catch (err) {
-        console.warn('⚠️  MongoDB running in standalone mode - Change Streams disabled');
+        console.warn('⚠️  MongoDB running in standalone mode - Change Streams and Transactions will be skipped');
       }
     } catch (error) {
       console.error('❌ MongoDB connection failed:', error);
@@ -89,7 +89,24 @@ describe('MongoDB Integration Tests', () => {
     try {
       const collections = await db.listCollections().toArray();
       for (const collection of collections) {
-        await db.collection(collection.name).deleteMany({});
+        const coll = db.collection(collection.name);
+
+        // Drop indexes except _id_ to avoid conflicts
+        try {
+          const indexes = await coll.indexes();
+          for (const index of indexes) {
+            if (index.name !== '_id_') {
+              await coll.dropIndex(index.name).catch(() => {
+                // Ignore errors for indexes that can't be dropped
+              });
+            }
+          }
+        } catch (err) {
+          // Some collections (like system.views) can't have indexes dropped
+        }
+
+        // Delete all documents
+        await coll.deleteMany({});
       }
     } catch (error) {
       console.warn('Warning: Collection cleanup failed:', error);
@@ -562,6 +579,13 @@ describe('MongoDB Integration Tests', () => {
     });
 
     it('should create a unique index', async () => {
+      // Drop the index if it exists from previous test
+      try {
+        await usersCollection.dropIndex('email_1');
+      } catch (err) {
+        // Index might not exist, that's ok
+      }
+
       await usersCollection.createIndex({ email: 1 }, { unique: true });
 
       await usersCollection.insertOne({ email: 'unique@example.com' });
@@ -675,25 +699,14 @@ describe('MongoDB Integration Tests', () => {
 
   describe('Transactions (Multi-Document ACID)', () => {
     it('should complete a successful transaction', async () => {
+      if (!isReplicaSetEnabled) {
+        console.log('⏭️  Skipping - requires MongoDB replica set configuration');
+        return;
+      }
+
       const session = client.startSession();
 
       try {
-        await session.withTransaction(async () => {
-          // Deduct from sender
-          await usersCollection.updateOne(
-            { name: 'Alice' },
-            { $inc: { balance: -100 } },
-            { session }
-          );
-
-          // Add to receiver
-          await usersCollection.updateOne(
-            { name: 'Bob' },
-            { $inc: { balance: 100 } },
-            { session }
-          );
-        });
-
         // Insert initial balances for verification
         await usersCollection.insertMany([
           { name: 'Alice', balance: 1000 },
@@ -701,22 +714,19 @@ describe('MongoDB Integration Tests', () => {
         ]);
 
         // Run transaction
-        const transactionSession = client.startSession();
-        await transactionSession.withTransaction(async () => {
+        await session.withTransaction(async () => {
           await usersCollection.updateOne(
             { name: 'Alice' },
             { $inc: { balance: -100 } },
-            { session: transactionSession }
+            { session }
           );
 
           await usersCollection.updateOne(
             { name: 'Bob' },
             { $inc: { balance: 100 } },
-            { session: transactionSession }
+            { session }
           );
         });
-
-        await transactionSession.endSession();
 
         // Verify balances
         const alice = await usersCollection.findOne({ name: 'Alice' });
@@ -730,6 +740,11 @@ describe('MongoDB Integration Tests', () => {
     });
 
     it('should rollback transaction on error', async () => {
+      if (!isReplicaSetEnabled) {
+        console.log('⏭️  Skipping - requires MongoDB replica set configuration');
+        return;
+      }
+
       // Setup initial data
       await usersCollection.insertMany([
         { name: 'Alice', balance: 1000 },
@@ -1129,7 +1144,34 @@ describe('MongoDB Integration Tests', () => {
     });
 
     it('should perform aggregations on time series data', async () => {
+      // Note: This test depends on data from previous test in same describe block
+      // Ensure sensor_data collection exists and has data
       const sensorCollection = db.collection('sensor_data');
+
+      // Check if collection has data, if not insert test data
+      const count = await sensorCollection.countDocuments();
+      if (count === 0) {
+        await sensorCollection.insertMany([
+          {
+            sensorId: 'sensor_1',
+            timestamp: new Date('2024-01-01T10:00:00Z'),
+            temperature: 22.5,
+            humidity: 60,
+          },
+          {
+            sensorId: 'sensor_1',
+            timestamp: new Date('2024-01-01T10:05:00Z'),
+            temperature: 23.0,
+            humidity: 62,
+          },
+          {
+            sensorId: 'sensor_2',
+            timestamp: new Date('2024-01-01T10:00:00Z'),
+            temperature: 21.5,
+            humidity: 58,
+          },
+        ]);
+      }
 
       const result = await sensorCollection
         .aggregate([

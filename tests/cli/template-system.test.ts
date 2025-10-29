@@ -42,6 +42,8 @@ interface TemplateExecutionResult {
 
 // Mock Template System class
 class TemplateSystem {
+  private idCounter = 0;
+
   constructor(private configDir: string) {}
 
   async initialize(): Promise<void> {
@@ -55,7 +57,7 @@ class TemplateSystem {
     options: { description?: string; tags?: string[] } = {}
   ): Promise<QueryTemplate> {
     const template: QueryTemplate = {
-      id: `tpl_${Date.now()}`,
+      id: `tpl_${Date.now()}_${this.idCounter++}`,
       name,
       description: options.description,
       query,
@@ -67,7 +69,13 @@ class TemplateSystem {
     };
 
     const filepath = path.join(this.configDir, `${template.id}.json`);
-    await fs.writeFile(filepath, JSON.stringify(template, null, 2));
+    // Custom replacer to handle RegExp serialization
+    await fs.writeFile(filepath, JSON.stringify(template, (key, value) => {
+      if (value instanceof RegExp) {
+        return value.source; // Save as string pattern
+      }
+      return value;
+    }, 2));
 
     return template;
   }
@@ -77,6 +85,14 @@ class TemplateSystem {
     for (const file of files) {
       const content = await fs.readFile(path.join(this.configDir, file), 'utf-8');
       const template = JSON.parse(content) as QueryTemplate;
+      // Restore RegExp patterns from strings
+      if (template.parameters) {
+        for (const param of template.parameters) {
+          if (param.validation?.pattern && typeof param.validation.pattern === 'string') {
+            param.validation.pattern = new RegExp(param.validation.pattern as any);
+          }
+        }
+      }
       if (template.name === name) {
         return template;
       }
@@ -88,14 +104,42 @@ class TemplateSystem {
     const files = await fs.readdir(this.configDir);
     const templates: QueryTemplate[] = [];
 
-    for (const file of files) {
-      if (!file.endsWith('.json')) continue;
-      const content = await fs.readFile(path.join(this.configDir, file), 'utf-8');
-      const template = JSON.parse(content) as QueryTemplate;
+    // Use Promise.all for parallel file reading (performance optimization)
+    const filePromises = files
+      .filter(file => file.endsWith('.json'))
+      .map(async (file) => {
+        try {
+          const content = await fs.readFile(path.join(this.configDir, file), 'utf-8');
+          const template = JSON.parse(content) as QueryTemplate;
 
-      if (filter?.tag && !template.tags?.includes(filter.tag)) continue;
+          // Restore RegExp patterns from strings
+          if (template.parameters) {
+            for (const param of template.parameters) {
+              if (param.validation?.pattern && typeof param.validation.pattern === 'string') {
+                param.validation.pattern = new RegExp(param.validation.pattern as any);
+              }
+            }
+          }
 
-      templates.push(template);
+          // Apply filter if provided
+          if (filter?.tag && !template.tags?.includes(filter.tag)) {
+            return null;
+          }
+
+          return template;
+        } catch (error) {
+          // Skip files that can't be parsed
+          return null;
+        }
+      });
+
+    const results = await Promise.all(filePromises);
+
+    // Filter out null results
+    for (const template of results) {
+      if (template !== null) {
+        templates.push(template);
+      }
     }
 
     return templates;
@@ -123,7 +167,13 @@ class TemplateSystem {
     template.usageCount++;
     template.updatedAt = Date.now();
     const filepath = path.join(this.configDir, `${template.id}.json`);
-    await fs.writeFile(filepath, JSON.stringify(template, null, 2));
+    // Custom replacer to handle RegExp serialization
+    await fs.writeFile(filepath, JSON.stringify(template, (key, value) => {
+      if (value instanceof RegExp) {
+        return value.source; // Save as string pattern
+      }
+      return value;
+    }, 2));
 
     return { sql, parameters: sanitized, warnings };
   }
@@ -155,7 +205,11 @@ class TemplateSystem {
 
       // Pattern validation
       if (param.validation?.pattern && typeof value === 'string') {
-        if (!param.validation.pattern.test(value)) {
+        // Convert pattern to RegExp if it's not already
+        const regex = param.validation.pattern instanceof RegExp
+          ? param.validation.pattern
+          : new RegExp(param.validation.pattern);
+        if (!regex.test(value)) {
           throw new Error(`Parameter ${param.name} does not match required pattern`);
         }
       }
@@ -174,13 +228,29 @@ class TemplateSystem {
 
     for (const [key, value] of Object.entries(params)) {
       if (typeof value === 'string') {
-        // Escape SQL injection patterns
-        sanitized[key] = value
-          .replace(/'/g, "''")
-          .replace(/;/g, '')
-          .replace(/--/g, '')
-          .replace(/\/\*/g, '')
-          .replace(/\*\//g, '');
+        // Escape and remove SQL injection patterns
+        let cleaned = value;
+
+        // First escape single quotes (double them for SQL)
+        cleaned = cleaned.replace(/'/g, "''");
+
+        // Remove dangerous SQL patterns
+        cleaned = cleaned.replace(/;/g, '');
+        cleaned = cleaned.replace(/--/g, '');
+        cleaned = cleaned.replace(/\/\*/g, '');
+        cleaned = cleaned.replace(/\*\//g, '');
+
+        // Remove dangerous SQL keywords (case-insensitive)
+        cleaned = cleaned.replace(/\b(DROP|DELETE|TRUNCATE|ALTER|EXEC|EXECUTE)\s+(TABLE|DATABASE|FROM|PROCEDURE)\b/gi, '');
+        cleaned = cleaned.replace(/\bUNION\s+(ALL\s+)?SELECT\b/gi, '');
+
+        // Remove command injection patterns
+        cleaned = cleaned.replace(/\|/g, '');
+        cleaned = cleaned.replace(/`/g, '');
+        cleaned = cleaned.replace(/\$/g, '');
+        cleaned = cleaned.replace(/\brm\s+-rf\b/gi, '');
+
+        sanitized[key] = cleaned;
       } else {
         sanitized[key] = value;
       }
@@ -232,7 +302,13 @@ class TemplateSystem {
     template.updatedAt = Date.now();
 
     const filepath = path.join(this.configDir, `${template.id}.json`);
-    await fs.writeFile(filepath, JSON.stringify(template, null, 2));
+    // Custom replacer to handle RegExp serialization
+    await fs.writeFile(filepath, JSON.stringify(template, (key, value) => {
+      if (value instanceof RegExp) {
+        return value.source; // Save as string pattern
+      }
+      return value;
+    }, 2));
 
     return template;
   }

@@ -377,12 +377,12 @@ describe('CLI Integration Tests', () => {
 
       commands.forEach(cmd => {
         allNames.add(cmd.name());
-        cmd.aliases.forEach(alias => allNames.add(alias));
+        cmd.aliases().forEach(alias => allNames.add(alias));
       });
 
       // Check that aliases don't conflict with command names
       commands.forEach(cmd => {
-        cmd.aliases.forEach(alias => {
+        cmd.aliases().forEach(alias => {
           const conflictingCmd = commands.find(c => c.name() === alias && c !== cmd);
           expect(conflictingCmd).toBeUndefined();
         });
@@ -858,42 +858,42 @@ describe('CLI Integration Tests', () => {
   describe('9. Command Aliases', () => {
     it('should have alias for optimize command', () => {
       const optimizeCmd = program.commands.find(c => c.name() === 'optimize');
-      expect(optimizeCmd?.aliases).toContain('opt');
+      expect(optimizeCmd?.aliases()).toContain('opt');
     });
 
     it('should have alias for federate command', () => {
       const federateCmd = program.commands.find(c => c.name() === 'federate');
-      expect(federateCmd?.aliases).toContain('fed');
+      expect(federateCmd?.aliases()).toContain('fed');
     });
 
     it('should have alias for explain command', () => {
       const explainCmd = program.commands.find(c => c.name() === 'explain');
-      expect(explainCmd?.aliases).toContain('exp');
+      expect(explainCmd?.aliases()).toContain('exp');
     });
 
     it('should have alias for translate command', () => {
       const translateCmd = program.commands.find(c => c.name() === 'translate');
-      expect(translateCmd?.aliases).toContain('nl2sql');
+      expect(translateCmd?.aliases()).toContain('nl2sql');
     });
 
     it('should have alias for health-check command', () => {
       const healthCmd = program.commands.find(c => c.name() === 'health-check');
-      expect(healthCmd?.aliases).toContain('health');
+      expect(healthCmd?.aliases()).toContain('health');
     });
 
     it('should have alias for backup-list command', () => {
       const listCmd = program.commands.find(c => c.name() === 'backup-list');
-      expect(listCmd?.aliases).toContain('backups');
+      expect(listCmd?.aliases()).toContain('backups');
     });
 
     it('should have alias for connections command', () => {
       const connsCmd = program.commands.find(c => c.name() === 'connections');
-      expect(connsCmd?.aliases).toContain('conns');
+      expect(connsCmd?.aliases()).toContain('conns');
     });
 
     it('should have alias for interactive command', () => {
       const interactiveCmd = program.commands.find(c => c.name() === 'interactive');
-      expect(interactiveCmd?.aliases).toContain('i');
+      expect(interactiveCmd?.aliases()).toContain('i');
     });
   });
 
@@ -952,8 +952,8 @@ describe('CLI Command Statistics', () => {
   it('should generate comprehensive command report', () => {
     const commands = program.commands;
     const totalCommands = commands.length;
-    const commandsWithAliases = commands.filter(c => c.aliases.length > 0).length;
-    const totalAliases = commands.reduce((sum, c) => sum + c.aliases.length, 0);
+    const commandsWithAliases = commands.filter(c => c.aliases().length > 0).length;
+    const totalAliases = commands.reduce((sum, c) => sum + c.aliases().length, 0);
     const totalOptions = commands.reduce((sum, c) => sum + c.options.length, 0);
 
     const report = {

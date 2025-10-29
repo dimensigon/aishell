@@ -41,14 +41,28 @@ describe('Redis Integration Tests', () => {
 
   // Cleanup: Close connections
   afterAll(async () => {
-    if (redis) {
-      await redis.quit();
+    try {
+      if (redis && redis.status !== 'end') {
+        await redis.quit();
+      }
+    } catch (err) {
+      // Connection already closed
     }
-    if (pubClient) {
-      await pubClient.quit();
+
+    try {
+      if (pubClient && pubClient.status !== 'end') {
+        await pubClient.quit();
+      }
+    } catch (err) {
+      // Connection already closed
     }
-    if (subClient) {
-      await subClient.quit();
+
+    try {
+      if (subClient && subClient.status !== 'end') {
+        await subClient.quit();
+      }
+    } catch (err) {
+      // Connection already closed
     }
 
     console.log('✅ Redis connections closed');
@@ -83,7 +97,16 @@ describe('Redis Integration Tests', () => {
         lazyConnect: true,
       });
 
+      // Add error event listener to prevent unhandled error warnings
+      const errorHandler = (err: Error) => {
+        // Expected error - suppress it
+      };
+      badClient.on('error', errorHandler);
+
       await expect(badClient.connect()).rejects.toThrow();
+
+      // Clean up
+      badClient.off('error', errorHandler);
       badClient.disconnect();
     });
 
@@ -1091,7 +1114,16 @@ describe('Redis Integration Tests', () => {
         lazyConnect: true,
       });
 
+      // Add error event listener to prevent unhandled error warnings
+      const errorHandler = (err: Error) => {
+        // Expected error - suppress it
+      };
+      timeoutClient.on('error', errorHandler);
+
       await expect(timeoutClient.connect()).rejects.toThrow();
+
+      // Clean up
+      timeoutClient.off('error', errorHandler);
       timeoutClient.disconnect();
     });
 

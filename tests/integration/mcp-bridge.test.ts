@@ -180,11 +180,16 @@ describe('LLMMCPBridge Integration', () => {
     });
 
     it('should cache accessed resources', async () => {
-      await bridge.accessResource('test://cached-resource');
-      await bridge.accessResource('test://cached-resource');
+      // First call should hit MCP client
+      await bridge.accessResource('test://resource');
 
-      // MCP client should only be called once (from cache on second call)
-      // This requires tracking calls in the mock
+      // Second call should use cache (MCP client request count shouldn't increase)
+      const requestCallCount = (mockMCPClient.request as any).mock.calls.length;
+      await bridge.accessResource('test://resource');
+
+      // Request should have been called once more for the first access
+      // but not for the second (cached) access
+      expect((mockMCPClient.request as any).mock.calls.length).toBe(requestCallCount);
     });
 
     it('should clear resource cache', async () => {

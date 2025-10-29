@@ -498,8 +498,9 @@ export class EmailNotificationService extends EventEmitter {
 
       this.emit('initialized', { timestamp: new Date() });
     } catch (error) {
+      const errorMessage = `Failed to initialize email service: ${error instanceof Error ? error.message : 'Unknown error'}`;
       this.emit('error', { type: 'initialization', error });
-      throw new Error(`Failed to initialize email service: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(errorMessage);
     }
   }
 
@@ -616,16 +617,10 @@ Sent at: ${new Date().toISOString()}
   }
 
   /**
-   * Simple template rendering (supports {{variable}} and {{#if}})
+   * Simple template rendering (supports {{variable}}, nested {{obj.prop}}, and {{#if}})
    */
   private renderTemplate(template: string, variables: Record<string, any>): string {
     let rendered = template;
-
-    // Replace variables
-    Object.entries(variables).forEach(([key, value]) => {
-      const regex = new RegExp(`{{${key}}}`, 'g');
-      rendered = rendered.replace(regex, String(value ?? ''));
-    });
 
     // Handle conditionals {{#if variable}}...{{/if}}
     rendered = rendered.replace(/\{\{#if\s+(\w+)\}\}(.*?)\{\{\/if\}\}/gs, (match, key, content) => {
@@ -642,6 +637,23 @@ Sent at: ${new Date().toISOString()}
         }
         return content.replace(/{{this}}/g, String(item));
       }).join('');
+    });
+
+    // Replace nested variables (e.g., {{user.name}})
+    rendered = rendered.replace(/\{\{([\w.]+)\}\}/g, (match, path) => {
+      const parts = path.split('.');
+      let value: any = variables;
+
+      for (const part of parts) {
+        if (value && typeof value === 'object' && part in value) {
+          value = value[part];
+        } else {
+          // Variable not found, return empty string
+          return '';
+        }
+      }
+
+      return String(value ?? '');
     });
 
     return rendered;
@@ -804,6 +816,9 @@ Sent at: ${new Date().toISOString()}
   }
 
   private startRateLimitRefill(): void {
+    // Initialize with full token bucket
+    this.rateLimitTokens = this.config.rateLimitPerMinute;
+
     setInterval(() => {
       const now = Date.now();
       const elapsed = now - this.lastRateLimitRefill;
@@ -945,13 +960,14 @@ Sent at: ${new Date().toISOString()}
     // Process remaining batch
     await this.processBatch();
 
-    // Wait for queue to empty
-    while (this.queue.size > 0 && this.processing) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+    // Wait for queue to empty or timeout after 2 seconds
+    const shutdownTimeout = Date.now() + 2000;
+    while (this.queue.size > 0 && this.processing && Date.now() < shutdownTimeout) {
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
 
     // Close transporter
-    if (this.transporter) {
+    if (this.transporter && typeof this.transporter.close === 'function') {
       this.transporter.close();
     }
 

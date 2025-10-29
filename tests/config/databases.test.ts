@@ -177,12 +177,21 @@ export async function isDatabaseAvailable(dbType: keyof DatabaseConfig): Promise
       case 'redis': {
         const Redis = (await import('ioredis')).default;
         const client = new Redis(testDatabaseConfig.redis);
+
+        // Add error event listener to prevent unhandled error warnings
+        const errorHandler = () => {
+          // Suppress connection errors during availability check
+        };
+        client.on('error', errorHandler);
+
         try {
           await client.connect();
           await client.ping();
+          client.off('error', errorHandler);
           await client.quit();
           return true;
         } catch {
+          client.off('error', errorHandler);
           await client.quit();
           return false;
         }
