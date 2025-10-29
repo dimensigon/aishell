@@ -16,6 +16,7 @@ export interface QueueOptions {
 export class AsyncCommandQueue extends EventEmitter {
   private queue: QueuedCommand[] = [];
   private processing = 0;
+  private processingCommands: Map<string, QueuedCommand> = new Map();
   private concurrency: number;
   private rateLimit: number;
   private maxQueueSize: number;
@@ -38,7 +39,8 @@ export class AsyncCommandQueue extends EventEmitter {
     context: CommandContext,
     priority = 0
   ): Promise<CommandResult> {
-    if (this.queue.length >= this.maxQueueSize) {
+    // Check total capacity: queued + processing
+    if (this.queue.length + this.processing >= this.maxQueueSize) {
       throw new Error(
         `Queue is full (max: ${this.maxQueueSize}). Please wait for commands to complete.`
       );
@@ -71,7 +73,10 @@ export class AsyncCommandQueue extends EventEmitter {
       }
 
       this.emit('commandQueued', { command, queueSize: this.queue.length });
-      this.processNext(context);
+
+      // Defer processing to allow priority ordering to work correctly
+      // Use setImmediate/nextTick equivalent for browser/node compatibility
+      setTimeout(() => this.processNext(context), 0);
     });
   }
 
@@ -79,16 +84,17 @@ export class AsyncCommandQueue extends EventEmitter {
    * Process next command in queue
    */
   private async processNext(context: CommandContext): Promise<void> {
+    // Check if we can start any new commands
     if (this.processing >= this.concurrency || this.queue.length === 0) {
       return;
     }
 
-    // Rate limiting
+    // Rate limiting - always enforce minimum interval between command starts
     const now = Date.now();
     const minInterval = 1000 / this.rateLimit;
     const timeSinceLastExecution = now - this.lastExecutionTime;
 
-    if (timeSinceLastExecution < minInterval) {
+    if (this.lastExecutionTime > 0 && timeSinceLastExecution < minInterval) {
       setTimeout(
         () => this.processNext(context),
         minInterval - timeSinceLastExecution
@@ -96,12 +102,14 @@ export class AsyncCommandQueue extends EventEmitter {
       return;
     }
 
+    // Start next command
     const queuedCommand = this.queue.shift();
     if (!queuedCommand) {
       return;
     }
 
     this.processing++;
+    this.processingCommands.set(queuedCommand.id, queuedCommand);
     this.lastExecutionTime = Date.now();
 
     this.emit('commandStart', {
@@ -109,6 +117,22 @@ export class AsyncCommandQueue extends EventEmitter {
       queueSize: this.queue.length,
     });
 
+    // Execute command asynchronously without waiting
+    this.executeCommand(queuedCommand, context);
+
+    // Try to start more commands if concurrency allows
+    if (this.processing < this.concurrency && this.queue.length > 0) {
+      this.processNext(context);
+    }
+  }
+
+  /**
+   * Execute a single command
+   */
+  private async executeCommand(
+    queuedCommand: QueuedCommand,
+    context: CommandContext
+  ): Promise<void> {
     try {
       // Parse command
       const { command, args } = this.processor.parseCommand(
@@ -129,6 +153,7 @@ export class AsyncCommandQueue extends EventEmitter {
       );
     } finally {
       this.processing--;
+      this.processingCommands.delete(queuedCommand.id);
       this.processNext(context);
     }
   }
@@ -154,10 +179,18 @@ export class AsyncCommandQueue extends EventEmitter {
    * Clear all queued commands
    */
   public clear(): void {
+    // Reject all queued commands
     this.queue.forEach((cmd) => {
       cmd.reject(new Error('Queue cleared'));
     });
     this.queue = [];
+
+    // Reject all currently processing commands
+    this.processingCommands.forEach((cmd) => {
+      cmd.reject(new Error('Queue cleared'));
+    });
+    this.processingCommands.clear();
+
     this.emit('queueCleared');
   }
 

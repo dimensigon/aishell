@@ -232,11 +232,16 @@ export class EnhancedDashboard extends EventEmitter<DashboardEvents> {
   /**
    * Export dashboard snapshot
    */
-  async export(filename?: string): Promise<string> {
+  async export(filename?: string, format?: 'json' | 'csv' | 'html' | 'pdf'): Promise<string> {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+
+    // Determine format from filename or use default
+    const exportFormat = format || this.getFormatFromFilename(filename) || 'json';
+    const ext = this.getExtensionForFormat(exportFormat);
+
     const filepath = path.join(
       this.config.exportPath,
-      filename || `dashboard-snapshot-${timestamp}.json`
+      filename || `dashboard-snapshot-${timestamp}.${ext}`
     );
 
     const snapshot = {
@@ -252,11 +257,337 @@ export class EnhancedDashboard extends EventEmitter<DashboardEvents> {
     };
 
     await fs.mkdir(path.dirname(filepath), { recursive: true });
-    await fs.writeFile(filepath, JSON.stringify(snapshot, null, 2), 'utf-8');
+
+    // Export in the specified format
+    let content: string;
+    switch (exportFormat) {
+      case 'json':
+        content = JSON.stringify(snapshot, null, 2);
+        break;
+      case 'csv':
+        content = this.convertToCSV(snapshot);
+        break;
+      case 'html':
+        content = this.convertToHTML(snapshot);
+        break;
+      case 'pdf':
+        content = this.convertToPDF(snapshot);
+        break;
+      default:
+        throw new Error(`Unsupported export format: ${exportFormat}`);
+    }
+
+    await fs.writeFile(filepath, content, 'utf-8');
 
     this.emit('exported', filepath);
 
     return filepath;
+  }
+
+  /**
+   * Get format from filename extension
+   */
+  private getFormatFromFilename(filename?: string): 'json' | 'csv' | 'html' | 'pdf' | null {
+    if (!filename) return null;
+
+    const ext = path.extname(filename).toLowerCase().slice(1);
+    if (['json', 'csv', 'html', 'pdf'].includes(ext)) {
+      return ext as 'json' | 'csv' | 'html' | 'pdf';
+    }
+
+    return null;
+  }
+
+  /**
+   * Get file extension for format
+   */
+  private getExtensionForFormat(format: 'json' | 'csv' | 'html' | 'pdf'): string {
+    return format;
+  }
+
+  /**
+   * Convert snapshot to CSV format
+   */
+  private convertToCSV(snapshot: any): string {
+    const lines: string[] = [];
+
+    // Header
+    lines.push('Dashboard Export - ' + new Date(snapshot.timestamp).toISOString());
+    lines.push('');
+
+    // Stats
+    lines.push('Statistics');
+    lines.push('Metric,Value');
+    lines.push(`Uptime,${snapshot.stats.uptime}`);
+    lines.push(`Total Queries,${snapshot.stats.totalQueries}`);
+    lines.push(`Active Connections,${snapshot.stats.activeConnections}`);
+    lines.push(`Avg Response Time,${snapshot.stats.avgResponseTime}`);
+    lines.push(`Error Rate,${snapshot.stats.errorRate}`);
+    lines.push(`Cache Hit Rate,${snapshot.stats.cacheHitRate}`);
+    lines.push('');
+
+    // Alerts
+    lines.push('Active Alerts');
+    lines.push('Severity,Message,Source,Timestamp');
+    snapshot.alerts.forEach((alert: DashboardAlert) => {
+      const time = new Date(alert.timestamp).toISOString();
+      lines.push(`${alert.severity},"${alert.message}",${alert.source},${time}`);
+    });
+    lines.push('');
+
+    // Recent Queries
+    if (snapshot.queryHistory?.logs) {
+      lines.push('Recent Queries');
+      lines.push('Query,Duration,Timestamp,Error');
+      snapshot.queryHistory.logs.slice(0, 20).forEach((q: any) => {
+        const time = new Date(q.timestamp).toISOString();
+        const error = q.result?.error ? 'Yes' : 'No';
+        lines.push(`"${q.query.replace(/"/g, '""')}",${q.duration},${time},${error}`);
+      });
+    }
+
+    return lines.join('\n');
+  }
+
+  /**
+   * Convert snapshot to HTML format
+   */
+  private convertToHTML(snapshot: any): string {
+    const uptime = this.formatUptime(snapshot.stats.uptime);
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Export - ${new Date(snapshot.timestamp).toISOString()}</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+    .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    h1 { color: #333; border-bottom: 3px solid #4CAF50; padding-bottom: 10px; }
+    h2 { color: #555; margin-top: 30px; border-bottom: 2px solid #ddd; padding-bottom: 8px; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin: 20px 0; }
+    .stat-card { background: #f9f9f9; padding: 15px; border-radius: 6px; border-left: 4px solid #4CAF50; }
+    .stat-label { font-weight: bold; color: #666; font-size: 14px; }
+    .stat-value { font-size: 24px; color: #333; margin-top: 5px; }
+    .alert { padding: 12px; margin: 10px 0; border-radius: 4px; border-left: 4px solid; }
+    .alert.critical { background: #ffebee; border-color: #f44336; }
+    .alert.warning { background: #fff3e0; border-color: #ff9800; }
+    .alert.info { background: #e3f2fd; border-color: #2196F3; }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+    th { background: #4CAF50; color: white; font-weight: bold; }
+    tr:hover { background: #f5f5f5; }
+    .timestamp { color: #999; font-size: 14px; }
+    .error { color: #f44336; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📊 Dashboard Export</h1>
+    <p class="timestamp">Exported: ${new Date(snapshot.timestamp).toLocaleString()}</p>
+
+    <h2>📈 Statistics</h2>
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-label">Uptime</div>
+        <div class="stat-value">${uptime}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Queries</div>
+        <div class="stat-value">${snapshot.stats.totalQueries.toLocaleString()}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active Connections</div>
+        <div class="stat-value">${snapshot.stats.activeConnections}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Response Time</div>
+        <div class="stat-value">${snapshot.stats.avgResponseTime.toFixed(0)}ms</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Error Rate</div>
+        <div class="stat-value">${(snapshot.stats.errorRate * 100).toFixed(2)}%</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Cache Hit Rate</div>
+        <div class="stat-value">${(snapshot.stats.cacheHitRate * 100).toFixed(1)}%</div>
+      </div>
+    </div>
+
+    <h2>🚨 Active Alerts</h2>
+    ${snapshot.alerts.length === 0
+      ? '<p>✅ No active alerts</p>'
+      : snapshot.alerts.map((alert: DashboardAlert) => `
+        <div class="alert ${alert.severity}">
+          <strong>${alert.severity.toUpperCase()}</strong> - ${alert.message}
+          <br><span class="timestamp">${new Date(alert.timestamp).toLocaleString()} | Source: ${alert.source}</span>
+        </div>
+      `).join('')
+    }
+
+    <h2>📝 Recent Queries</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Query</th>
+          <th>Duration</th>
+          <th>Timestamp</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${snapshot.queryHistory?.logs?.slice(0, 20).map((q: any) => `
+          <tr>
+            <td><code>${this.escapeHtml(q.query.substring(0, 80))}${q.query.length > 80 ? '...' : ''}</code></td>
+            <td>${q.duration.toFixed(0)}ms</td>
+            <td class="timestamp">${new Date(q.timestamp).toLocaleString()}</td>
+            <td>${q.result?.error ? '<span class="error">Error</span>' : '✅'}</td>
+          </tr>
+        `).join('') || '<tr><td colspan="4">No queries recorded</td></tr>'}
+      </tbody>
+    </table>
+
+    <h2>📊 Current Metrics</h2>
+    ${snapshot.metrics?.current ? `
+      <table>
+        <tr>
+          <th>Metric</th>
+          <th>Value</th>
+        </tr>
+        <tr>
+          <td>Queries per Second</td>
+          <td>${snapshot.metrics.current.queriesPerSecond.toFixed(2)}</td>
+        </tr>
+        <tr>
+          <td>Average Query Time</td>
+          <td>${snapshot.metrics.current.averageQueryTime.toFixed(2)}ms</td>
+        </tr>
+        <tr>
+          <td>Slow Queries</td>
+          <td>${snapshot.metrics.current.slowQueriesCount}</td>
+        </tr>
+        <tr>
+          <td>Cache Hit Rate</td>
+          <td>${(snapshot.metrics.current.cacheHitRate * 100).toFixed(1)}%</td>
+        </tr>
+        <tr>
+          <td>CPU Usage</td>
+          <td>${snapshot.metrics.current.cpuUsage.toFixed(1)}%</td>
+        </tr>
+        <tr>
+          <td>Memory Usage</td>
+          <td>${snapshot.metrics.current.memoryUsage.toFixed(1)}%</td>
+        </tr>
+      </table>
+    ` : '<p>No current metrics available</p>'}
+  </div>
+</body>
+</html>`;
+
+    return html;
+  }
+
+  /**
+   * Convert snapshot to PDF format (as text representation)
+   * Note: True PDF generation would require a library like pdfkit
+   */
+  private convertToPDF(snapshot: any): string {
+    // For now, we'll create a text-based PDF-like format
+    // In production, you'd use a library like pdfkit or puppeteer
+    const lines: string[] = [];
+
+    lines.push('='.repeat(80));
+    lines.push('DASHBOARD EXPORT REPORT');
+    lines.push(`Generated: ${new Date(snapshot.timestamp).toLocaleString()}`);
+    lines.push('='.repeat(80));
+    lines.push('');
+
+    // Stats
+    lines.push('STATISTICS');
+    lines.push('-'.repeat(80));
+    lines.push(`Uptime:              ${this.formatUptime(snapshot.stats.uptime)}`);
+    lines.push(`Total Queries:       ${snapshot.stats.totalQueries.toLocaleString()}`);
+    lines.push(`Active Connections:  ${snapshot.stats.activeConnections}`);
+    lines.push(`Avg Response Time:   ${snapshot.stats.avgResponseTime.toFixed(0)}ms`);
+    lines.push(`Error Rate:          ${(snapshot.stats.errorRate * 100).toFixed(2)}%`);
+    lines.push(`Cache Hit Rate:      ${(snapshot.stats.cacheHitRate * 100).toFixed(1)}%`);
+    lines.push('');
+
+    // Alerts
+    lines.push('ACTIVE ALERTS');
+    lines.push('-'.repeat(80));
+    if (snapshot.alerts.length === 0) {
+      lines.push('✓ No active alerts');
+    } else {
+      snapshot.alerts.forEach((alert: DashboardAlert, i: number) => {
+        lines.push(`${i + 1}. [${alert.severity.toUpperCase()}] ${alert.message}`);
+        lines.push(`   Source: ${alert.source} | Time: ${new Date(alert.timestamp).toLocaleString()}`);
+        lines.push('');
+      });
+    }
+    lines.push('');
+
+    // Recent Queries
+    lines.push('RECENT QUERIES');
+    lines.push('-'.repeat(80));
+    if (snapshot.queryHistory?.logs) {
+      snapshot.queryHistory.logs.slice(0, 15).forEach((q: any, i: number) => {
+        const status = q.result?.error ? '[ERROR]' : '[OK]';
+        lines.push(`${i + 1}. ${status} ${q.duration.toFixed(0)}ms`);
+        lines.push(`   ${q.query.substring(0, 70)}${q.query.length > 70 ? '...' : ''}`);
+        lines.push(`   ${new Date(q.timestamp).toLocaleString()}`);
+        lines.push('');
+      });
+    } else {
+      lines.push('No queries recorded');
+    }
+    lines.push('');
+
+    // Current Metrics
+    if (snapshot.metrics?.current) {
+      lines.push('CURRENT METRICS');
+      lines.push('-'.repeat(80));
+      lines.push(`Queries/Second:      ${snapshot.metrics.current.queriesPerSecond.toFixed(2)}`);
+      lines.push(`Avg Query Time:      ${snapshot.metrics.current.averageQueryTime.toFixed(2)}ms`);
+      lines.push(`Slow Queries:        ${snapshot.metrics.current.slowQueriesCount}`);
+      lines.push(`Cache Hit Rate:      ${(snapshot.metrics.current.cacheHitRate * 100).toFixed(1)}%`);
+      lines.push(`CPU Usage:           ${snapshot.metrics.current.cpuUsage.toFixed(1)}%`);
+      lines.push(`Memory Usage:        ${snapshot.metrics.current.memoryUsage.toFixed(1)}%`);
+    }
+
+    lines.push('');
+    lines.push('='.repeat(80));
+    lines.push('END OF REPORT');
+    lines.push('='.repeat(80));
+
+    return lines.join('\n');
+  }
+
+  /**
+   * Format uptime duration
+   */
+  private formatUptime(milliseconds: number): string {
+    const seconds = Math.floor(milliseconds / 1000);
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    return `${hours}h ${minutes}m ${secs}s`;
+  }
+
+  /**
+   * Escape HTML special characters
+   */
+  private escapeHtml(text: string): string {
+    const map: Record<string, string> = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
   }
 
   /**

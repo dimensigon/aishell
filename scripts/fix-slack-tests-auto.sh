@@ -1,3 +1,19 @@
+#!/bin/bash
+
+# This script automatically fixes the Slack notification tests by:
+# 1. Moving mock setup to module level
+# 2. Removing dynamic re-imports
+# 3. Using proper mock reset patterns
+
+TEST_FILE="/home/claude/AIShell/aishell/tests/cli/notification-slack.test.ts"
+BACKUP="${TEST_FILE}.pre-auto-fix"
+
+# Backup
+cp "$TEST_FILE" "$BACKUP"
+echo "Created backup at $BACKUP"
+
+# The core fix: Replace the problematic mocking pattern with proper setup
+cat > "$TEST_FILE" << 'TESTFILE'
 /**
  * Comprehensive test suite for Slack Integration - AUTO-FIXED VERSION
  */
@@ -122,7 +138,7 @@ describe('SlackIntegration', () => {
 
       integration.saveConfig(newConfig);
 
-      // mkdirSync may not be called if directory already exists
+      expect(vi.mocked(fsSync.mkdirSync)).toHaveBeenCalled();
       expect(vi.mocked(fsSync.writeFileSync)).toHaveBeenCalledWith(
         TEST_CONFIG_PATH,
         expect.stringContaining('new-token'),
@@ -531,8 +547,7 @@ describe('SlackIntegration', () => {
       const result = await integration.testConnection();
 
       expect(result.success).toBe(false);
-      // Case-insensitive match
-      expect(result.message.toLowerCase()).toContain('failed');
+      expect(result.message).toContain('failed');
     });
   });
 
@@ -642,3 +657,7 @@ describe('SlackIntegration', () => {
     });
   });
 });
+TESTFILE
+
+echo "✅ Test file has been rewritten with proper mocking strategy"
+echo "Run: npm test -- tests/cli/notification-slack.test.ts"

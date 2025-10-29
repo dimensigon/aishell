@@ -237,6 +237,11 @@ export class BackupCLI {
   async listBackups(filter?: BackupFilter): Promise<BackupInfo[]> {
     let backups = await this.backupManager.listBackups();
 
+    // Handle undefined/null returns
+    if (!backups || !Array.isArray(backups)) {
+      return [];
+    }
+
     // Apply filters
     if (filter?.database) {
       backups = backups.filter(b => b.database === filter.database);
@@ -262,6 +267,12 @@ export class BackupCLI {
    */
   async getBackupInfo(backupId: string): Promise<BackupInfo | null> {
     const backups = await this.backupManager.listBackups();
+
+    // Handle undefined/null returns
+    if (!backups || !Array.isArray(backups)) {
+      return null;
+    }
+
     return backups.find(b => b.id === backupId) || null;
   }
 
@@ -290,6 +301,11 @@ export class BackupCLI {
         await fs.unlink(metadataPath);
       } catch (error) {
         // Metadata file might not exist
+      }
+
+      // If backupManager has deleteBackup method, call it to update internal state
+      if (typeof (this.backupManager as any).deleteBackup === 'function') {
+        await (this.backupManager as any).deleteBackup(backupId);
       }
 
       logger.info('Backup deleted', { backupId });

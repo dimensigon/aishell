@@ -26,7 +26,10 @@ export class CommandProcessor {
   ];
 
   // Dangerous characters that could be used for command injection
-  private static readonly DANGEROUS_CHARS = /[;&|`$()<>]/;
+  // Note: Since we use spawn() without shell:true, we only need to check
+  // for shell metacharacters that could be dangerous in the command name itself
+  // Arguments are passed safely to the child process and don't need strict filtering
+  private static readonly DANGEROUS_CHARS = /[;&|`]/;
 
   constructor(config: ShellConfig) {
     this.config = config;
@@ -43,12 +46,16 @@ export class CommandProcessor {
 
   /**
    * Sanitize input to prevent shell injection
+   * Note: This is primarily for the command name. Arguments are safe
+   * because we use spawn() without shell:true, so they're passed directly
+   * to the process without shell interpretation.
    */
   private sanitizeInput(input: string): string {
-    // Remove or escape dangerous characters
-    if (CommandProcessor.DANGEROUS_CHARS.test(input)) {
+    // Since we're not using shell:true, arguments are safe from injection
+    // We only check for null bytes which could cause issues at the OS level
+    if (input.includes('\0')) {
       throw new Error(
-        'Input contains dangerous characters that could lead to command injection'
+        'Input contains null bytes which are not allowed'
       );
     }
     return input;

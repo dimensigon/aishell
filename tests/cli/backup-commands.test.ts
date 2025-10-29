@@ -11,21 +11,83 @@ import { CloudProvider } from '../../src/cli/cloud-backup';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
-// Mock dependencies
-vi.mock('../../src/cli/database-manager');
-vi.mock('../../src/cli/backup-manager');
-vi.mock('../../src/cli/backup-system');
-vi.mock('../../src/core/state-manager');
-vi.mock('node-cron');
+// Mock dependencies with proper implementations
+vi.mock('../../src/cli/backup-manager', () => {
+  class MockBackupManager {
+    createBackup = vi.fn();
+    restoreBackup = vi.fn();
+    listBackups = vi.fn(() => Promise.resolve([]));
+    verifyBackup = vi.fn(() => Promise.resolve(true));
+    shutdown = vi.fn();
+    constructor(config?: any) {}
+  }
+  return {
+    BackupManager: MockBackupManager
+  };
+});
+
+vi.mock('../../src/cli/backup-system', () => {
+  class MockBackupSystem {
+    constructor(dbManager?: any, stateManager?: any) {}
+  }
+  return {
+    BackupSystem: MockBackupSystem
+  };
+});
+
+vi.mock('../../src/cli/database-manager', () => {
+  class MockDatabaseConnectionManager {
+    getConnection = vi.fn((dbName: string) => {
+      // Return null for databases that should fail
+      if (dbName === 'nonexistent_db' || dbName === 'missing_db') {
+        return null;
+      }
+      return { database: dbName, connected: true };
+    });
+    constructor(stateManager?: any) {}
+  }
+  return {
+    DatabaseConnectionManager: MockDatabaseConnectionManager
+  };
+});
+
+vi.mock('../../src/core/state-manager', () => {
+  class MockStateManager {
+    private state = new Map();
+    get = vi.fn((key: string) => this.state.get(key));
+    set = vi.fn((key: string, value: any, options?: any) => this.state.set(key, value));
+    constructor() {}
+  }
+  return {
+    StateManager: MockStateManager
+  };
+});
+
+// Mock node-cron with proper validation
+vi.mock('node-cron', () => ({
+  default: {
+    schedule: vi.fn(() => ({ stop: vi.fn() })),
+    validate: vi.fn((expression: string) => {
+      // Accept standard cron expressions (5 or 6 fields)
+      const parts = expression.trim().split(/\s+/);
+      return parts.length === 5 || parts.length === 6;
+    })
+  }
+}));
+
 vi.mock('fs/promises');
 
 describe('Backup Commands - All 10 Commands', () => {
   let backupCLI: BackupCLI;
   let mockBackupManager: any;
   let testBackupDir: string;
+  let backupCounter = 0;
+  let createdBackups: BackupInfo[] = [];
 
   beforeEach(() => {
     vi.clearAllMocks();
+    backupCounter = 0;
+    createdBackups = [];
 
     testBackupDir = path.join(__dirname, '..', '..', 'test-backups');
 
@@ -36,7 +98,52 @@ describe('Backup Commands - All 10 Commands', () => {
       maxBackups: 10
     });
 
-    // Setup mock implementations
+    // Access the backupManager instance to configure mocks
+    mockBackupManager = (backupCLI as any).backupManager;
+
+    // Setup mock backup manager to track created backups
+    mockBackupManager.createBackup.mockImplementation((options: any) => {
+      backupCounter++;
+      const ext = options.format === 'sql' ? (options.compress ? '.sql.gz' : '.sql') :
+                  options.format === 'json' ? '.json' : '.csv';
+      const backupInfo: BackupInfo = {
+        id: `backup-${backupCounter}-${Date.now()}`,
+        timestamp: Date.now(),
+        database: options.database,
+        format: options.format || 'sql',
+        compressed: options.compress || false,
+        size: 1024 * backupCounter,
+        tables: ['users', 'posts'],
+        path: path.join(testBackupDir, `${options.name || 'backup'}${ext}`),
+        metadata: { checksum: `checksum-${backupCounter}` },
+        status: 'success'
+      };
+      // Track created backups with retention policy
+      createdBackups.push(backupInfo);
+
+      // Enforce max backups limit (10)
+      if (createdBackups.length > 10) {
+        createdBackups.shift(); // Remove oldest backup
+      }
+
+      return Promise.resolve(backupInfo);
+    });
+
+    // Return tracked backups
+    mockBackupManager.listBackups.mockImplementation(() => Promise.resolve([...createdBackups]));
+    mockBackupManager.verifyBackup.mockResolvedValue(true);
+    mockBackupManager.restoreBackup.mockResolvedValue(undefined); // Restore succeeds
+
+    // Mock delete to remove from tracked backups
+    mockBackupManager.deleteBackup = vi.fn((backupId: string) => {
+      const index = createdBackups.findIndex(b => b.id === backupId);
+      if (index >= 0) {
+        createdBackups.splice(index, 1);
+      }
+      return Promise.resolve();
+    });
+
+    // Setup filesystem mocks
     (fs.mkdir as any).mockResolvedValue(undefined);
     (fs.rm as any).mockResolvedValue(undefined);
     (fs.access as any).mockResolvedValue(undefined);
@@ -685,7 +792,8 @@ describe('Backup Commands - All 10 Commands', () => {
     });
 
     it('should handle file system errors gracefully', async () => {
-      (fs.copyFile as any).mockRejectedValue(new Error('Disk full'));
+      // Make backupManager.createBackup throw filesystem error
+      mockBackupManager.createBackup.mockRejectedValueOnce(new Error('Disk full'));
 
       const result = await backupCLI.createBackup({
         database: 'test_db',
