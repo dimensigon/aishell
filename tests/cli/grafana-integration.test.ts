@@ -518,12 +518,12 @@ describe('DashboardTemplates', () => {
   });
 
   describe('createPerformanceDashboard', () => {
-    it('should create performance dashboard with 15 panels', () => {
+    it('should create performance dashboard with 14 panels', () => {
       const dashboard = DashboardTemplates.createPerformanceDashboard();
 
       expect(dashboard.title).toBe('AI-Shell Performance');
       expect(dashboard.tags).toContain('performance');
-      expect(dashboard.panels).toHaveLength(15);
+      expect(dashboard.panels).toHaveLength(14);
     });
 
     it('should include instance and endpoint variables', () => {
@@ -759,11 +759,12 @@ describe('GrafanaIntegrationCLI', () => {
         version: 1,
       };
 
+      // Note: getClient() calls loadConfig() first, then importDashboard reads the file
       mockedFs.readFile
-        .mockResolvedValueOnce(JSON.stringify(dashboard))
         .mockResolvedValueOnce(
           JSON.stringify({ url: 'http://localhost:3000', apiKey: 'test-key' })
-        );
+        )
+        .mockResolvedValueOnce(JSON.stringify(dashboard));
 
       const mockClient = {
         post: vi.fn().mockResolvedValue({

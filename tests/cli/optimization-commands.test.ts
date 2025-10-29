@@ -8,11 +8,94 @@ import { OptimizationCLI } from '../../src/cli/optimization-cli';
 import { StateManager } from '../../src/core/state-manager';
 import { DatabaseConnectionManager } from '../../src/cli/database-manager';
 
+// Mock Anthropic SDK at module level
+vi.mock('@anthropic-ai/sdk', () => {
+  class MockAnthropic {
+    messages = {
+      create: vi.fn().mockResolvedValue({
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              issues: [
+                'Using SELECT * is inefficient',
+                'Missing index on active column',
+                'Full table scan detected'
+              ],
+              suggestions: [
+                'Replace SELECT * with specific column names',
+                'Add index on users(active)',
+                'Consider adding composite index for frequently queried columns'
+              ],
+              optimizedQuery: 'SELECT id, name, email FROM users WHERE active = true',
+              indexRecommendations: [
+                'CREATE INDEX idx_users_active ON users(active)',
+                'CREATE INDEX idx_users_email ON users(email)'
+              ],
+              estimatedImprovement: '45% faster'
+            })
+          }
+        ],
+        usage: {
+          input_tokens: 150,
+          output_tokens: 200
+        }
+      })
+    };
+
+    constructor(config: any) {
+      // Mock constructor
+    }
+  }
+
+  return {
+    default: MockAnthropic
+  };
+});
+
 // Mock dependencies
 vi.mock('../../src/core/state-manager');
 vi.mock('../../src/cli/database-manager');
-vi.mock('../../src/llm/mcp-bridge');
-vi.mock('../../src/core/error-handler');
+
+// Mock LLMMCPBridge for natural language translation
+vi.mock('../../src/llm/mcp-bridge', () => {
+  class MockLLMMCPBridge {
+    async generate(options: any) {
+      return {
+        content: JSON.stringify({
+          sql: 'SELECT * FROM users',
+          explanation: 'This query retrieves all users from the users table',
+          confidence: 0.95,
+          warnings: []
+        })
+      };
+    }
+
+    constructor(apiKey: string) {
+      // Mock constructor
+    }
+  }
+
+  return {
+    LLMMCPBridge: MockLLMMCPBridge
+  };
+});
+
+// Mock ErrorHandler to properly wrap async functions
+vi.mock('../../src/core/error-handler', () => {
+  class MockErrorHandler {
+    wrap(fn: Function, context?: any) {
+      return fn;
+    }
+    handle(error: any) {
+      throw error;
+    }
+  }
+
+  return {
+    ErrorHandler: MockErrorHandler
+  };
+});
 
 describe('OptimizationCLI - Sprint 1 Commands', () => {
   let cli: OptimizationCLI;
@@ -20,12 +103,20 @@ describe('OptimizationCLI - Sprint 1 Commands', () => {
   let dbManager: DatabaseConnectionManager;
 
   beforeEach(() => {
+    // Clear all mocks before each test to ensure clean state
+    vi.clearAllMocks();
+
     // Set API key for tests
     process.env.ANTHROPIC_API_KEY = 'test-api-key';
 
     stateManager = new StateManager();
     dbManager = new DatabaseConnectionManager(stateManager);
     cli = new OptimizationCLI(stateManager, dbManager);
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    delete process.env.ANTHROPIC_API_KEY;
   });
 
   describe('1. ai-shell translate <natural-language>', () => {

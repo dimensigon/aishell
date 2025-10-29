@@ -30,18 +30,17 @@ describe('MigrationCLI', () => {
     await fs.mkdir(migrationsDir, { recursive: true });
 
     // Setup managers
-    dbManager = new DatabaseConnectionManager({
-      default: 'test',
-      connections: {
-        test: {
-          type: DatabaseType.SQLITE,
-          database: ':memory:'
-        }
-      }
-    });
-
     stateManager = new StateManager({
       enablePersistence: false
+    });
+
+    dbManager = new DatabaseConnectionManager(stateManager);
+
+    // Connect to in-memory SQLite database
+    await dbManager.connect({
+      name: 'test',
+      type: DatabaseType.SQLITE,
+      database: ':memory:'
     });
 
     backupSystem = new BackupSystem(dbManager, stateManager, {

@@ -8,10 +8,55 @@ import { OptimizationCLI, OptimizationResult, SlowQuery, IndexRecommendation } f
 import { StateManager } from '../../src/core/state-manager';
 import { DatabaseConnectionManager } from '../../src/cli/database-manager';
 
+// Mock Anthropic SDK at module level
+vi.mock('@anthropic-ai/sdk', () => {
+  class MockAnthropic {
+    messages = {
+      create: vi.fn().mockResolvedValue({
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              issues: [
+                'Using SELECT * is inefficient',
+                'Missing index on active column',
+                'Full table scan detected'
+              ],
+              suggestions: [
+                'Replace SELECT * with specific column names',
+                'Add index on users(active)',
+                'Consider adding composite index for frequently queried columns'
+              ],
+              optimizedQuery: 'SELECT id, name, email FROM users WHERE active = true',
+              indexRecommendations: [
+                'CREATE INDEX idx_users_active ON users(active)',
+                'CREATE INDEX idx_users_email ON users(email)'
+              ],
+              estimatedImprovement: '45% faster'
+            })
+          }
+        ],
+        usage: {
+          input_tokens: 150,
+          output_tokens: 200
+        }
+      })
+    };
+
+    constructor(config: any) {
+      // Mock constructor
+    }
+  }
+
+  return {
+    default: MockAnthropic
+  };
+});
+
 // Mock dependencies
 vi.mock('../../src/core/state-manager');
 vi.mock('../../src/cli/database-manager');
-vi.mock('../../src/cli/query-optimizer');
+// Don't mock query-optimizer - let it use real implementation with Anthropic mock
 
 describe('OptimizationCLI', () => {
   let cli: OptimizationCLI;
@@ -19,6 +64,9 @@ describe('OptimizationCLI', () => {
   let mockDbManager: any;
 
   beforeEach(() => {
+    // Clear all mocks before each test to ensure clean state
+    vi.clearAllMocks();
+
     mockStateManager = new StateManager() as any;
     mockDbManager = new DatabaseConnectionManager(mockStateManager) as any;
 

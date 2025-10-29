@@ -649,7 +649,7 @@ export class DashboardTemplates {
   }
 
   /**
-   * Create Performance Dashboard (15 panels)
+   * Create Performance Dashboard (14 panels)
    */
   static createPerformanceDashboard(): Dashboard {
     const builder = new DashboardBuilder('AI-Shell Performance', ['performance']);

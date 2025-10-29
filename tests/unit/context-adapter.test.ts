@@ -35,7 +35,7 @@ describe('ContextAdapter', () => {
 
       const transformed = adapter.transform(context, ContextFormat.JSON);
 
-      expect(transformed).toBeInstanceOf(String);
+      expect(typeof transformed).toBe('string');
       const parsed = JSON.parse(transformed);
       expect(parsed.sessionId).toBe('test-session');
       expect(parsed.userId).toBe('user-123');
@@ -434,7 +434,7 @@ describe('ContextAdapter', () => {
 
       const serialized = adapter.serialize(context);
 
-      expect(serialized).toBeInstanceOf(String);
+      expect(typeof serialized).toBe('string');
       expect(() => JSON.parse(serialized)).not.toThrow();
     });
 

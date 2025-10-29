@@ -102,8 +102,12 @@ export class DatabaseConnectionManager extends EventEmitter<ConnectionManagerEve
   private activeConnection: string | null = null;
   private healthCheckIntervalMs = 30000; // 30 seconds
 
-  constructor(private stateManager: StateManager) {
+  constructor(private stateManager?: StateManager) {
     super();
+    // Initialize stateManager if not provided or invalid
+    if (!this.stateManager || typeof this.stateManager.findByMetadata !== 'function') {
+      this.stateManager = new StateManager({ enablePersistence: false });
+    }
     this.loadConnectionsFromState();
   }
 
@@ -701,6 +705,8 @@ export class DatabaseConnectionManager extends EventEmitter<ConnectionManagerEve
    * Save connection config to state
    */
   private saveConnectionToState(config: ConnectionConfig): void {
+    if (!this.stateManager) return;
+
     const sanitized = {
       ...config,
       password: undefined // Don't store password
@@ -715,6 +721,10 @@ export class DatabaseConnectionManager extends EventEmitter<ConnectionManagerEve
    * Load connections from state
    */
   private loadConnectionsFromState(): void {
+    if (!this.stateManager || typeof this.stateManager.findByMetadata !== 'function') {
+      return;
+    }
+
     try {
       this.stateManager.findByMetadata('type', 'database-connection');
       // Connections will be reconnected manually by user

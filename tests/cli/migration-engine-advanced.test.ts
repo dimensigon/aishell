@@ -25,8 +25,8 @@ describe('AdvancedMigrationEngine', () => {
     tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'migration-test-'));
 
     // Setup mocks
-    dbManager = new DatabaseConnectionManager();
     stateManager = new StateManager({ enablePersistence: false });
+    dbManager = new DatabaseConnectionManager(stateManager);
     backupSystem = new BackupSystem(dbManager, stateManager);
 
     // Mock database operations

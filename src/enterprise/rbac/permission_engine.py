@@ -41,7 +41,13 @@ class Permission:
         if len(parts) != 2:
             raise ValueError(f"Invalid permission format: {permission_str}")
 
-        return cls(resource=parts[0], action=parts[1])
+        resource, action = parts[0], parts[1]
+
+        # Validate non-empty parts
+        if not resource or not action:
+            raise ValueError(f"Invalid permission format: {permission_str}")
+
+        return cls(resource=resource, action=action)
 
 
 class PermissionEngine:
@@ -223,8 +229,10 @@ class PermissionEngine:
             if not resource_id:
                 continue
 
-            # Format permission string
-            required_perm = permission_format.format(id=resource_id, **item)
+            # Format permission string - only pass the resource_id value
+            # to avoid conflicts if item dict also contains 'id' key
+            format_vars = {permission_key: resource_id}
+            required_perm = permission_format.format(**format_vars)
 
             if self.check_permission(user_permissions, required_perm):
                 filtered.append(item)
@@ -260,7 +268,8 @@ class PermissionEngine:
 
     def validate_permission_format(self, permission_str: str) -> bool:
         """Validate permission string format"""
-        pattern = r'^[a-zA-Z0-9_-]+:[a-zA-Z0-9_*-]+$'
+        # Allow patterns like: database:read, database:*, *:read, db-name:action_name
+        pattern = r'^[a-zA-Z0-9_*-]+:[a-zA-Z0-9_*-]+$'
         return bool(re.match(pattern, permission_str))
 
     def get_resource_permissions(

@@ -232,9 +232,9 @@ describe('MCPDatabaseServer', () => {
 
   describe('Error Handling', () => {
     it('should handle invalid connection', async () => {
-      await expect(async () => {
-        await connectionManager.disconnect('nonexistent');
-      }).resolves.not.toThrow();
+      await expect(
+        connectionManager.disconnect('nonexistent')
+      ).resolves.toBeUndefined();
     });
 
     it('should handle query without active connection', async () => {
