@@ -1,6 +1,1310 @@
 {
-  "state": [],
+  "state": [
+    [
+      "query:query_1761747868259_2",
+      {
+        "key": "query:query_1761747868259_2",
+        "value": 1761747868259,
+        "version": 1,
+        "timestamp": 1761747868259,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761747868259_2",
+      {
+        "key": "query-log:query_1761747868259_2",
+        "value": {
+          "id": "query_1761747868259_2",
+          "query": "SELECT * FROM users",
+          "duration": 150,
+          "timestamp": 1761747868259,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 2,
+        "timestamp": 1761747868259,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761747868269_3",
+      {
+        "key": "query:query_1761747868269_3",
+        "value": 1761747868269,
+        "version": 3,
+        "timestamp": 1761747868269,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761747868269_3",
+      {
+        "key": "query-log:query_1761747868269_3",
+        "value": {
+          "id": "query_1761747868269_3",
+          "query": "SELECT * FROM users",
+          "duration": 200,
+          "timestamp": 1761747868269,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 4,
+        "timestamp": 1761747868269,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761747868279_4",
+      {
+        "key": "query:query_1761747868279_4",
+        "value": 1761747868279,
+        "version": 5,
+        "timestamp": 1761747868279,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761747868279_4",
+      {
+        "key": "query-log:query_1761747868279_4",
+        "value": {
+          "id": "query_1761747868279_4",
+          "query": "SELECT * FROM users",
+          "duration": 250,
+          "timestamp": 1761747868279,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 6,
+        "timestamp": 1761747868279,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761747868290_5",
+      {
+        "key": "query:query_1761747868290_5",
+        "value": 1761747868290,
+        "version": 7,
+        "timestamp": 1761747868290,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761747868290_5",
+      {
+        "key": "query-log:query_1761747868290_5",
+        "value": {
+          "id": "query_1761747868290_5",
+          "query": "SELECT * FROM users",
+          "duration": 300,
+          "timestamp": 1761747868290,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 8,
+        "timestamp": 1761747868290,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761747868300_6",
+      {
+        "key": "query:query_1761747868300_6",
+        "value": 1761747868300,
+        "version": 9,
+        "timestamp": 1761747868300,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761747868300_6",
+      {
+        "key": "query-log:query_1761747868300_6",
+        "value": {
+          "id": "query_1761747868300_6",
+          "query": "SELECT * FROM users",
+          "duration": 350,
+          "timestamp": 1761747868300,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 10,
+        "timestamp": 1761747868300,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761747868310_7",
+      {
+        "key": "query:query_1761747868310_7",
+        "value": 1761747868310,
+        "version": 11,
+        "timestamp": 1761747868310,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761747868310_7",
+      {
+        "key": "query-log:query_1761747868310_7",
+        "value": {
+          "id": "query_1761747868310_7",
+          "query": "SELECT * FROM users",
+          "duration": 400,
+          "timestamp": 1761747868310,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 12,
+        "timestamp": 1761747868310,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761747868320_8",
+      {
+        "key": "query:query_1761747868320_8",
+        "value": 1761747868320,
+        "version": 13,
+        "timestamp": 1761747868320,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761747868320_8",
+      {
+        "key": "query-log:query_1761747868320_8",
+        "value": {
+          "id": "query_1761747868320_8",
+          "query": "SELECT * FROM users",
+          "duration": 450,
+          "timestamp": 1761747868320,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 14,
+        "timestamp": 1761747868320,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761747868330_9",
+      {
+        "key": "query:query_1761747868330_9",
+        "value": 1761747868330,
+        "version": 15,
+        "timestamp": 1761747868330,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761747868330_9",
+      {
+        "key": "query-log:query_1761747868330_9",
+        "value": {
+          "id": "query_1761747868330_9",
+          "query": "SELECT * FROM users",
+          "duration": 500,
+          "timestamp": 1761747868330,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 16,
+        "timestamp": 1761747868330,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761747868341_10",
+      {
+        "key": "query:query_1761747868341_10",
+        "value": 1761747868341,
+        "version": 17,
+        "timestamp": 1761747868341,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761747868341_10",
+      {
+        "key": "query-log:query_1761747868341_10",
+        "value": {
+          "id": "query_1761747868341_10",
+          "query": "SELECT * FROM users",
+          "duration": 550,
+          "timestamp": 1761747868341,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 18,
+        "timestamp": 1761747868341,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761747868351_11",
+      {
+        "key": "query:query_1761747868351_11",
+        "value": 1761747868351,
+        "version": 19,
+        "timestamp": 1761747868351,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761747868351_11",
+      {
+        "key": "query-log:query_1761747868351_11",
+        "value": {
+          "id": "query_1761747868351_11",
+          "query": "SELECT * FROM users",
+          "duration": 600,
+          "timestamp": 1761747868351,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 20,
+        "timestamp": 1761747868351,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761747868361_12",
+      {
+        "key": "query:query_1761747868361_12",
+        "value": 1761747868361,
+        "version": 21,
+        "timestamp": 1761747868361,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761747868361_12",
+      {
+        "key": "query-log:query_1761747868361_12",
+        "value": {
+          "id": "query_1761747868361_12",
+          "query": "SELECT * FROM users",
+          "duration": 650,
+          "timestamp": 1761747868361,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 22,
+        "timestamp": 1761747868361,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761747868371_13",
+      {
+        "key": "query:query_1761747868371_13",
+        "value": 1761747868371,
+        "version": 23,
+        "timestamp": 1761747868371,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761747868371_13",
+      {
+        "key": "query-log:query_1761747868371_13",
+        "value": {
+          "id": "query_1761747868371_13",
+          "query": "SELECT * FROM users",
+          "duration": 700,
+          "timestamp": 1761747868371,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 24,
+        "timestamp": 1761747868371,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761747868381_14",
+      {
+        "key": "query:query_1761747868381_14",
+        "value": 1761747868381,
+        "version": 25,
+        "timestamp": 1761747868381,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761747868381_14",
+      {
+        "key": "query-log:query_1761747868381_14",
+        "value": {
+          "id": "query_1761747868381_14",
+          "query": "SELECT * FROM users",
+          "duration": 750,
+          "timestamp": 1761747868381,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 26,
+        "timestamp": 1761747868381,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761747868391_15",
+      {
+        "key": "query:query_1761747868391_15",
+        "value": 1761747868391,
+        "version": 27,
+        "timestamp": 1761747868391,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761747868391_15",
+      {
+        "key": "query-log:query_1761747868391_15",
+        "value": {
+          "id": "query_1761747868391_15",
+          "query": "SELECT * FROM users",
+          "duration": 800,
+          "timestamp": 1761747868391,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 28,
+        "timestamp": 1761747868391,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761747868402_16",
+      {
+        "key": "query:query_1761747868402_16",
+        "value": 1761747868402,
+        "version": 29,
+        "timestamp": 1761747868402,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761747868402_16",
+      {
+        "key": "query-log:query_1761747868402_16",
+        "value": {
+          "id": "query_1761747868402_16",
+          "query": "SELECT * FROM users",
+          "duration": 850,
+          "timestamp": 1761747868402,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 30,
+        "timestamp": 1761747868402,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761747868412_17",
+      {
+        "key": "query:query_1761747868412_17",
+        "value": 1761747868412,
+        "version": 31,
+        "timestamp": 1761747868412,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761747868412_17",
+      {
+        "key": "query-log:query_1761747868412_17",
+        "value": {
+          "id": "query_1761747868412_17",
+          "query": "SELECT * FROM users",
+          "duration": 900,
+          "timestamp": 1761747868412,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 32,
+        "timestamp": 1761747868412,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761747868422_18",
+      {
+        "key": "query:query_1761747868422_18",
+        "value": 1761747868422,
+        "version": 33,
+        "timestamp": 1761747868422,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761747868422_18",
+      {
+        "key": "query-log:query_1761747868422_18",
+        "value": {
+          "id": "query_1761747868422_18",
+          "query": "SELECT * FROM users",
+          "duration": 950,
+          "timestamp": 1761747868422,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 34,
+        "timestamp": 1761747868422,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761747868432_19",
+      {
+        "key": "query:query_1761747868432_19",
+        "value": 1761747868432,
+        "version": 35,
+        "timestamp": 1761747868432,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761747868432_19",
+      {
+        "key": "query-log:query_1761747868432_19",
+        "value": {
+          "id": "query_1761747868432_19",
+          "query": "SELECT * FROM users",
+          "duration": 1000,
+          "timestamp": 1761747868432,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 36,
+        "timestamp": 1761747868432,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761747868442_20",
+      {
+        "key": "query:query_1761747868442_20",
+        "value": 1761747868442,
+        "version": 37,
+        "timestamp": 1761747868442,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761747868442_20",
+      {
+        "key": "query-log:query_1761747868442_20",
+        "value": {
+          "id": "query_1761747868442_20",
+          "query": "SELECT * FROM users",
+          "duration": 1050,
+          "timestamp": 1761747868442,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 38,
+        "timestamp": 1761747868442,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "pattern-clusters",
+      {
+        "key": "pattern-clusters",
+        "value": [],
+        "version": 81,
+        "timestamp": 1761748083548,
+        "metadata": {
+          "type": "pattern-clusters"
+        }
+      }
+    ],
+    [
+      "pattern-anomalies",
+      {
+        "key": "pattern-anomalies",
+        "value": [],
+        "version": 82,
+        "timestamp": 1761748083548,
+        "metadata": {
+          "type": "pattern-anomalies"
+        }
+      }
+    ],
+    [
+      "pattern-threats",
+      {
+        "key": "pattern-threats",
+        "value": [],
+        "version": 83,
+        "timestamp": 1761748083548,
+        "metadata": {
+          "type": "pattern-threats"
+        }
+      }
+    ],
+    [
+      "pattern-learning-model",
+      {
+        "key": "pattern-learning-model",
+        "value": {},
+        "version": 84,
+        "timestamp": 1761748083548,
+        "metadata": {
+          "type": "pattern-learning"
+        }
+      }
+    ],
+    [
+      "query:query_1761748083451_3",
+      {
+        "key": "query:query_1761748083451_3",
+        "value": 1761748083451,
+        "version": 44,
+        "timestamp": 1761748083451,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761748083451_3",
+      {
+        "key": "query-log:query_1761748083451_3",
+        "value": {
+          "id": "query_1761748083451_3",
+          "query": "SELECT * FROM users JOIN orders ON users.id = orders.user_id",
+          "duration": 408.89167627219155,
+          "timestamp": 1761748083451,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 45,
+        "timestamp": 1761748083451,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761748083456_4",
+      {
+        "key": "query:query_1761748083456_4",
+        "value": 1761748083456,
+        "version": 46,
+        "timestamp": 1761748083456,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761748083456_4",
+      {
+        "key": "query-log:query_1761748083456_4",
+        "value": {
+          "id": "query_1761748083456_4",
+          "query": "INSERT INTO users (name, email) VALUES (\"test\", \"test@example.com\")",
+          "duration": 352.06696357195983,
+          "timestamp": 1761748083456,
+          "metadata": {
+            "queryType": "INSERT"
+          }
+        },
+        "version": 47,
+        "timestamp": 1761748083456,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761748083461_5",
+      {
+        "key": "query:query_1761748083461_5",
+        "value": 1761748083461,
+        "version": 48,
+        "timestamp": 1761748083461,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761748083461_5",
+      {
+        "key": "query-log:query_1761748083461_5",
+        "value": {
+          "id": "query_1761748083461_5",
+          "query": "UPDATE users SET name = \"updated\" WHERE id = 1",
+          "duration": 434.05703981258364,
+          "timestamp": 1761748083461,
+          "metadata": {
+            "queryType": "UPDATE"
+          }
+        },
+        "version": 49,
+        "timestamp": 1761748083461,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761748083466_6",
+      {
+        "key": "query:query_1761748083466_6",
+        "value": 1761748083466,
+        "version": 50,
+        "timestamp": 1761748083466,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761748083466_6",
+      {
+        "key": "query-log:query_1761748083466_6",
+        "value": {
+          "id": "query_1761748083466_6",
+          "query": "DELETE FROM users WHERE id = 1",
+          "duration": 115.19529209886154,
+          "timestamp": 1761748083466,
+          "metadata": {
+            "queryType": "DELETE"
+          }
+        },
+        "version": 51,
+        "timestamp": 1761748083466,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761748083473_7",
+      {
+        "key": "query:query_1761748083473_7",
+        "value": 1761748083473,
+        "version": 52,
+        "timestamp": 1761748083473,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761748083473_7",
+      {
+        "key": "query-log:query_1761748083473_7",
+        "value": {
+          "id": "query_1761748083473_7",
+          "query": "SELECT COUNT(*) FROM users GROUP BY age",
+          "duration": 256.5938441123792,
+          "timestamp": 1761748083473,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 53,
+        "timestamp": 1761748083473,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761748083478_8",
+      {
+        "key": "query:query_1761748083478_8",
+        "value": 1761748083478,
+        "version": 54,
+        "timestamp": 1761748083478,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761748083478_8",
+      {
+        "key": "query-log:query_1761748083478_8",
+        "value": {
+          "id": "query_1761748083478_8",
+          "query": "SELECT * FROM products WHERE price > 100 ORDER BY price DESC",
+          "duration": 90.69342381449226,
+          "timestamp": 1761748083478,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 55,
+        "timestamp": 1761748083478,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761748083483_9",
+      {
+        "key": "query:query_1761748083483_9",
+        "value": 1761748083483,
+        "version": 56,
+        "timestamp": 1761748083483,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761748083483_9",
+      {
+        "key": "query-log:query_1761748083483_9",
+        "value": {
+          "id": "query_1761748083483_9",
+          "query": "SELECT DISTINCT category FROM products",
+          "duration": 447.336465885922,
+          "timestamp": 1761748083483,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 57,
+        "timestamp": 1761748083483,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761748083488_10",
+      {
+        "key": "query:query_1761748083488_10",
+        "value": 1761748083488,
+        "version": 58,
+        "timestamp": 1761748083488,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761748083488_10",
+      {
+        "key": "query-log:query_1761748083488_10",
+        "value": {
+          "id": "query_1761748083488_10",
+          "query": "SELECT * FROM users LIMIT 10",
+          "duration": 502.2079360301926,
+          "timestamp": 1761748083488,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 59,
+        "timestamp": 1761748083488,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761748083494_11",
+      {
+        "key": "query:query_1761748083494_11",
+        "value": 1761748083494,
+        "version": 60,
+        "timestamp": 1761748083494,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761748083494_11",
+      {
+        "key": "query-log:query_1761748083494_11",
+        "value": {
+          "id": "query_1761748083494_11",
+          "query": "SELECT * FROM users",
+          "duration": 264.83559931822003,
+          "timestamp": 1761748083494,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 61,
+        "timestamp": 1761748083494,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761748083499_12",
+      {
+        "key": "query:query_1761748083499_12",
+        "value": 1761748083499,
+        "version": 62,
+        "timestamp": 1761748083499,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761748083499_12",
+      {
+        "key": "query-log:query_1761748083499_12",
+        "value": {
+          "id": "query_1761748083499_12",
+          "query": "SELECT id, name FROM users WHERE age > 18",
+          "duration": 533.7483460621397,
+          "timestamp": 1761748083499,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 63,
+        "timestamp": 1761748083499,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761748083505_13",
+      {
+        "key": "query:query_1761748083505_13",
+        "value": 1761748083505,
+        "version": 64,
+        "timestamp": 1761748083505,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761748083505_13",
+      {
+        "key": "query-log:query_1761748083505_13",
+        "value": {
+          "id": "query_1761748083505_13",
+          "query": "SELECT * FROM users JOIN orders ON users.id = orders.user_id",
+          "duration": 127.53370652881154,
+          "timestamp": 1761748083505,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 65,
+        "timestamp": 1761748083505,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761748083510_14",
+      {
+        "key": "query:query_1761748083510_14",
+        "value": 1761748083510,
+        "version": 66,
+        "timestamp": 1761748083510,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761748083510_14",
+      {
+        "key": "query-log:query_1761748083510_14",
+        "value": {
+          "id": "query_1761748083510_14",
+          "query": "INSERT INTO users (name, email) VALUES (\"test\", \"test@example.com\")",
+          "duration": 403.0816670616633,
+          "timestamp": 1761748083510,
+          "metadata": {
+            "queryType": "INSERT"
+          }
+        },
+        "version": 67,
+        "timestamp": 1761748083510,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761748083515_15",
+      {
+        "key": "query:query_1761748083515_15",
+        "value": 1761748083515,
+        "version": 68,
+        "timestamp": 1761748083515,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761748083515_15",
+      {
+        "key": "query-log:query_1761748083515_15",
+        "value": {
+          "id": "query_1761748083515_15",
+          "query": "UPDATE users SET name = \"updated\" WHERE id = 1",
+          "duration": 290.5574266736037,
+          "timestamp": 1761748083515,
+          "metadata": {
+            "queryType": "UPDATE"
+          }
+        },
+        "version": 69,
+        "timestamp": 1761748083515,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761748083520_16",
+      {
+        "key": "query:query_1761748083520_16",
+        "value": 1761748083520,
+        "version": 70,
+        "timestamp": 1761748083520,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761748083520_16",
+      {
+        "key": "query-log:query_1761748083520_16",
+        "value": {
+          "id": "query_1761748083520_16",
+          "query": "DELETE FROM users WHERE id = 1",
+          "duration": 419.6685700343638,
+          "timestamp": 1761748083520,
+          "metadata": {
+            "queryType": "DELETE"
+          }
+        },
+        "version": 71,
+        "timestamp": 1761748083520,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761748083525_17",
+      {
+        "key": "query:query_1761748083525_17",
+        "value": 1761748083525,
+        "version": 72,
+        "timestamp": 1761748083525,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761748083525_17",
+      {
+        "key": "query-log:query_1761748083525_17",
+        "value": {
+          "id": "query_1761748083525_17",
+          "query": "SELECT COUNT(*) FROM users GROUP BY age",
+          "duration": 381.07593281402694,
+          "timestamp": 1761748083525,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 73,
+        "timestamp": 1761748083525,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761748083530_18",
+      {
+        "key": "query:query_1761748083530_18",
+        "value": 1761748083530,
+        "version": 74,
+        "timestamp": 1761748083530,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761748083530_18",
+      {
+        "key": "query-log:query_1761748083530_18",
+        "value": {
+          "id": "query_1761748083530_18",
+          "query": "SELECT * FROM products WHERE price > 100 ORDER BY price DESC",
+          "duration": 396.9612387444528,
+          "timestamp": 1761748083530,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 75,
+        "timestamp": 1761748083530,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761748083536_19",
+      {
+        "key": "query:query_1761748083536_19",
+        "value": 1761748083536,
+        "version": 76,
+        "timestamp": 1761748083536,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761748083536_19",
+      {
+        "key": "query-log:query_1761748083536_19",
+        "value": {
+          "id": "query_1761748083536_19",
+          "query": "SELECT DISTINCT category FROM products",
+          "duration": 82.30321609242893,
+          "timestamp": 1761748083536,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 77,
+        "timestamp": 1761748083536,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ],
+    [
+      "query:query_1761748083541_20",
+      {
+        "key": "query:query_1761748083541_20",
+        "value": 1761748083541,
+        "version": 78,
+        "timestamp": 1761748083541,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761748083541_20",
+      {
+        "key": "query-log:query_1761748083541_20",
+        "value": {
+          "id": "query_1761748083541_20",
+          "query": "SELECT * FROM users LIMIT 10",
+          "duration": 230.76555565458528,
+          "timestamp": 1761748083541,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 79,
+        "timestamp": 1761748083541,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ]
+  ],
   "snapshots": [],
-  "version": 0,
-  "timestamp": 1761752911650
+  "version": 84,
+  "timestamp": 1761754583813
+}query:query_1761748083438_21",
+        "value": 1761748083438,
+        "version": 80,
+        "timestamp": 1761748083438,
+        "metadata": {
+          "type": "query-log"
+        }
+      }
+    ],
+    [
+      "query-log:query_1761748083438_21",
+      {
+        "key": "query-log:query_1761748083438_21",
+        "value": {
+          "id": "query_1761748083438_21",
+          "query": "SELECT * FROM users",
+          "duration": 10000,
+          "timestamp": 1761748083438,
+          "metadata": {
+            "queryType": "SELECT"
+          }
+        },
+        "version": 81,
+        "timestamp": 1761748083438,
+        "metadata": {
+          "type": "query-log"
+        },
+        "ttl": 604800000
+      }
+    ]
+  ],
+  "snapshots": [],
+  "version": 86,
+  "timestamp": 1761754583813
 }
