@@ -1,6 +1,6 @@
 # Kubernetes Deployment Guide
 
-**Version:** 2.0.0
+**Version:** 1.0.0
 **Last Updated:** October 28, 2025
 **Target Audience:** DevOps engineers, Kubernetes administrators
 

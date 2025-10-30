@@ -717,4 +717,4 @@ For issues and questions:
 ---
 
 **Last Updated**: 2025-10-11
-**Version**: 2.0.0 (Enhanced Features Release)
+**Version**: 1.0.0 (Enhanced Features Release)

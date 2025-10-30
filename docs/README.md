@@ -1,6 +1,6 @@
 # AI-Shell CLI Documentation
 
-Welcome to the comprehensive documentation for AI-Shell CLI v2.0.0
+Welcome to the comprehensive documentation for AI-Shell CLI v1.0.0
 
 ## 📚 User Guides
 
@@ -239,8 +239,8 @@ Complete guides for all Phase 2 CLI features:
 
 ## 📦 Version Information
 
-- **Documentation Version**: 2.0.0
-- **CLI Version**: 2.0.0
+- **Documentation Version**: 1.0.0
+- **CLI Version**: 1.0.0
 - **Last Updated**: January 15, 2024
 - **Status**: ✅ Complete and Ready for Distribution
 

@@ -1,6 +1,6 @@
 # AI-Shell Developer Documentation Index
 
-**Version:** 2.0.0
+**Version:** 1.0.0
 **Last Updated:** October 26, 2025
 **Status:** Production Ready
 

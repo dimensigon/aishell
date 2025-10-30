@@ -264,4 +264,4 @@ When built, the following are generated:
 
 **File Listing Complete**
 **Last Updated**: October 2025
-**Version**: v2.0.0
+**Version**: v1.0.0

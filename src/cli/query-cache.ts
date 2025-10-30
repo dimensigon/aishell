@@ -9,6 +9,11 @@ import { createLogger } from '../core/logger';
 import { StateManager } from '../core/state-manager';
 import Redis from 'ioredis';
 import crypto from 'crypto';
+import { promisify } from 'util';
+import { gzip, gunzip } from 'zlib';
+
+const gzipAsync = promisify(gzip);
+const gunzipAsync = promisify(gunzip);
 
 interface CacheConfig {
   enabled: boolean;
@@ -17,6 +22,9 @@ interface CacheConfig {
   redisUrl?: string;
   invalidationStrategy: 'time' | 'manual' | 'smart';
   autoInvalidateTables: string[];
+  compressionEnabled: boolean;
+  compressionThreshold: number; // bytes, default 1024
+  compressionLevel: number; // 1-9, default 6
 }
 
 interface CacheStats {
@@ -26,6 +34,13 @@ interface CacheStats {
   totalKeys: number;
   memoryUsed: number;
   evictions: number;
+  compressionStats?: {
+    compressedEntries: number;
+    totalOriginalSize: number;
+    totalCompressedSize: number;
+    averageCompressionRatio: number;
+    memoryByteSavings: number;
+  };
 }
 
 interface CacheEntry {
@@ -46,6 +61,11 @@ export class QueryCache {
     hits: 0,
     misses: 0,
     evictions: 0
+  };
+  private compressionStats = {
+    compressedEntries: 0,
+    totalOriginalSize: 0,
+    totalCompressedSize: 0
   };
   private localCache = new Map<string, CacheEntry>();
 
@@ -153,7 +173,30 @@ export class QueryCache {
       if (this.redis) {
         const cached = await this.redis.get(key);
         if (cached) {
-          result = JSON.parse(cached);
+          const meta = await this.redis.get(`${key}:meta`);
+          const metaData = meta ? JSON.parse(meta) : { compressed: false };
+
+          // Decompress if needed
+          if (metaData.compressed) {
+            try {
+              const buffer = Buffer.from(cached, 'base64');
+              const decompressed = await gunzipAsync(buffer);
+              result = JSON.parse(decompressed.toString('utf-8'));
+
+              this.logger.debug('Decompressed cache entry', {
+                key,
+                compressedSize: buffer.length,
+                originalSize: metaData.originalSize
+              });
+            } catch (error) {
+              this.logger.error('Failed to decompress cache entry', error);
+              // Try to parse as uncompressed data (backward compatibility)
+              result = JSON.parse(cached);
+            }
+          } else {
+            result = JSON.parse(cached);
+          }
+
           await this.redis.incr(`${key}:hits`);
         }
       } else {
@@ -188,21 +231,60 @@ export class QueryCache {
     }
 
     const key = this.generateCacheKey(query, params);
-    const size = this.estimateSize(result);
+    const serialized = JSON.stringify(result);
+    const originalSize = serialized.length;
 
     // Check max size
-    if (size > this.config.maxSize) {
-      this.logger.warn('Result too large to cache', { size, maxSize: this.config.maxSize });
+    if (originalSize > this.config.maxSize) {
+      this.logger.warn('Result too large to cache', { size: originalSize, maxSize: this.config.maxSize });
       return;
     }
 
     try {
       if (this.redis) {
-        await this.redis.setex(key, this.config.ttl, JSON.stringify(result));
+        let data: string | Buffer = serialized;
+        let compressed = false;
+        let compressedSize = originalSize;
+
+        // Compress if enabled and above threshold
+        if (this.config.compressionEnabled && originalSize > this.config.compressionThreshold) {
+          try {
+            const buffer = await gzipAsync(serialized, { level: this.config.compressionLevel });
+            data = buffer.toString('base64');
+            compressed = true;
+            compressedSize = buffer.length;
+
+            // Update compression stats
+            this.compressionStats.compressedEntries++;
+            this.compressionStats.totalOriginalSize += originalSize;
+            this.compressionStats.totalCompressedSize += compressedSize;
+
+            const compressionRatio = (compressedSize / originalSize * 100).toFixed(1);
+            const savings = originalSize - compressedSize;
+
+            this.logger.debug('Compressed cache entry', {
+              key,
+              originalSize,
+              compressedSize,
+              ratio: `${compressionRatio}%`,
+              savings: `${savings} bytes`,
+              savingsPercent: `${((savings / originalSize) * 100).toFixed(1)}%`
+            });
+          } catch (error) {
+            this.logger.warn('Compression failed, storing uncompressed', { error });
+            compressed = false;
+          }
+        }
+
+        // Store the data
+        await this.redis.setex(key, this.config.ttl, data);
         await this.redis.set(`${key}:meta`, JSON.stringify({
           query: query.substring(0, 500),
           timestamp: Date.now(),
-          size
+          size: originalSize,
+          compressed,
+          compressedSize,
+          originalSize
         }), 'EX', this.config.ttl);
       } else {
         const entry: CacheEntry = {
@@ -211,7 +293,7 @@ export class QueryCache {
           result,
           timestamp: Date.now(),
           ttl: this.config.ttl,
-          size,
+          size: originalSize,
           hits: 0
         };
 
@@ -221,7 +303,7 @@ export class QueryCache {
         this.evictIfNeeded();
       }
 
-      this.logger.debug('Result cached', { key, size, ttl: this.config.ttl });
+      this.logger.debug('Result cached', { key, size: originalSize, ttl: this.config.ttl });
     } catch (error) {
       this.logger.error('Failed to set cache', error);
     }
@@ -399,6 +481,9 @@ export class QueryCache {
       this.stats.hits = 0;
       this.stats.misses = 0;
       this.stats.evictions = 0;
+      this.compressionStats.compressedEntries = 0;
+      this.compressionStats.totalOriginalSize = 0;
+      this.compressionStats.totalCompressedSize = 0;
     } catch (error) {
       this.logger.error('Failed to clear cache', error);
       throw error;
@@ -435,18 +520,44 @@ export class QueryCache {
       const total = this.stats.hits + this.stats.misses;
       const hitRate = total > 0 ? (this.stats.hits / total) * 100 : 0;
 
+      // Calculate compression stats
+      const compressionStats = this.calculateCompressionStats();
+
       return {
         hits: this.stats.hits,
         misses: this.stats.misses,
         hitRate,
         totalKeys,
         memoryUsed,
-        evictions: this.stats.evictions
+        evictions: this.stats.evictions,
+        compressionStats
       };
     } catch (error) {
       this.logger.error('Failed to get cache stats', error);
       throw error;
     }
+  }
+
+  /**
+   * Calculate compression statistics
+   */
+  private calculateCompressionStats() {
+    if (this.compressionStats.compressedEntries === 0) {
+      return undefined;
+    }
+
+    const totalOriginal = this.compressionStats.totalOriginalSize;
+    const totalCompressed = this.compressionStats.totalCompressedSize;
+    const averageRatio = (totalCompressed / totalOriginal) * 100;
+    const savings = totalOriginal - totalCompressed;
+
+    return {
+      compressedEntries: this.compressionStats.compressedEntries,
+      totalOriginalSize: totalOriginal,
+      totalCompressedSize: totalCompressed,
+      averageCompressionRatio: parseFloat(averageRatio.toFixed(2)),
+      memoryByteSavings: savings
+    };
   }
 
   /**
@@ -621,7 +732,10 @@ export class QueryCache {
       ttl: 3600, // 1 hour
       maxSize: 1024 * 1024 * 10, // 10MB
       invalidationStrategy: 'time',
-      autoInvalidateTables: []
+      autoInvalidateTables: [],
+      compressionEnabled: true,
+      compressionThreshold: 1024, // 1KB
+      compressionLevel: 6 // Balanced compression
     };
   }
 

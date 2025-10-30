@@ -964,4 +964,4 @@ aishell backup upload prod-db --retry 3 --timeout 3600
 
 ---
 
-*Last Updated: 2024-01-15 | Version: 2.0.0*
+*Last Updated: 2024-01-15 | Version: 1.0.0*

@@ -543,6 +543,6 @@ AI-Shell MCP implementation is part of the AI-Shell project. See LICENSE for det
 
 ---
 
-**Version**: 1.1.0
+**Version**: 1.0.0
 **Last Updated**: October 2025
 **MCP Protocol**: v1.0.0

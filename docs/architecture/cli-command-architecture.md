@@ -2,7 +2,7 @@
 
 **Unified Command Interface Design & Implementation Specification**
 
-**Version:** 2.0.0
+**Version:** 1.0.0
 **Status:** Architecture Design Document
 **Last Updated:** 2025-10-28
 **Author:** Architect Worker 5

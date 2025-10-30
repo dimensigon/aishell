@@ -1161,4 +1161,4 @@ mkdir -p /path/to/directory
 ---
 
 **Last Updated:** 2025-10-29
-**Version:** 2.0.0
+**Version:** 1.0.0

@@ -5,6 +5,7 @@ import threading
 import queue
 import time
 import re
+import logging
 from urllib.parse import urlparse, parse_qs
 
 # Import database drivers
@@ -25,15 +26,34 @@ except ImportError:
 class ConnectionPool:
     """Connection pool for a single database with health checks."""
 
-    def __init__(self, connection_string: str, max_connections: int = 10):
+    def __init__(
+        self,
+        connection_string: str,
+        max_connections: int = 10,
+        validate_on_get: bool = True,
+        max_validation_retries: int = 3,
+    ):
         self.connection_string = connection_string
         self.max_connections = max_connections
+        self.validate_on_get = validate_on_get
+        self.max_validation_retries = max_validation_retries
         self._available = queue.Queue(maxsize=max_connections)
         self._all_connections = []
         self._active_count = 0
         self._lock = threading.Lock()
         self._health_check_interval = 30  # seconds
         self._last_health_check = time.time()
+
+        # Setup logging
+        self.logger = logging.getLogger(__name__)
+
+        # Validation statistics
+        self._validation_stats = {
+            'total_validations': 0,
+            'failed_validations': 0,
+            'reconnections': 0,
+            'validation_errors': 0
+        }
 
         # Parse connection string to determine database type
         self.db_type = self._parse_db_type()
@@ -121,7 +141,7 @@ class ConnectionPool:
 
     def _health_check(self, conn) -> bool:
         """
-        Check if connection is healthy.
+        Check if connection is healthy (legacy method for backward compatibility).
 
         Args:
             conn: Connection to check
@@ -129,35 +149,66 @@ class ConnectionPool:
         Returns:
             True if healthy, False otherwise
         """
+        return self._validate_connection(conn, quick=False)
+
+    def _validate_connection(self, conn, quick: bool = False) -> bool:
+        """
+        Validate connection is alive.
+
+        Args:
+            conn: Database connection
+            quick: If True, use lightweight check
+
+        Returns:
+            True if connection is valid, False otherwise
+        """
+        with self._lock:
+            self._validation_stats['total_validations'] += 1
+
         if self.db_type == 'mock':
             return True
 
         try:
             if self.db_type == 'postgresql':
                 if not PSYCOPG2_AVAILABLE:
+                    with self._lock:
+                        self._validation_stats['validation_errors'] += 1
                     return False
-                # Check if connection is closed
-                if conn.closed:
-                    return False
-                # Execute simple query to verify connection
-                cursor = conn.cursor()
-                cursor.execute("SELECT 1")
-                cursor.fetchone()
-                cursor.close()
-                return True
+
+                if quick:
+                    # Quick check: just verify not closed
+                    return not conn.closed
+                else:
+                    # Full check: execute query
+                    if conn.closed:
+                        return False
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT 1")
+                    cursor.fetchone()
+                    cursor.close()
+                    return True
 
             elif self.db_type == 'mysql':
                 if not PYMYSQL_AVAILABLE:
+                    with self._lock:
+                        self._validation_stats['validation_errors'] += 1
                     return False
-                # Check if connection is open
-                if not conn.open:
-                    return False
-                # Ping the server
-                conn.ping(reconnect=False)
-                return True
+
+                if quick:
+                    # Quick check: verify connection is open
+                    return conn.open
+                else:
+                    # Full check: ping the server
+                    if not conn.open:
+                        return False
+                    conn.ping(reconnect=False)
+                    return True
 
             return False
-        except Exception:
+        except Exception as e:
+            self.logger.debug(f"Validation failed: {e}")
+            with self._lock:
+                self._validation_stats['failed_validations'] += 1
             return False
 
     def _reconnect(self, old_conn) -> Union[object, Any]:
@@ -170,6 +221,9 @@ class ConnectionPool:
         Returns:
             New connection or None if reconnection fails
         """
+        with self._lock:
+            self._validation_stats['reconnections'] += 1
+
         try:
             # Close old connection if possible
             if self.db_type == 'postgresql' and hasattr(old_conn, 'close'):
@@ -184,9 +238,11 @@ class ConnectionPool:
                     pass
 
             # Create new connection
-            return self._create_connection()
+            new_conn = self._create_connection()
+            self.logger.info("Successfully reconnected stale connection")
+            return new_conn
         except Exception as e:
-            # Log error but don't raise - we'll handle this in get_connection
+            self.logger.error(f"Reconnection failed: {e}")
             return None
 
     def _get_healthy_connection(self, timeout: float = None):
@@ -236,11 +292,58 @@ class ConnectionPool:
             raise Exception("Connection pool exhausted")
 
     def get_connection(self, timeout: float = None):
-        """Get healthy connection from pool."""
-        conn = self._get_healthy_connection(timeout)
-        with self._lock:
-            self._active_count += 1
-        return conn
+        """
+        Get a connection with validation.
+
+        Args:
+            timeout: Timeout in seconds for getting connection from pool
+
+        Returns:
+            Valid database connection
+
+        Raises:
+            Exception: If unable to get valid connection after retries
+        """
+        if not self.validate_on_get:
+            # Legacy behavior: no validation on get
+            conn = self._get_healthy_connection(timeout)
+            with self._lock:
+                self._active_count += 1
+            return conn
+
+        # New behavior: validate on get with retries
+        max_retries = self.max_validation_retries
+        for attempt in range(max_retries):
+            conn = self._get_healthy_connection(timeout)
+
+            # Validate connection before returning
+            if self._validate_connection(conn, quick=True):
+                with self._lock:
+                    self._active_count += 1
+                return conn
+            else:
+                # Connection is stale, try to reconnect
+                self.logger.warning(
+                    f"Stale connection detected (attempt {attempt + 1}/{max_retries})"
+                )
+                try:
+                    new_conn = self._reconnect(conn)
+                    if new_conn is not None and self._validate_connection(new_conn, quick=True):
+                        # Update all_connections list
+                        with self._lock:
+                            try:
+                                idx = self._all_connections.index(conn)
+                                self._all_connections[idx] = new_conn
+                            except ValueError:
+                                self._all_connections.append(new_conn)
+                            self._active_count += 1
+                        return new_conn
+                except Exception as e:
+                    self.logger.error(f"Reconnection failed: {e}")
+                    if attempt == max_retries - 1:
+                        raise
+
+        raise Exception("Failed to get valid connection after max retries")
 
     def release_connection(self, conn):
         """Release connection back to pool."""
@@ -257,6 +360,27 @@ class ConnectionPool:
     def available_connections(self):
         """Get count of available connections."""
         return self._available.qsize()
+
+    def get_validation_stats(self) -> Dict[str, Any]:
+        """
+        Get validation statistics.
+
+        Returns:
+            Dictionary with validation metrics including:
+            - total_validations: Total number of validations performed
+            - failed_validations: Number of failed validations
+            - reconnections: Number of reconnection attempts
+            - validation_errors: Number of validation errors
+            - failure_rate: Percentage of failed validations
+        """
+        with self._lock:
+            stats = self._validation_stats.copy()
+
+        # Calculate failure rate
+        total = max(stats['total_validations'], 1)
+        stats['failure_rate'] = (stats['failed_validations'] / total) * 100
+
+        return stats
 
     def close_all(self):
         """Close all connections in the pool."""

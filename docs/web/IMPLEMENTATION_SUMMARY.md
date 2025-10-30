@@ -679,7 +679,7 @@ The AI-Shell Web UI v2.0 has been successfully implemented with all requested fe
 
 **Project Status**: ✅ **COMPLETE**
 
-**Version**: v2.0.0
+**Version**: v1.0.0
 
 **Date**: October 2025
 

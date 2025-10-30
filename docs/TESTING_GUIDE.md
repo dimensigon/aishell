@@ -764,5 +764,5 @@ For testing questions or issues:
 ---
 
 **Last Updated**: 2025-10-12
-**Version**: 2.0.0
+**Version**: 1.0.0
 **Maintainers**: AIShell Testing Team

@@ -571,6 +571,6 @@ For issues or questions:
 
 ---
 
-**Version:** 2.0.0
+**Version:** 1.0.0
 **Last Updated:** 2025-10-28
 **Status:** Production Ready

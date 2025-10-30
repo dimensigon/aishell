@@ -932,4 +932,4 @@ aishell integration document \
 
 ---
 
-*Last Updated: 2024-01-15 | Version: 2.0.0*
+*Last Updated: 2024-01-15 | Version: 1.0.0*
