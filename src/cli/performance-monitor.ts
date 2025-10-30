@@ -6,6 +6,7 @@
 import { EventEmitter } from 'eventemitter3';
 import { StateManager } from '../core/state-manager';
 import { LLMMCPBridge } from '../llm/mcp-bridge';
+import { CircularBuffer } from '../utils/circular-buffer';
 
 /**
  * Monitor options
@@ -13,7 +14,7 @@ import { LLMMCPBridge } from '../llm/mcp-bridge';
 export interface MonitorOptions {
   interval?: number; // Update interval in seconds
   metrics?: string[]; // Specific metrics to display
-  maxHistory?: number; // Max history items to keep
+  maxHistory?: number; // Max history items to keep (default: 1000)
 }
 
 /**
@@ -92,14 +93,18 @@ export interface PerformanceMonitorEvents {
  * Performance Monitor
  */
 export class PerformanceMonitor extends EventEmitter<PerformanceMonitorEvents> {
-  private metricsHistory: PerformanceMetrics[] = [];
+  private metricsHistory: CircularBuffer<PerformanceMetrics>;
   private monitoringInterval?: NodeJS.Timeout;
+  private readonly maxHistorySize: number;
 
   constructor(
     private stateManager: StateManager,
-    private mcpBridge?: LLMMCPBridge
+    private mcpBridge?: LLMMCPBridge,
+    maxHistorySize: number = 1000
   ) {
     super();
+    this.maxHistorySize = maxHistorySize;
+    this.metricsHistory = new CircularBuffer<PerformanceMetrics>(maxHistorySize);
   }
 
   /**
@@ -107,10 +112,10 @@ export class PerformanceMonitor extends EventEmitter<PerformanceMonitorEvents> {
    */
   async monitor(options: MonitorOptions = {}): Promise<void> {
     const interval = (options.interval || 5) * 1000;
-    const maxHistory = options.maxHistory || 100;
 
     console.log('🔍 Starting performance monitoring...');
-    console.log(`Update interval: ${interval / 1000}s\n`);
+    console.log(`Update interval: ${interval / 1000}s`);
+    console.log(`Max history size: ${this.maxHistorySize} entries\n`);
 
     // Initial metrics
     await this.updateMetrics();
@@ -119,11 +124,7 @@ export class PerformanceMonitor extends EventEmitter<PerformanceMonitorEvents> {
     this.monitoringInterval = setInterval(async () => {
       await this.updateMetrics();
 
-      // Keep history limited
-      if (this.metricsHistory.length > maxHistory) {
-        this.metricsHistory = this.metricsHistory.slice(-maxHistory);
-      }
-
+      // No need to manually limit history - CircularBuffer handles it automatically
       // Display current metrics
       this.displayMetrics(options.metrics);
     }, interval);
@@ -168,7 +169,7 @@ export class PerformanceMonitor extends EventEmitter<PerformanceMonitorEvents> {
    * Display metrics in terminal
    */
   private displayMetrics(specificMetrics?: string[]): void {
-    const latest = this.metricsHistory[this.metricsHistory.length - 1];
+    const latest = this.metricsHistory.peek();
     if (!latest) return;
 
     console.clear();
@@ -403,7 +404,25 @@ export class PerformanceMonitor extends EventEmitter<PerformanceMonitorEvents> {
    * Get performance metrics history
    */
   getHistory(limit?: number): PerformanceMetrics[] {
-    return limit ? this.metricsHistory.slice(-limit) : [...this.metricsHistory];
+    if (limit) {
+      // Get last N items
+      const total = this.metricsHistory.length;
+      const start = Math.max(0, total - limit);
+      return this.metricsHistory.slice(start);
+    }
+    return this.metricsHistory.toArray();
+  }
+
+  /**
+   * Get memory usage statistics for the metrics buffer
+   */
+  getBufferStats(): {
+    capacity: number;
+    size: number;
+    utilizationPercent: number;
+    estimatedBytes: number;
+  } {
+    return this.metricsHistory.getMemoryStats();
   }
 
   // Private helper methods

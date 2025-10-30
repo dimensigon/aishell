@@ -277,6 +277,32 @@ export class QueryCache {
   }
 
   /**
+   * Async generator for scanning Redis keys with SCAN command
+   * @param pattern - Redis key pattern to match
+   * @param count - Number of keys to return per iteration (hint to Redis)
+   */
+  private async *scanKeys(pattern: string, count: number = 100): AsyncGenerator<string[]> {
+    if (!this.redis) {
+      return;
+    }
+
+    let cursor = '0';
+    do {
+      const [newCursor, keys] = await this.redis.scan(
+        cursor,
+        'MATCH',
+        pattern,
+        'COUNT',
+        count.toString()
+      );
+      cursor = newCursor;
+      if (keys.length > 0) {
+        yield keys;
+      }
+    } while (cursor !== '0');
+  }
+
+  /**
    * Invalidate all cache entries for a table
    */
   async invalidateTable(tableName: string): Promise<void> {
@@ -284,19 +310,52 @@ export class QueryCache {
 
     try {
       if (this.redis) {
-        const keys = await this.redis.keys('query:*');
+        const lowerTableName = tableName.toLowerCase();
+        let totalDeleted = 0;
 
-        for (const key of keys) {
-          const meta = await this.redis.get(`${key}:meta`);
-          if (meta) {
-            const parsed = JSON.parse(meta);
-            if (parsed.query.toLowerCase().includes(tableName.toLowerCase())) {
-              await this.redis.del(key);
-              await this.redis.del(`${key}:meta`);
-              await this.redis.del(`${key}:hits`);
+        // Use SCAN instead of KEYS to avoid blocking
+        for await (const keyBatch of this.scanKeys('query:*', 100)) {
+          // Batch fetch metadata for all keys
+          const metaPromises = keyBatch.map(key =>
+            this.redis!.get(`${key}:meta`).catch(() => null)
+          );
+          const metaResults = await Promise.all(metaPromises);
+
+          // Find keys that match the table name
+          const keysToDelete: string[] = [];
+          keyBatch.forEach((key, index) => {
+            const meta = metaResults[index];
+            if (meta) {
+              try {
+                const parsed = JSON.parse(meta);
+                if (parsed.query.toLowerCase().includes(lowerTableName)) {
+                  keysToDelete.push(key);
+                }
+              } catch (err) {
+                // Skip malformed metadata
+              }
             }
+          });
+
+          // Batch delete all matching keys and their metadata
+          if (keysToDelete.length > 0) {
+            const deletePromises: Promise<any>[] = [];
+            for (const key of keysToDelete) {
+              deletePromises.push(
+                this.redis!.del(key),
+                this.redis!.del(`${key}:meta`),
+                this.redis!.del(`${key}:hits`)
+              );
+            }
+            await Promise.all(deletePromises);
+            totalDeleted += keysToDelete.length;
           }
         }
+
+        this.logger.debug('Table cache invalidation complete', {
+          tableName,
+          keysDeleted: totalDeleted
+        });
       } else {
         const toDelete: string[] = [];
 
@@ -321,10 +380,18 @@ export class QueryCache {
 
     try {
       if (this.redis) {
-        const keys = await this.redis.keys('query:*');
-        if (keys.length > 0) {
-          await this.redis.del(...keys);
+        let totalDeleted = 0;
+
+        // Use SCAN instead of KEYS to avoid blocking
+        for await (const keyBatch of this.scanKeys('query:*', 100)) {
+          if (keyBatch.length > 0) {
+            // Batch delete all keys in this batch
+            await this.redis.del(...keyBatch);
+            totalDeleted += keyBatch.length;
+          }
         }
+
+        this.logger.debug('Cache clear complete', { keysDeleted: totalDeleted });
       } else {
         this.localCache.clear();
       }
@@ -347,8 +414,10 @@ export class QueryCache {
       let memoryUsed = 0;
 
       if (this.redis) {
-        const keys = await this.redis.keys('query:*');
-        totalKeys = keys.length;
+        // Use SCAN instead of KEYS to count keys without blocking
+        for await (const keyBatch of this.scanKeys('query:*', 100)) {
+          totalKeys += keyBatch.length;
+        }
 
         const info = await this.redis.info('memory');
         const memMatch = info.match(/used_memory:(\d+)/);
@@ -492,28 +561,40 @@ export class QueryCache {
    */
   async exportCache(): Promise<CacheEntry[]> {
     if (this.redis) {
-      const keys = await this.redis.keys('query:*');
       const entries: CacheEntry[] = [];
 
-      for (const key of keys) {
-        const [result, meta, hits] = await Promise.all([
-          this.redis.get(key),
-          this.redis.get(`${key}:meta`),
-          this.redis.get(`${key}:hits`)
-        ]);
+      // Use SCAN instead of KEYS to avoid blocking
+      for await (const keyBatch of this.scanKeys('query:*', 100)) {
+        // Batch fetch all data for keys in parallel
+        const fetchPromises = keyBatch.map(async (key) => {
+          const [result, meta, hits] = await Promise.all([
+            this.redis!.get(key),
+            this.redis!.get(`${key}:meta`),
+            this.redis!.get(`${key}:hits`)
+          ]);
 
-        if (result && meta) {
-          const metaData = JSON.parse(meta);
-          entries.push({
-            key,
-            query: metaData.query,
-            result: JSON.parse(result),
-            timestamp: metaData.timestamp,
-            ttl: this.config.ttl,
-            size: metaData.size,
-            hits: parseInt(hits || '0')
-          });
-        }
+          if (result && meta) {
+            try {
+              const metaData = JSON.parse(meta);
+              return {
+                key,
+                query: metaData.query,
+                result: JSON.parse(result),
+                timestamp: metaData.timestamp,
+                ttl: this.config.ttl,
+                size: metaData.size,
+                hits: parseInt(hits || '0')
+              } as CacheEntry;
+            } catch (err) {
+              // Skip malformed entries
+              return null;
+            }
+          }
+          return null;
+        });
+
+        const batchEntries = await Promise.all(fetchPromises);
+        entries.push(...batchEntries.filter((e): e is CacheEntry => e !== null));
       }
 
       return entries;
