@@ -78,3 +78,15 @@ __pycache__/
 coverage.json
 .pytest_cache/
 htmlcov/
+
+# Runtime state and session data
+.state
+.vault/
+.claude-flow/
+.hive-mind/
+.aishell/
+.coordination-status.json
+.swarm/
+
+# Node modules and build artifacts
+node_modules/
