@@ -26,7 +26,11 @@
     "test:db:clean": "bash scripts/teardown-test-dbs.sh --volumes",
     "lint": "eslint src/**/*.ts",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build && npm run test",
+    "prepack": "npm run build",
+    "version": "npm run build && git add -A dist",
+    "postversion": "git push && git push --tags"
   },
   "keywords": [
     "ai",
@@ -35,10 +39,35 @@
     "database",
     "llm",
     "cli",
-    "repl"
+    "repl",
+    "postgresql",
+    "mysql",
+    "mongodb",
+    "redis",
+    "sql",
+    "query-optimization",
+    "database-management"
   ],
-  "author": "",
+  "author": "AIShell Contributors",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dimensigon/aishell.git"
+  },
+  "homepage": "https://github.com/dimensigon/aishell#readme",
+  "bugs": {
+    "url": "https://github.com/dimensigon/aishell/issues"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
     "@modelcontextprotocol/sdk": "^0.5.0",

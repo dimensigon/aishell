@@ -90,3 +90,4 @@ htmlcov/
 
 # Node modules and build artifacts
 node_modules/
+.npmrc
