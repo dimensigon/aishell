@@ -217,12 +217,113 @@ export const encryptionCommands = {
 };
 
 /**
+ * Security status and monitoring commands
+ */
+export const securityCommands = {
+  /**
+   * Get comprehensive security status
+   */
+  async status(): Promise<void> {
+    const cli = createSecurityCLI();
+    await cli.getSecurityStatus();
+  },
+
+  /**
+   * Run security scan
+   */
+  async scan(options: { deep?: boolean; outputFile?: string } = {}): Promise<any> {
+    const cli = createSecurityCLI();
+    return await cli.runSecurityScan(options);
+  },
+
+  /**
+   * List known vulnerabilities
+   */
+  async vulnerabilities(): Promise<void> {
+    const cli = createSecurityCLI();
+    await cli.listVulnerabilities();
+  },
+
+  /**
+   * Check compliance
+   */
+  async compliance(standard?: 'gdpr' | 'sox' | 'hipaa' | 'all'): Promise<void> {
+    const cli = createSecurityCLI();
+    const report: any = { compliance: {} };
+    await cli.checkCompliance(report, { standard: standard || 'all' });
+  },
+
+  /**
+   * Verify audit log integrity
+   */
+  async verifyIntegrity(): Promise<void> {
+    const cli = createSecurityCLI();
+    await cli.verifyAuditIntegrity();
+  },
+
+  /**
+   * Detect PII in text
+   */
+  async detectPII(text: string): Promise<void> {
+    const cli = createSecurityCLI();
+    await cli.detectPII(text);
+  }
+};
+
+/**
+ * Extended vault commands
+ */
+export const vaultExtendedCommands = {
+  ...vaultCommands,
+
+  /**
+   * Search vault entries
+   */
+  async search(query: string): Promise<any[]> {
+    const cli = createSecurityCLI();
+    return await cli.searchVaultEntries(query);
+  },
+
+  /**
+   * Bulk import credentials
+   */
+  async import(filePath: string): Promise<void> {
+    const cli = createSecurityCLI();
+    await cli.bulkImportCredentials(filePath);
+  },
+
+  /**
+   * Bulk export credentials
+   */
+  async export(filePath: string, options: { includeSensitive?: boolean } = {}): Promise<void> {
+    const cli = createSecurityCLI();
+    await cli.bulkExportCredentials(filePath, options);
+  }
+};
+
+/**
+ * Extended role commands
+ */
+export const roleExtendedCommands = {
+  ...roleCommands,
+
+  /**
+   * Get role hierarchy
+   */
+  async hierarchy(roleName: string): Promise<void> {
+    const cli = createSecurityCLI();
+    await cli.getRoleHierarchy(roleName);
+  }
+};
+
+/**
  * Default export - all command handlers
  */
 export default {
-  vault: vaultCommands,
+  vault: vaultExtendedCommands,
   permissions: permissionCommands,
   audit: auditCommands,
-  roles: roleCommands,
-  encryption: encryptionCommands
+  roles: roleExtendedCommands,
+  encryption: encryptionCommands,
+  security: securityCommands
 };

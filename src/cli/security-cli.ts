@@ -923,6 +923,363 @@ print(json.dumps({'success': True, 'user': '${user}', 'role': '${role}'}))
   }
 
   /**
+   * Get security status and health overview
+   */
+  async getSecurityStatus(): Promise<void> {
+    try {
+      console.log(chalk.blue('\n🔒 Security Status Overview\n'));
+
+      // Check vault status
+      const pythonScript = `
+import sys
+import json
+from pathlib import Path
+sys.path.insert(0, '${path.join(process.cwd(), 'src')}')
+
+from security.vault import SecureVault
+from security.rbac import RBACManager
+from security.audit import AuditLogger
+
+# Check vault
+try:
+    vault = SecureVault(
+        vault_path='${this.vaultPath}',
+        master_password='${process.env.VAULT_PASSWORD || 'default-password'}'
+    )
+    vault_stats = vault.get_vault_stats()
+    vault_enabled = True
+except:
+    vault_stats = {}
+    vault_enabled = False
+
+# Check RBAC
+rbac = RBACManager()
+roles = rbac.list_roles()
+
+# Check audit
+audit = AuditLogger()
+audit_stats = audit.get_statistics()
+
+print(json.dumps({
+    'vault': {
+        'enabled': vault_enabled,
+        'stats': vault_stats
+    },
+    'rbac': {
+        'total_roles': len(roles),
+        'roles': roles
+    },
+    'audit': audit_stats
+}, default=str))
+`;
+
+      const result = await this.executePythonScript(pythonScript);
+      const status = JSON.parse(result);
+
+      // Display vault status
+      console.log(chalk.bold('Vault:'));
+      if (status.vault.enabled) {
+        console.log(chalk.green('  ✓ Enabled'));
+        console.log(`  Total Credentials: ${status.vault.stats.total_credentials}`);
+        console.log(`  Auto-Redact: ${status.vault.stats.auto_redact ? 'Yes' : 'No'}`);
+      } else {
+        console.log(chalk.red('  ✗ Disabled or not initialized'));
+      }
+      console.log('');
+
+      // Display RBAC status
+      console.log(chalk.bold('RBAC:'));
+      console.log(chalk.green('  ✓ Enabled'));
+      console.log(`  Total Roles: ${status.rbac.total_roles}`);
+      if (status.rbac.roles.length > 0) {
+        console.log(`  Roles: ${status.rbac.roles.join(', ')}`);
+      }
+      console.log('');
+
+      // Display audit status
+      console.log(chalk.bold('Audit Logging:'));
+      console.log(chalk.green('  ✓ Enabled'));
+      console.log(`  Total Logs: ${status.audit.total_logs}`);
+      console.log(`  Unique Users: ${status.audit.unique_users}`);
+      console.log(`  Unique Actions: ${status.audit.unique_actions}`);
+      console.log('');
+
+    } catch (error) {
+      this.logger.error('Failed to get security status', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Search vault entries by name or metadata
+   */
+  async searchVaultEntries(query: string): Promise<any[]> {
+    try {
+      this.logger.info('Searching vault entries', { query });
+
+      const pythonScript = `
+import sys
+import json
+from pathlib import Path
+sys.path.insert(0, '${path.join(process.cwd(), 'src')}')
+
+from security.vault import SecureVault
+
+vault = SecureVault(
+    vault_path='${this.vaultPath}',
+    master_password='${process.env.VAULT_PASSWORD || 'default-password'}',
+    auto_redact=True
+)
+
+results = vault.search_credentials('${query}')
+credentials = [
+    {
+        'id': cred.id,
+        'name': cred.name,
+        'type': cred.type.value,
+        'created_at': cred.created_at,
+        'data': cred.data
+    }
+    for cred in results
+]
+
+print(json.dumps(credentials))
+`;
+
+      const result = await this.executePythonScript(pythonScript);
+      const credentials = JSON.parse(result);
+
+      console.log(chalk.blue(`\n🔍 Search Results: ${credentials.length} found\n`));
+      this.displayVaultList(credentials, { format: 'table' });
+
+      return credentials;
+
+    } catch (error) {
+      this.logger.error('Failed to search vault entries', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Bulk import credentials from JSON file
+   */
+  async bulkImportCredentials(filePath: string): Promise<void> {
+    try {
+      console.log(chalk.blue(`\n📥 Importing credentials from: ${filePath}\n`));
+
+      const fileContent = await fs.readFile(filePath, 'utf-8');
+      const credentials = JSON.parse(fileContent);
+
+      let imported = 0;
+      let failed = 0;
+
+      for (const cred of credentials) {
+        try {
+          await this.addVaultEntry(cred.name, cred.value, { encrypt: cred.encrypt || false });
+          imported++;
+        } catch (error) {
+          failed++;
+          console.log(chalk.red(`  ✗ Failed to import: ${cred.name}`));
+        }
+      }
+
+      console.log(chalk.green(`\n✅ Import complete:`));
+      console.log(chalk.dim(`   Imported: ${imported}`));
+      console.log(chalk.dim(`   Failed: ${failed}\n`));
+
+    } catch (error) {
+      this.logger.error('Failed to bulk import credentials', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Bulk export credentials to JSON file
+   */
+  async bulkExportCredentials(filePath: string, options: { includeSensitive?: boolean } = {}): Promise<void> {
+    try {
+      console.log(chalk.blue(`\n📤 Exporting credentials to: ${filePath}\n`));
+
+      const credentials = await this.listVaultEntries({
+        showPasswords: options.includeSensitive || false
+      });
+
+      const exportData = credentials.map(cred => ({
+        name: cred.name,
+        type: cred.type,
+        value: cred.data,
+        created_at: cred.created_at
+      }));
+
+      await fs.writeFile(filePath, JSON.stringify(exportData, null, 2), 'utf-8');
+
+      console.log(chalk.green(`✅ Exported ${credentials.length} credentials\n`));
+
+    } catch (error) {
+      this.logger.error('Failed to bulk export credentials', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get role hierarchy information
+   */
+  async getRoleHierarchy(roleName: string): Promise<void> {
+    try {
+      const pythonScript = `
+import sys
+import json
+from pathlib import Path
+sys.path.insert(0, '${path.join(process.cwd(), 'src')}')
+
+from security.rbac import RBACManager
+
+rbac = RBACManager()
+hierarchy = rbac.get_role_hierarchy('${roleName}')
+
+print(json.dumps(hierarchy))
+`;
+
+      const result = await this.executePythonScript(pythonScript);
+      const hierarchy = JSON.parse(result);
+
+      if (!hierarchy.name) {
+        console.log(chalk.red(`\n❌ Role '${roleName}' not found\n`));
+        return;
+      }
+
+      console.log(chalk.blue(`\n📊 Role Hierarchy: ${hierarchy.name}\n`));
+
+      console.log(chalk.bold('Direct Permissions:'));
+      hierarchy.permissions.forEach((perm: string) => {
+        console.log(chalk.green(`  ✓ ${perm}`));
+      });
+      console.log('');
+
+      if (hierarchy.inherits_from.length > 0) {
+        console.log(chalk.bold('Inherits From:'));
+        hierarchy.inherits_from.forEach((parent: string) => {
+          console.log(chalk.cyan(`  → ${parent}`));
+        });
+        console.log('');
+
+        console.log(chalk.bold('Inherited Permissions:'));
+        hierarchy.inherited_permissions.forEach((perm: string) => {
+          console.log(chalk.dim(`  ✓ ${perm}`));
+        });
+        console.log('');
+      }
+
+      console.log(chalk.bold('Total Permissions:'), hierarchy.total_permissions.length);
+      console.log('');
+
+    } catch (error) {
+      this.logger.error('Failed to get role hierarchy', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Verify audit log integrity
+   */
+  async verifyAuditIntegrity(): Promise<void> {
+    try {
+      console.log(chalk.blue('\n🔍 Verifying audit log integrity...\n'));
+
+      const pythonScript = `
+import sys
+import json
+from pathlib import Path
+sys.path.insert(0, '${path.join(process.cwd(), 'src')}')
+
+from security.audit import TamperProofLogger
+
+logger = TamperProofLogger(retention_days=90)
+result = logger.verify_chain_integrity()
+
+print(json.dumps(result, default=str))
+`;
+
+      const result = await this.executePythonScript(pythonScript);
+      const verification = JSON.parse(result);
+
+      if (verification.valid) {
+        console.log(chalk.green('✅ Audit log integrity verified'));
+        console.log(chalk.dim(`   Total Logs: ${verification.total_logs}`));
+        console.log(chalk.dim(`   Verified At: ${verification.verified_at}`));
+      } else {
+        console.log(chalk.red('❌ Audit log integrity compromised'));
+        console.log(chalk.yellow(`\n⚠️  Invalid Logs: ${verification.invalid_logs.length}\n`));
+
+        verification.invalid_logs.forEach((log: any) => {
+          console.log(chalk.red(`  Log ID: ${log.log_id}`));
+          console.log(chalk.dim(`  Expected: ${log.expected_hash.substring(0, 16)}...`));
+          console.log(chalk.dim(`  Actual: ${log.actual_hash.substring(0, 16)}...\n`));
+        });
+      }
+      console.log('');
+
+    } catch (error) {
+      this.logger.error('Failed to verify audit integrity', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Detect PII in text
+   */
+  async detectPII(text: string): Promise<void> {
+    try {
+      const pythonScript = `
+import sys
+import json
+from pathlib import Path
+sys.path.insert(0, '${path.join(process.cwd(), 'src')}')
+
+from security.pii import PIIDetector
+
+detector = PIIDetector()
+detections = detector.detect_pii('''${text.replace(/'/g, "\\'")}''')
+pii_types = detector.get_pii_types('''${text.replace(/'/g, "\\'")}''')
+has_pii = detector.has_pii('''${text.replace(/'/g, "\\'")}''')
+masked = detector.mask_pii('''${text.replace(/'/g, "\\'")}''')
+
+print(json.dumps({
+    'has_pii': has_pii,
+    'types': pii_types,
+    'detections': detections,
+    'masked': masked
+}))
+`;
+
+      const result = await this.executePythonScript(pythonScript);
+      const piiData = JSON.parse(result);
+
+      console.log(chalk.blue('\n🔍 PII Detection Results\n'));
+
+      if (piiData.has_pii) {
+        console.log(chalk.yellow(`⚠️  PII Detected: ${piiData.types.join(', ')}`));
+        console.log(chalk.dim(`\nDetections: ${piiData.detections.length}\n`));
+
+        piiData.detections.forEach((detection: any, index: number) => {
+          console.log(chalk.red(`  ${index + 1}. ${detection.type.toUpperCase()}`));
+          console.log(chalk.dim(`     Value: ${detection.value}`));
+          console.log(chalk.dim(`     Position: ${detection.start}-${detection.end}\n`));
+        });
+
+        console.log(chalk.bold('Masked Output:'));
+        console.log(chalk.green(`  ${piiData.masked}\n`));
+      } else {
+        console.log(chalk.green('✅ No PII detected\n'));
+      }
+
+    } catch (error) {
+      this.logger.error('Failed to detect PII', error);
+      throw error;
+    }
+  }
+
+  /**
    * Check compliance with standards
    */
   async checkCompliance(report: SecurityReport, options: ComplianceOptions = {}): Promise<void> {
