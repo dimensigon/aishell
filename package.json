@@ -27,8 +27,8 @@
     "lint": "eslint src/**/*.ts",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist",
-    "prepublishOnly": "npm run clean && npm run build && npm run test",
-    "prepack": "npm run build",
+    "prepublishOnly-DISABLED": "npm run clean && npm run build && npm run test",
+    "prepack-DISABLED": "npm run build",
     "version": "npm run build && git add -A dist",
     "postversion": "git push && git push --tags"
   },

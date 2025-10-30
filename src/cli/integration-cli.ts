@@ -14,10 +14,10 @@ import chalk from 'chalk';
 import ora from 'ora';
 import Table from 'cli-table3';
 import inquirer from 'inquirer';
-import { SlackClient } from './notification-slack';
-import { EmailClient } from './notification-email';
+import SlackIntegration from './notification-slack';
+import { EmailNotificationService } from './notification-email';
 import { FederationEngine } from './federation-engine';
-import { SchemaManager } from './schema-inspector';
+import { SchemaInspector } from './schema-inspector';
 import { createLogger } from '../core/logger';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -25,18 +25,18 @@ import * as path from 'path';
 const logger = createLogger('IntegrationCLI');
 
 // Singleton instances
-let slackClient: SlackClient | null = null;
-let emailClient: EmailClient | null = null;
+let slackClient: SlackIntegration | null = null;
+let emailClient: EmailNotificationService | null = null;
 let federationEngine: FederationEngine | null = null;
-let schemaManager: SchemaManager | null = null;
-let adaAgent: ADAAgent | null = null;
+let schemaManager: SchemaInspector | null = null;
+// let adaAgent: ADAAgent | null = null; // TODO: Import ADAAgent or remove if not needed
 
 /**
  * Initialize Slack client
  */
-async function getSlackClient(): Promise<SlackClient> {
+async function getSlackClient(): Promise<SlackIntegration> {
   if (!slackClient) {
-    slackClient = new SlackClient();
+    slackClient = new SlackIntegration();
     await slackClient.initialize();
   }
   return slackClient;
@@ -45,9 +45,9 @@ async function getSlackClient(): Promise<SlackClient> {
 /**
  * Initialize Email client
  */
-async function getEmailClient(): Promise<EmailClient> {
+async function getEmailClient(): Promise<EmailNotificationService> {
   if (!emailClient) {
-    emailClient = new EmailClient();
+    emailClient = new EmailNotificationService({});
     await emailClient.initialize();
   }
   return emailClient;
@@ -67,9 +67,9 @@ async function getFederationEngine(): Promise<FederationEngine> {
 /**
  * Initialize Schema manager
  */
-async function getSchemaManager(): Promise<SchemaManager> {
+async function getSchemaManager(): Promise<SchemaInspector> {
   if (!schemaManager) {
-    schemaManager = new SchemaManager();
+    schemaManager = new SchemaInspector();
     await schemaManager.initialize();
   }
   return schemaManager;
