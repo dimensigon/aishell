@@ -14,30 +14,37 @@ import chalk from 'chalk';
 import ora from 'ora';
 import Table from 'cli-table3';
 import inquirer from 'inquirer';
-import { SlackClient } from './notification-slack';
-import { EmailClient } from './notification-email';
+import { SlackIntegration } from './notification-slack';
+import { EmailNotificationService } from './notification-email';
 import { FederationEngine } from './federation-engine';
-import { SchemaManager } from './schema-inspector';
+import { SchemaInspector } from './schema-inspector';
 import { createLogger } from '../core/logger';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
 const logger = createLogger('IntegrationCLI');
 
+// Type placeholder for ADA Agent (not yet implemented)
+interface ADAAgent {
+  initialize(): Promise<void>;
+  analyzeQuery(query: string): Promise<any>;
+  optimizePlan(plan: any): Promise<any>;
+}
+
 // Singleton instances
-let slackClient: SlackClient | null = null;
-let emailClient: EmailClient | null = null;
+let slackClient: SlackIntegration | null = null;
+let emailClient: EmailNotificationService | null = null;
 let federationEngine: FederationEngine | null = null;
-let schemaManager: SchemaManager | null = null;
+let schemaManager: SchemaInspector | null = null;
 let adaAgent: ADAAgent | null = null;
 
 /**
  * Initialize Slack client
  */
-async function getSlackClient(): Promise<SlackClient> {
+async function getSlackClient(): Promise<SlackIntegration> {
   if (!slackClient) {
-    slackClient = new SlackClient();
-    await slackClient.initialize();
+    slackClient = new SlackIntegration();
+    // SlackIntegration doesn't have initialize method, configure directly
   }
   return slackClient;
 }
@@ -45,10 +52,17 @@ async function getSlackClient(): Promise<SlackClient> {
 /**
  * Initialize Email client
  */
-async function getEmailClient(): Promise<EmailClient> {
+async function getEmailClient(): Promise<EmailNotificationService> {
   if (!emailClient) {
-    emailClient = new EmailClient();
-    await emailClient.initialize();
+    emailClient = new EmailNotificationService({
+      host: process.env.SMTP_HOST || 'localhost',
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: process.env.SMTP_USER ? {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS || ''
+      } : undefined
+    });
   }
   return emailClient;
 }
@@ -77,11 +91,24 @@ async function getSchemaManager(): Promise<SchemaManager> {
 
 /**
  * Initialize ADA agent
+ * Note: ADA Agent is a placeholder for future implementation
  */
 async function getADAAgent(): Promise<ADAAgent> {
   if (!adaAgent) {
-    adaAgent = new ADAAgent();
-    await adaAgent.initialize();
+    // TODO: Implement actual ADA Agent class
+    adaAgent = {
+      async initialize() {
+        logger.info('ADA Agent placeholder initialized');
+      },
+      async analyzeQuery(query: string) {
+        logger.info('Analyzing query:', query);
+        return { analyzed: true };
+      },
+      async optimizePlan(plan: any) {
+        logger.info('Optimizing plan:', plan);
+        return plan;
+      }
+    };
   }
   return adaAgent;
 }

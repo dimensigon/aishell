@@ -298,31 +298,27 @@ export class MigrationTester {
     try {
       switch (connection.type) {
         case DatabaseType.POSTGRESQL:
-          await connection.client.query(`
-            SELECT table_name
-            FROM information_schema.tables
-            WHERE table_schema = 'public'
-          `);
-          break;
-
         case DatabaseType.MYSQL:
-          await connection.client.query(`
-            SELECT TABLE_NAME
-            FROM information_schema.TABLES
-            WHERE TABLE_SCHEMA = DATABASE()
-          `);
+          if ('query' in connection.client && typeof connection.client.query === 'function') {
+            const query = connection.type === DatabaseType.POSTGRESQL
+              ? `SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'`
+              : `SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()`;
+            await connection.client.query(query);
+          }
           break;
 
         case DatabaseType.SQLITE:
-          await new Promise((resolve, reject) => {
-            connection.client.all(
-              "SELECT name FROM sqlite_master WHERE type='table'",
-              (err: Error, rows: any) => {
-                if (err) reject(err);
-                else resolve(rows);
-              }
-            );
-          });
+          if ('all' in connection.client && typeof connection.client.all === 'function') {
+            await new Promise((resolve, reject) => {
+              connection.client.all(
+                "SELECT name FROM sqlite_master WHERE type='table'",
+                (err: Error, rows: any) => {
+                  if (err) reject(err);
+                  else resolve(rows);
+                }
+              );
+            });
+          }
           break;
       }
     } catch (error) {
@@ -347,11 +343,10 @@ export class MigrationTester {
     try {
       switch (connection.type) {
         case DatabaseType.POSTGRESQL:
-          await connection.client.query(`CREATE DATABASE ${testDbName}`);
-          break;
-
         case DatabaseType.MYSQL:
-          await connection.client.query(`CREATE DATABASE ${testDbName}`);
+          if ('query' in connection.client && typeof connection.client.query === 'function') {
+            await connection.client.query(`CREATE DATABASE ${testDbName}`);
+          }
           break;
 
         case DatabaseType.SQLITE:
@@ -399,16 +394,17 @@ export class MigrationTester {
 
         switch (originalConnection.type) {
           case DatabaseType.POSTGRESQL:
-            await originalConnection.client.query(`DROP DATABASE IF EXISTS ${testDbName}`);
-            break;
-
           case DatabaseType.MYSQL:
-            await originalConnection.client.query(`DROP DATABASE IF EXISTS ${testDbName}`);
+            if ('query' in originalConnection.client && typeof originalConnection.client.query === 'function') {
+              await originalConnection.client.query(`DROP DATABASE IF EXISTS ${testDbName}`);
+            }
             break;
 
           case DatabaseType.SQLITE:
             // Delete SQLite file
-            await fs.unlink(testConnection.config.database);
+            if (testConnection.config.database) {
+              await fs.unlink(testConnection.config.database);
+            }
             break;
         }
       }

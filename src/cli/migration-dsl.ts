@@ -71,7 +71,7 @@ interface MigrationDefinition {
  */
 export class MigrationBuilder {
   private definition: MigrationDefinition;
-  private currentPhase: MigrationPhase;
+  private currentPhase: MigrationPhase = { name: '', operations: [] };
   private phaseCounter: number = 0;
   private currentOperation?: Operation;
   private currentTable?: string;

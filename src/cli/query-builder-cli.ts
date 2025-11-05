@@ -1168,7 +1168,7 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
 
     const draft: QueryDraft = {
       id: uuidv4(),
-      name,
+      name: name || 'unnamed-draft',
       state: { ...this.state },
       createdAt: Date.now(),
       updatedAt: Date.now(),
