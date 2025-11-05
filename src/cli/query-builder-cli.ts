@@ -865,9 +865,10 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
       console.log(chalk.cyan('\n⏳ Executing query...'));
 
       const startTime = Date.now();
+      const activeConn = this.connectionManager.getActive();
       const result = await this.queryExecutor.execute(
         sql,
-        this.connectionManager.getActiveConnectionName() || ''
+        activeConn?.config.database || ''
       );
       const executionTime = Date.now() - startTime;
 
@@ -917,7 +918,7 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
    * Generate SQL from state
    */
   generateSQL(): string {
-    const dbType = this.connectionManager.getActiveConnection()?.type;
+    const dbType = this.connectionManager.getActive()?.type;
 
     switch (this.state.type) {
       case QueryType.SELECT:
@@ -1428,7 +1429,7 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
    * Get table list
    */
   private async getTableList(): Promise<string[]> {
-    const connection = this.connectionManager.getActiveConnection();
+    const connection = this.connectionManager.getActive();
     if (!connection) {
       throw new Error('No active connection');
     }
@@ -1442,7 +1443,7 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
    * Get table columns
    */
   private async getTableColumns(table: string): Promise<string[]> {
-    const connection = this.connectionManager.getActiveConnection();
+    const connection = this.connectionManager.getActive();
     if (!connection) {
       throw new Error('No active connection');
     }

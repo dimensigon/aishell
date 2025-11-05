@@ -399,26 +399,35 @@ Return a JSON execution plan with this structure:
     try {
       switch (connection.type) {
         case DatabaseType.POSTGRESQL:
-          const pgResult = await connection.client.query(`
-            SELECT table_name, column_name, data_type
-            FROM information_schema.columns
-            WHERE table_schema = 'public'
-            ORDER BY table_name, ordinal_position
-          `);
-          return this.formatSchemaInfo(pgResult.rows);
+          if ('query' in connection.client && typeof connection.client.query === 'function') {
+            const pgResult = await connection.client.query(`
+              SELECT table_name, column_name, data_type
+              FROM information_schema.columns
+              WHERE table_schema = 'public'
+              ORDER BY table_name, ordinal_position
+            `);
+            return this.formatSchemaInfo(pgResult.rows);
+          }
+          return {};
 
         case DatabaseType.MYSQL:
-          const [mysqlResult] = await connection.client.query(`
-            SELECT TABLE_NAME as table_name, COLUMN_NAME as column_name, DATA_TYPE as data_type
-            FROM information_schema.COLUMNS
-            WHERE TABLE_SCHEMA = DATABASE()
-          `);
-          return this.formatSchemaInfo(mysqlResult);
+          if ('query' in connection.client && typeof connection.client.query === 'function') {
+            const [mysqlResult] = await connection.client.query(`
+              SELECT TABLE_NAME as table_name, COLUMN_NAME as column_name, DATA_TYPE as data_type
+              FROM information_schema.COLUMNS
+              WHERE TABLE_SCHEMA = DATABASE()
+            `);
+            return this.formatSchemaInfo(mysqlResult);
+          }
+          return {};
 
         case DatabaseType.MONGODB:
           // MongoDB is schemaless, return collection names
-          const collections = await connection.client.db().listCollections().toArray();
-          return { collections: collections.map((c: any) => c.name) };
+          if ('db' in connection.client && typeof connection.client.db === 'function') {
+            const collections = await connection.client.db().listCollections().toArray();
+            return { collections: collections.map((c: any) => c.name) };
+          }
+          return {};
 
         default:
           return {};

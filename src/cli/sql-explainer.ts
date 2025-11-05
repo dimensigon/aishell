@@ -309,25 +309,29 @@ Format your response as JSON:
     const connection = this.dbManager.getActive();
     if (!connection) return { tables: [] };
 
-    const result = await connection.client.query(`
-      SELECT
-        t.table_name,
-        c.column_name,
-        c.data_type,
-        c.is_nullable,
-        tc.constraint_type
-      FROM information_schema.tables t
-      LEFT JOIN information_schema.columns c
-        ON t.table_name = c.table_name
-      LEFT JOIN information_schema.key_column_usage kcu
-        ON c.column_name = kcu.column_name AND c.table_name = kcu.table_name
-      LEFT JOIN information_schema.table_constraints tc
-        ON kcu.constraint_name = tc.constraint_name
-      WHERE t.table_schema = 'public'
-      ORDER BY t.table_name, c.ordinal_position
-    `);
+    if ('query' in connection.client && typeof connection.client.query === 'function') {
+      const result = await connection.client.query(`
+        SELECT
+          t.table_name,
+          c.column_name,
+          c.data_type,
+          c.is_nullable,
+          tc.constraint_type
+        FROM information_schema.tables t
+        LEFT JOIN information_schema.columns c
+          ON t.table_name = c.table_name
+        LEFT JOIN information_schema.key_column_usage kcu
+          ON c.column_name = kcu.column_name AND c.table_name = kcu.table_name
+        LEFT JOIN information_schema.table_constraints tc
+          ON kcu.constraint_name = tc.constraint_name
+        WHERE t.table_schema = 'public'
+        ORDER BY t.table_name, c.ordinal_position
+      `);
 
-    return this.formatSchemaInfo(result.rows);
+      return this.formatSchemaInfo(result.rows);
+    }
+
+    return { tables: [] };
   }
 
   /**
@@ -337,19 +341,23 @@ Format your response as JSON:
     const connection = this.dbManager.getActive();
     if (!connection) return { tables: [] };
 
-    const [result] = await connection.client.query(`
-      SELECT
-        TABLE_NAME as table_name,
-        COLUMN_NAME as column_name,
-        DATA_TYPE as data_type,
-        IS_NULLABLE as is_nullable,
-        COLUMN_KEY as constraint_type
-      FROM information_schema.COLUMNS
-      WHERE TABLE_SCHEMA = DATABASE()
-      ORDER BY TABLE_NAME, ORDINAL_POSITION
-    `);
+    if ('query' in connection.client && typeof connection.client.query === 'function') {
+      const [result] = await connection.client.query(`
+        SELECT
+          TABLE_NAME as table_name,
+          COLUMN_NAME as column_name,
+          DATA_TYPE as data_type,
+          IS_NULLABLE as is_nullable,
+          COLUMN_KEY as constraint_type
+        FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+        ORDER BY TABLE_NAME, ORDINAL_POSITION
+      `);
 
-    return this.formatSchemaInfo(result);
+      return this.formatSchemaInfo(result);
+    }
+
+    return { tables: [] };
   }
 
   /**
@@ -358,6 +366,10 @@ Format your response as JSON:
   private async getSQLiteSchema(): Promise<any> {
     const connection = this.dbManager.getActive();
     if (!connection) return { tables: [] };
+
+    if (!('all' in connection.client && typeof connection.client.all === 'function')) {
+      return { tables: [] };
+    }
 
     return new Promise((resolve, reject) => {
       connection.client.all(
@@ -370,15 +382,16 @@ Format your response as JSON:
 
           const schema = { tables: [] as any[] };
 
-          tables.forEach((table) => {
-            connection.client.all(
-              `PRAGMA table_info(${table.name})`,
-              (err: Error, columns: any[]) => {
-                if (!err) {
-                  schema.tables.push({
-                    name: table.name,
-                    columns: columns.map((col) => ({
-                      name: col.name,
+          if ('all' in connection.client && typeof connection.client.all === 'function') {
+            tables.forEach((table) => {
+              connection.client.all(
+                `PRAGMA table_info(${table.name})`,
+                (err: Error, columns: any[]) => {
+                  if (!err) {
+                    schema.tables.push({
+                      name: table.name,
+                      columns: columns.map((col) => ({
+                        name: col.name,
                       type: col.type,
                       nullable: !col.notnull
                     }))
@@ -386,7 +399,8 @@ Format your response as JSON:
                 }
               }
             );
-          });
+            });
+          }
 
           resolve(schema);
         }
@@ -401,11 +415,15 @@ Format your response as JSON:
     const connection = this.dbManager.getActive();
     if (!connection) return { collections: [] };
 
-    const collections = await connection.client.db().listCollections().toArray();
+    if ('db' in connection.client && typeof connection.client.db === 'function') {
+      const collections = await connection.client.db().listCollections().toArray();
 
-    return {
-      collections: collections.map((c: any) => c.name)
-    };
+      return {
+        collections: collections.map((c: any) => c.name)
+      };
+    }
+
+    return { collections: [] };
   }
 
   /**
