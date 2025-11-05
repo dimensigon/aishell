@@ -351,7 +351,7 @@ registerMongoDBCommands(program, stateManager);
 
 // Register Redis commands (Sprint 2 - 14 commands)
 function getRedisCLI(): RedisCLI {
-  return new RedisCLI(stateManager);
+  return new RedisCLI(); // RedisCLI constructor takes no arguments
 }
 registerRedisCommands(program, getRedisCLI);
 
@@ -1807,7 +1807,7 @@ setupBackupCommands(program);
 
 // Register optimization commands (if available)
 if (typeof registerOptimizationCommands === 'function') {
-  registerOptimizationCommands(program, getOptimizationCLI());
+  registerOptimizationCommands(program, getOptimizationCLI); // Pass function reference, not call result
 }
 
 // ============================================================================
