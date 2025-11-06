@@ -7,25 +7,25 @@
 import { Command } from 'commander';
 import {
   slackSetup,
-  slackNotify,
+  slackSend,  // was slackNotify
   slackAlert,
   slackReport,
   emailSetup,
   emailSend,
   emailAlert,
   emailReport,
-  federationAdd,
-  federationRemove,
+  federationAddDb,  // was federationAdd
+  federationRemoveDb,  // was federationRemove
   federationQuery,
-  federationStatus,
-  schemaDiff,
-  schemaSync,
+  federationList,  // was federationStatus
+  schemaCompare,  // was schemaDiff
+  schemaValidate,  // was schemaSync
   schemaExport,
-  schemaImport,
-  adaStart,
-  adaStop,
-  adaStatus,
-  adaConfigure
+  schemaInspect,  // was schemaImport
+  adaAnalyze,  // was adaStart
+  adaOptimize,  // was adaStop
+  adaSuggest,  // was adaStatus
+  adaLearn  // was adaConfigure
 } from './integration-cli.js';
 
 /**
@@ -49,15 +49,11 @@ export function registerIntegrationCommands(program: Command): void {
     .action(slackSetup);
 
   slackCmd
-    .command('notify')
-    .description('Send notification to Slack channel')
-    .argument('<channel>', 'Channel name or ID')
-    .argument('<message>', 'Message to send')
-    .option('-p, --priority <level>', 'Priority level (low|normal|high)', 'normal')
-    .option('-a, --attachments <json>', 'Attachments as JSON or file path')
+    .command('send <message>')
+    .description('Send message to Slack channel')
+    .option('-c, --channel <channel>', 'Channel name or ID')
     .option('-t, --thread <ts>', 'Thread timestamp to reply to')
-    .option('-m, --mentions <users>', 'Comma-separated user IDs to mention')
-    .action(slackNotify);
+    .action(slackSend);
 
   slackCmd
     .command('alert')
@@ -142,23 +138,14 @@ export function registerIntegrationCommands(program: Command): void {
     .description('Database federation commands');
 
   federationCmd
-    .command('add')
+    .command('add-db <name> <connectionString>')
     .description('Add database to federation')
-    .argument('<database>', 'Database name')
-    .option('-t, --type <type>', 'Database type (postgresql|mysql|mongodb|redis)')
-    .option('-h, --host <host>', 'Database host')
-    .option('-p, --port <port>', 'Database port', parseInt)
-    .option('-u, --username <username>', 'Username')
-    .option('--password <password>', 'Password')
-    .option('-a, --alias <alias>', 'Database alias')
-    .action(federationAdd);
+    .action(federationAddDb);
 
   federationCmd
-    .command('remove')
+    .command('remove-db <name>')
     .description('Remove database from federation')
-    .argument('<database>', 'Database name or alias')
-    .option('-f, --force', 'Force removal without confirmation', false)
-    .action(federationRemove);
+    .action(federationRemoveDb);
 
   federationCmd
     .command('query')
@@ -171,11 +158,9 @@ export function registerIntegrationCommands(program: Command): void {
     .action(federationQuery);
 
   federationCmd
-    .command('status')
-    .description('Show federation status and connected databases')
-    .option('-d, --detailed', 'Show detailed metrics', false)
-    .option('--database <database>', 'Show status for specific database')
-    .action(federationStatus);
+    .command('list')
+    .description('List federated databases')
+    .action(federationList);
 
   // ============================================================================
   // SCHEMA MANAGEMENT COMMANDS
@@ -186,44 +171,25 @@ export function registerIntegrationCommands(program: Command): void {
     .description('Schema management commands');
 
   schemaCmd
-    .command('diff')
+    .command('compare <db1> <db2>')
     .description('Compare schemas between two databases')
-    .argument('<source>', 'Source database')
-    .argument('<target>', 'Target database')
-    .option('-o, --output <file>', 'Save diff to file')
-    .option('-f, --format <format>', 'Output format (text|json|sql)', 'text')
-    .option('--ignore-data', 'Ignore data differences', false)
-    .action(schemaDiff);
+    .action(schemaCompare);
 
   schemaCmd
-    .command('sync')
-    .description('Synchronize schema from source to target database')
-    .argument('<source>', 'Source database')
-    .argument('<target>', 'Target database')
-    .option('--dry-run', 'Simulate sync without executing', false)
-    .option('-f, --force', 'Skip confirmation prompt', false)
-    .option('-b, --backup', 'Create backup before sync', false)
-    .action(schemaSync);
+    .command('validate')
+    .description('Validate current schema')
+    .action(schemaValidate);
 
   schemaCmd
-    .command('export')
+    .command('export <output>')
     .description('Export schema to file')
-    .argument('<database>', 'Database name')
-    .option('-o, --output <file>', 'Output file path')
-    .option('-f, --format <format>', 'Export format (sql|json|yaml)', 'sql')
-    .option('--include-data', 'Include table data', false)
-    .option('-t, --tables <tables>', 'Comma-separated table names to export')
+    .option('-f, --format <format>', 'Output format (json|sql|markdown)')
     .action(schemaExport);
 
   schemaCmd
-    .command('import')
-    .description('Import schema from file')
-    .argument('<file>', 'Schema file to import')
-    .option('-d, --database <database>', 'Target database')
-    .option('-f, --format <format>', 'Schema format (sql|json|yaml)')
-    .option('--dry-run', 'Validate without importing', false)
-    .option('--force', 'Skip confirmation prompt', false)
-    .action(schemaImport);
+    .command('inspect [database]')
+    .description('Inspect database schema')
+    .action(schemaInspect);
 
   // ============================================================================
   // AUTONOMOUS AGENT COMMANDS
@@ -234,38 +200,24 @@ export function registerIntegrationCommands(program: Command): void {
     .description('Autonomous Database Agent (ADA) commands');
 
   adaCmd
-    .command('start')
-    .description('Start autonomous database agent')
-    .option('-m, --mode <mode>', 'Operation mode (monitoring|optimization|full)', 'full')
-    .option('-i, --interval <seconds>', 'Check interval in seconds', parseInt, 60)
-    .option('--auto-fix', 'Enable automatic fixes', true)
-    .action(adaStart);
+    .command('analyze <query>')
+    .description('Analyze query with ADA')
+    .action(adaAnalyze);
 
   adaCmd
-    .command('stop')
-    .description('Stop autonomous database agent')
-    .option('-f, --force', 'Force stop without graceful shutdown', false)
-    .option('-e, --export', 'Export metrics before stopping', false)
-    .action(adaStop);
+    .command('optimize <query>')
+    .description('Optimize query with ADA')
+    .action(adaOptimize);
 
   adaCmd
-    .command('status')
-    .description('Check autonomous agent status')
-    .option('-d, --detailed', 'Show detailed status and metrics', false)
-    .option('-w, --watch', 'Watch mode - continuously update status', false)
-    .option('-i, --interval <ms>', 'Update interval for watch mode (ms)', parseInt, 5000)
-    .action(adaStatus);
+    .command('suggest <description>')
+    .description('Get query suggestions from ADA')
+    .action(adaSuggest);
 
   adaCmd
-    .command('configure')
-    .description('Configure autonomous agent settings')
-    .option('-m, --mode <mode>', 'Operation mode (monitoring|optimization|full)')
-    .option('-i, --interval <seconds>', 'Check interval in seconds', parseInt)
-    .option('--auto-fix <boolean>', 'Enable/disable automatic fixes', (val) => val === 'true')
-    .option('--alert-threshold <percent>', 'Alert threshold percentage', parseInt)
-    .option('-d, --databases <databases>', 'Comma-separated database names to monitor')
-    .option('--interactive', 'Interactive configuration', false)
-    .action(adaConfigure);
+    .command('learn <feedback>')
+    .description('Provide feedback to ADA')
+    .action(adaLearn);
 }
 
 /**

@@ -15,7 +15,7 @@ import ora from 'ora';
 import Table from 'cli-table3';
 import inquirer from 'inquirer';
 import { SlackIntegration } from './notification-slack';
-import { EmailNotificationService, SMTPConfig } from './notification-email';
+import { EmailNotificationService } from './notification-email';
 import { FederationEngine } from './federation-engine';
 import { SchemaInspector } from './schema-inspector';
 import { DatabaseConnectionManager } from './database-manager';
@@ -77,15 +77,17 @@ async function getSlackClient(): Promise<SlackIntegration> {
  */
 async function getEmailClient(): Promise<EmailNotificationService> {
   if (!emailClient) {
-    const config: SMTPConfig = {
-      host: process.env.SMTP_HOST || 'localhost',
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: process.env.SMTP_SECURE === 'true',
-      auth: process.env.SMTP_USER ? {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS || ''
-      } : undefined,
-      from: process.env.SMTP_FROM || 'noreply@aishell.local'
+    const config = {
+      smtp: {
+        host: process.env.SMTP_HOST || 'localhost',
+        port: parseInt(process.env.SMTP_PORT || '587'),
+        secure: process.env.SMTP_SECURE === 'true',
+        auth: process.env.SMTP_USER ? {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS || ''
+        } : { user: '', pass: '' }
+      },
+      defaultFrom: process.env.SMTP_FROM || 'noreply@aishell.local'
     };
     emailClient = new EmailNotificationService(config);
   }
@@ -318,23 +320,23 @@ export async function federationQuery(query: string): Promise<void> {
     spinner.succeed('Federated query executed');
 
     console.log(chalk.bold('\nQuery Results:'));
-    console.log(`Databases: ${result.databases.join(', ')}`);
     console.log(`Execution Time: ${result.executionTime}ms`);
-    console.log(`Rows: ${result.results.length}`);
+    console.log(`Rows: ${result.rowCount}`);
+    console.log(`Databases Used: ${Object.keys(result.statistics.databases).length}`);
 
-    if (result.results.length > 0) {
+    if (result.rows.length > 0) {
       const table = new Table({
-        head: Object.keys(result.results[0]).map(k => chalk.cyan(k))
+        head: Object.keys(result.rows[0]).map((k: string) => chalk.cyan(k))
       });
 
-      result.results.slice(0, 10).forEach(row => {
+      result.rows.slice(0, 10).forEach((row: any) => {
         table.push(Object.values(row));
       });
 
       console.log(table.toString());
 
-      if (result.results.length > 10) {
-        console.log(chalk.gray(`\n... and ${result.results.length - 10} more rows\n`));
+      if (result.rows.length > 10) {
+        console.log(chalk.gray(`\n... and ${result.rows.length - 10} more rows\n`));
       }
     }
   } catch (error) {
