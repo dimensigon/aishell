@@ -629,7 +629,8 @@ export class MonitoringCLI {
   private dashboardServer?: DashboardServer;
 
   constructor() {
-    this.stateManager = StateManager.getInstance();
+    // StateManager doesn't have getInstance, create new instance
+    this.stateManager = new StateManager();
     this.dbManager = new DatabaseConnectionManager(this.stateManager);
     this.healthMonitor = new HealthMonitor(this.dbManager, this.stateManager);
     this.perfMonitor = new PerformanceMonitor(this.stateManager);
@@ -649,11 +650,11 @@ export class MonitoringCLI {
 
     try {
       if (database) {
-        // Switch to specific database
+        // Switch to specific database by name
         const connections = this.dbManager.listConnections();
-        const conn = connections.find(c => c.alias === database || c.id === database);
+        const conn = connections.find(c => c.name === database);
         if (conn) {
-          await this.dbManager.setActive(conn.id);
+          await this.dbManager.switchActive(conn.name);
         }
       }
 

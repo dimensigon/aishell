@@ -9,6 +9,7 @@ import { createLogger } from '../core/logger';
 import { StateManager } from '../core/state-manager';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import type sqlite3 from 'sqlite3';
 
 interface MigrationFile {
   path: string;
@@ -303,14 +304,16 @@ export class MigrationTester {
             const query = connection.type === DatabaseType.POSTGRESQL
               ? `SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'`
               : `SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()`;
-            await connection.client.query(query);
+            // Type assertion after type guard to resolve overload incompatibility
+            await (connection.client as any).query(query);
           }
           break;
 
         case DatabaseType.SQLITE:
           if ('all' in connection.client && typeof connection.client.all === 'function') {
+            const db = connection.client as sqlite3.Database;
             await new Promise((resolve, reject) => {
-              connection.client.all(
+              db.all(
                 "SELECT name FROM sqlite_master WHERE type='table'",
                 (err: Error, rows: any) => {
                   if (err) reject(err);
@@ -345,7 +348,8 @@ export class MigrationTester {
         case DatabaseType.POSTGRESQL:
         case DatabaseType.MYSQL:
           if ('query' in connection.client && typeof connection.client.query === 'function') {
-            await connection.client.query(`CREATE DATABASE ${testDbName}`);
+            // Type assertion after type guard to resolve overload incompatibility
+            await (connection.client as any).query(`CREATE DATABASE ${testDbName}`);
           }
           break;
 
@@ -396,7 +400,8 @@ export class MigrationTester {
           case DatabaseType.POSTGRESQL:
           case DatabaseType.MYSQL:
             if ('query' in originalConnection.client && typeof originalConnection.client.query === 'function') {
-              await originalConnection.client.query(`DROP DATABASE IF EXISTS ${testDbName}`);
+              // Type assertion after type guard to resolve overload incompatibility
+              await (originalConnection.client as any).query(`DROP DATABASE IF EXISTS ${testDbName}`);
             }
             break;
 

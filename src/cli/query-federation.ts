@@ -400,7 +400,8 @@ Return a JSON execution plan with this structure:
       switch (connection.type) {
         case DatabaseType.POSTGRESQL:
           if ('query' in connection.client && typeof connection.client.query === 'function') {
-            const pgResult = await connection.client.query(`
+            // Type assertion after type guard to resolve overload incompatibility
+            const pgResult = await (connection.client as any).query(`
               SELECT table_name, column_name, data_type
               FROM information_schema.columns
               WHERE table_schema = 'public'
@@ -412,7 +413,8 @@ Return a JSON execution plan with this structure:
 
         case DatabaseType.MYSQL:
           if ('query' in connection.client && typeof connection.client.query === 'function') {
-            const [mysqlResult] = await connection.client.query(`
+            // Type assertion after type guard to resolve overload incompatibility
+            const [mysqlResult] = await (connection.client as any).query(`
               SELECT TABLE_NAME as table_name, COLUMN_NAME as column_name, DATA_TYPE as data_type
               FROM information_schema.COLUMNS
               WHERE TABLE_SCHEMA = DATABASE()

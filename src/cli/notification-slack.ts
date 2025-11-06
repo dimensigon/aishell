@@ -253,7 +253,7 @@ export class SlackIntegration {
     const args: ChatPostMessageArguments = {
       channel: message.channel,
       text: message.text,
-      blocks: message.blocks || undefined,
+      blocks: message.blocks,
       thread_ts: message.thread_ts,
       username: message.username,
       icon_emoji: message.icon_emoji,

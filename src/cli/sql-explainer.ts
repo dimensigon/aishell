@@ -8,6 +8,7 @@ import { AnthropicProvider } from '../llm/anthropic-provider';
 import { DatabaseConnectionManager, DatabaseType } from './database-manager';
 import { createLogger } from '../core/logger';
 import { StateManager } from '../core/state-manager';
+import type sqlite3 from 'sqlite3';
 
 interface Explanation {
   query: string;
@@ -310,7 +311,8 @@ Format your response as JSON:
     if (!connection) return { tables: [] };
 
     if ('query' in connection.client && typeof connection.client.query === 'function') {
-      const result = await connection.client.query(`
+      // Type assertion after type guard to resolve overload incompatibility
+      const result = await (connection.client as any).query(`
         SELECT
           t.table_name,
           c.column_name,
@@ -342,7 +344,8 @@ Format your response as JSON:
     if (!connection) return { tables: [] };
 
     if ('query' in connection.client && typeof connection.client.query === 'function') {
-      const [result] = await connection.client.query(`
+      // Type assertion after type guard to resolve overload incompatibility
+      const [result] = await (connection.client as any).query(`
         SELECT
           TABLE_NAME as table_name,
           COLUMN_NAME as column_name,
@@ -371,8 +374,10 @@ Format your response as JSON:
       return { tables: [] };
     }
 
+    const db = connection.client as sqlite3.Database;
+
     return new Promise((resolve, reject) => {
-      connection.client.all(
+      db.all(
         "SELECT name FROM sqlite_master WHERE type='table'",
         (err: Error, tables: any[]) => {
           if (err) {
@@ -383,8 +388,9 @@ Format your response as JSON:
           const schema = { tables: [] as any[] };
 
           if ('all' in connection.client && typeof connection.client.all === 'function') {
+            const db2 = connection.client as sqlite3.Database;
             tables.forEach((table) => {
-              connection.client.all(
+              db2.all(
                 `PRAGMA table_info(${table.name})`,
                 (err: Error, columns: any[]) => {
                   if (!err) {

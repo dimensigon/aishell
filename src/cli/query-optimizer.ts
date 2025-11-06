@@ -8,6 +8,7 @@ import { AnthropicProvider } from '../llm/anthropic-provider';
 import { DatabaseConnectionManager, DatabaseType } from './database-manager';
 import { createLogger } from '../core/logger';
 import { StateManager } from '../core/state-manager';
+import type sqlite3 from 'sqlite3';
 
 interface QueryAnalysis {
   query: string;
@@ -150,22 +151,25 @@ export class QueryOptimizer {
       switch (connection.type) {
         case DatabaseType.POSTGRESQL:
           if ('query' in connection.client && typeof connection.client.query === 'function') {
-            const pgResult = await connection.client.query(`EXPLAIN (FORMAT JSON) ${query}`);
+            // Type assertion after type guard to resolve overload incompatibility
+            const pgResult = await (connection.client as any).query(`EXPLAIN (FORMAT JSON) ${query}`);
             return pgResult.rows[0]['QUERY PLAN'];
           }
           return null;
 
         case DatabaseType.MYSQL:
           if ('query' in connection.client && typeof connection.client.query === 'function') {
-            const [mysqlResult] = await connection.client.query(`EXPLAIN FORMAT=JSON ${query}`);
+            // Type assertion after type guard to resolve overload incompatibility
+            const [mysqlResult] = await (connection.client as any).query(`EXPLAIN FORMAT=JSON ${query}`);
             return mysqlResult;
           }
           return null;
 
         case DatabaseType.SQLITE:
           if ('all' in connection.client && typeof connection.client.all === 'function') {
+            const db = connection.client as sqlite3.Database;
             return new Promise((resolve, reject) => {
-              connection.client.all(`EXPLAIN QUERY PLAN ${query}`, (err: Error, rows: any) => {
+              db.all(`EXPLAIN QUERY PLAN ${query}`, (err: Error, rows: any) => {
                 if (err) reject(err);
                 else resolve(rows);
               });
