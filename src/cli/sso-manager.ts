@@ -191,7 +191,7 @@ export class SSOManager extends EventEmitter {
         roleMappings: this.config.roleMappings.length
       });
     } catch (error) {
-      this.logger.warn('Failed to load configuration, using defaults', error);
+      this.logger.warn('Failed to load configuration, using defaults', { error: String(error) });
     }
   }
 
@@ -240,7 +240,7 @@ export class SSOManager extends EventEmitter {
         this.logger.debug(`Loaded ${sessions.length} sessions`);
       }
     } catch (error) {
-      this.logger.warn('Failed to load sessions', error);
+      this.logger.warn('Failed to load sessions', { error: String(error) });
     }
   }
 
@@ -553,7 +553,7 @@ export class SSOManager extends EventEmitter {
         res.end(`Authentication failed: ${errorDescription || error}`);
 
         const pending = state ? this.pendingAuths.get(state) : null;
-        if (pending) {
+        if (pending && state) {
           pending.reject(new Error(`Authentication failed: ${errorDescription || error}`));
           this.pendingAuths.delete(state);
         }
@@ -851,7 +851,7 @@ export class SSOManager extends EventEmitter {
       try {
         await this.revokeToken(session);
       } catch (error) {
-        this.logger.warn('Token revocation failed', error);
+        this.logger.warn('Token revocation failed', { error: String(error) });
       }
 
       // Remove session
@@ -899,7 +899,7 @@ export class SSOManager extends EventEmitter {
       this.logger.debug('Token revoked', { sessionId: session.sessionId });
 
     } catch (error) {
-      this.logger.warn('Token revocation failed', error);
+      this.logger.warn('Token revocation failed', { error: String(error) });
       throw error;
     }
   }

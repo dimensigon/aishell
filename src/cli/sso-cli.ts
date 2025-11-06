@@ -413,7 +413,7 @@ export class SSOCLI {
       console.log(chalk.blue(`\n🔐 Logging in with ${providerName}...\n`));
 
       // Start login flow
-      const session = await this.ssoManager.login(providerName);
+      const session = await this.ssoManager.login(providerName || 'default');
 
       console.log(chalk.green('\n✅ Authentication successful!\n'));
       console.log(chalk.dim(`   Session ID: ${session.sessionId}`));

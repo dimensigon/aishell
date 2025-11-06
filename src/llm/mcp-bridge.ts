@@ -311,7 +311,7 @@ export class LLMMCPBridge extends EventEmitter<BridgeEvents> {
       }
 
       // Execute tool call with MCP client
-      const executePromise = this.mcpClient.request('tools/call', {
+      const executePromise = this.mcpClient.request('default', 'tools/call', {
         name: toolName,
         arguments: params
       });
@@ -365,7 +365,7 @@ export class LLMMCPBridge extends EventEmitter<BridgeEvents> {
       }
 
       // Read resource from MCP client
-      const content = await this.mcpClient.request('resources/read', {
+      const content = await this.mcpClient.request('default', 'resources/read', {
         uri
       });
 

@@ -250,15 +250,18 @@ export class SlackIntegration {
       throw new Error('Slack Web API client not initialized');
     }
 
-    const args: ChatPostMessageArguments = {
+    const args: any = {
       channel: message.channel,
       text: message.text,
-      blocks: message.blocks,
       thread_ts: message.thread_ts,
       username: message.username,
       icon_emoji: message.icon_emoji,
       icon_url: message.icon_url,
     };
+
+    if (message.blocks) {
+      args.blocks = message.blocks;
+    }
 
     const result = await this.client.chat.postMessage(args);
     return result;

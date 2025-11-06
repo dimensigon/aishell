@@ -320,15 +320,13 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
     const columns = await this.getTableColumns(this.state.table);
 
     // Select columns to insert
-    const { selectedColumns } = await inquirer.prompt([
-      {
-        type: 'checkbox',
-        name: 'selectedColumns',
-        message: 'Select columns to insert:',
-        choices: columns,
-        validate: (input: string[]) => input.length > 0 || 'Select at least one column'
-      }
-    ]);
+    const { selectedColumns } = await inquirer.prompt({
+      type: 'checkbox',
+      name: 'selectedColumns',
+      message: 'Select columns to insert:',
+      choices: columns,
+      validate: (input: string[]) => input.length > 0 || 'Select at least one column'
+    } as any);
 
     this.state.columns = selectedColumns;
 
@@ -360,15 +358,13 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
     const columns = await this.getTableColumns(this.state.table);
 
     // Select columns to update
-    const { selectedColumns } = await inquirer.prompt([
-      {
-        type: 'checkbox',
-        name: 'selectedColumns',
-        message: 'Select columns to update:',
-        choices: columns,
-        validate: (input: string[]) => input.length > 0 || 'Select at least one column'
-      }
-    ]);
+    const { selectedColumns } = await inquirer.prompt({
+      type: 'checkbox',
+      name: 'selectedColumns',
+      message: 'Select columns to update:',
+      choices: columns,
+      validate: (input: string[]) => input.length > 0 || 'Select at least one column'
+    } as any);
 
     this.state.columns = selectedColumns;
 
@@ -433,17 +429,15 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
   private async selectColumns(): Promise<void> {
     const columns = await this.getTableColumns(this.state.table);
 
-    const { selectedColumns } = await inquirer.prompt([
-      {
-        type: 'checkbox',
-        name: 'selectedColumns',
-        message: 'Select columns (leave empty for all):',
-        choices: [
-          { name: '* (All columns)', value: '*' },
-          ...columns
-        ]
-      }
-    ]);
+    const { selectedColumns } = await inquirer.prompt({
+      type: 'checkbox',
+      name: 'selectedColumns',
+      message: 'Select columns (leave empty for all):',
+      choices: [
+        { name: '* (All columns)', value: '*' },
+        ...columns
+      ]
+    } as any);
 
     if (selectedColumns.includes('*') || selectedColumns.length === 0) {
       this.state.columns = ['*'];
@@ -634,15 +628,13 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
 
     const columns = await this.getTableColumns(this.state.table);
 
-    const { groupColumns } = await inquirer.prompt([
-      {
-        type: 'checkbox',
-        name: 'groupColumns',
-        message: 'Select columns to group by:',
-        choices: columns,
-        validate: (input: string[]) => input.length > 0 || 'Select at least one column'
-      }
-    ]);
+    const { groupColumns } = await inquirer.prompt({
+      type: 'checkbox',
+      name: 'groupColumns',
+      message: 'Select columns to group by:',
+      choices: columns,
+      validate: (input: string[]) => input.length > 0 || 'Select at least one column'
+    } as any);
 
     this.state.groupBy = groupColumns;
     this.emitStateChanged();
@@ -777,19 +769,17 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
         message: 'Add OFFSET?',
         default: false
       }
-    ]);
+    ] as any);
 
     this.state.limit = answers.limit;
 
     if (answers.shouldAddOffset) {
-      const { offset } = await inquirer.prompt([
-        {
-          type: 'number',
-          name: 'offset',
-          message: 'Enter OFFSET:',
-          validate: (input: number) => input >= 0 || 'OFFSET must be non-negative'
-        }
-      ]);
+      const { offset } = await inquirer.prompt({
+        type: 'number',
+        name: 'offset',
+        message: 'Enter OFFSET:',
+        validate: (input: number) => input >= 0 || 'OFFSET must be non-negative'
+      } as any);
       this.state.offset = offset;
     }
 
@@ -866,10 +856,7 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
 
       const startTime = Date.now();
       const activeConn = this.connectionManager.getActive();
-      const result = await this.queryExecutor.execute(
-        sql,
-        activeConn?.config.database || ''
-      );
+      const result = await this.queryExecutor.execute(sql, {});
       const executionTime = Date.now() - startTime;
 
       this.emit('queryExecuted', result);
@@ -882,7 +869,7 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
       console.log(chalk.cyan(`Rows: ${result.rowCount}`));
 
       if (result.rows && result.rows.length > 0) {
-        const formatted = this.formatter.format(result.rows, {
+        const formatted = ResultFormatter.format(result.rows, {
           format: 'table',
           colors: true,
           headers: true
