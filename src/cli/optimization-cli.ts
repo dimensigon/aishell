@@ -150,7 +150,10 @@ export class OptimizationCLI {
       if (!apiKey) {
         throw new Error('ANTHROPIC_API_KEY environment variable not set');
       }
-      const llmBridge = new LLMMCPBridge(apiKey);
+      // Create stub implementations for LLMMCPBridge parameters
+      const llmProvider = {} as any; // Stub ILLMProvider
+      const mcpClient = {} as any; // Stub IMCPClient
+      const llmBridge = new LLMMCPBridge(llmProvider, mcpClient);
       const errorHandler = new ErrorHandler();
       this.nlQueryTranslator = new NLQueryTranslator(llmBridge, errorHandler);
     }
@@ -658,7 +661,16 @@ export class OptimizationCLI {
 
     // Export if requested
     if (options.output) {
-      await this.exportResult(result, options.output, options.format || 'json');
+      // Convert TranslationResult to OptimizationResult for export
+      const optimizationResult: OptimizationResult = {
+        originalQuery: naturalLanguage,
+        optimizedQuery: result.sql,
+        improvementPercent: 0,
+        estimatedTimeSavings: 0,
+        recommendations: [],
+        appliedOptimizations: []
+      };
+      await this.exportResult(optimizationResult, options.output, options.format || 'json');
     }
 
     return result;

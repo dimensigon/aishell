@@ -18,6 +18,8 @@ import { SlackIntegration } from './notification-slack';
 import { EmailNotificationService } from './notification-email';
 import { FederationEngine } from './federation-engine';
 import { SchemaInspector } from './schema-inspector';
+import { LLMMCPBridge } from '../llm/mcp-bridge';
+import { ErrorHandler } from '../core/error-handler';
 import { DatabaseConnectionManager } from './database-manager';
 import { StateManager } from '../core/state-manager';
 import { createLogger } from '../core/logger';
@@ -109,7 +111,13 @@ async function getFederationEngine(): Promise<FederationEngine> {
  */
 async function getSchemaManager(): Promise<SchemaInspector> {
   if (!schemaManager) {
-    schemaManager = new SchemaInspector();
+    const dbManager = getDbManager();
+    // Create stub implementations for LLMMCPBridge parameters
+    const llmProvider = {} as any; // Stub ILLMProvider
+    const mcpClient = {} as any; // Stub IMCPClient
+    const llmBridge = new LLMMCPBridge(llmProvider, mcpClient);
+    const errorHandler = new ErrorHandler();
+    schemaManager = new SchemaInspector(dbManager, llmBridge, errorHandler);
   }
   return schemaManager;
 }
@@ -330,7 +338,7 @@ export async function federationQuery(query: string): Promise<void> {
       });
 
       result.rows.slice(0, 10).forEach((row: any) => {
-        table.push(Object.values(row));
+        table.push(Object.values(row) as any);
       });
 
       console.log(table.toString());

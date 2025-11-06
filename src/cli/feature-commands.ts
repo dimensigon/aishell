@@ -508,8 +508,8 @@ export class FeatureCommands {
 
     // Use different format based on options
     if (options.format === 'json' || options.analyze) {
-      // Note: explainQuery method doesn't exist, using explain instead
-      const explanation = await this.sqlExplainer.explain(query);
+      // Use correct method name: explainSQL
+      const explanation = await this.sqlExplainer.explainSQL(query);
       if (options.format === 'json') {
         console.log(JSON.stringify(explanation, null, 2));
       } else {
