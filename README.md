@@ -255,33 +255,42 @@ export ANTHROPIC_API_KEY="your-api-key"
 
 ```bash
 # Connect to your PostgreSQL database
-python src/main.py connect postgres://user:pass@localhost:5432/mydb
+ai-shell connect postgres://user:pass@localhost:5432/mydb
 
-# Or use interactive setup
-python src/main.py setup
+# Or connect with database-specific command
+ai-shell pg connect postgresql://user:pass@localhost:5432/mydb --name production
+
+# Connect to other databases
+ai-shell mysql connect mysql://root:secret@localhost:3306/app
+ai-shell mongo connect mongodb://localhost:27017/mydb
+ai-shell redis connect redis://localhost:6379
 ```
 
-### Your First Session (REPL Mode)
+### Your First Commands
 
 ```bash
-# Start AI-Shell REPL
-python src/main.py
+# Natural language query translation
+ai-shell translate "show me all active users"
 
-# In REPL mode, try these commands:
-> query "SELECT * FROM users WHERE active = true"
-> health  # Check database health
-> metrics  # View performance metrics
+# Query optimization
+ai-shell optimize "SELECT * FROM users WHERE active = true"
 
-# Cognitive features
-> memory recall "queries about users"
-> memory insights
+# Database health monitoring
+ai-shell pg status
+ai-shell slow-queries --threshold 1000
 
-# Autonomous features
-> anomaly start  # Start anomaly detection
-> anomaly status
+# Index analysis and recommendations
+ai-shell indexes analyze users
+ai-shell indexes recommend users
 
-> ada start  # Start Autonomous DevOps Agent
-> ada status
+# Backup operations
+ai-shell backup create --name daily-backup
+ai-shell backup list
+
+# Connection management
+ai-shell connections        # List all connections
+ai-shell use production     # Switch connections
+ai-shell disconnect         # Disconnect
 ```
 
 ### What Works vs. What's Planned
