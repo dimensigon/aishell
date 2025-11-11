@@ -141,83 +141,94 @@ ai-shell query "delete spam comments" --confirm
 
 ### 2. Database Connection Commands
 
-#### `ai-shell db connect <connection-string>`
+> **Note**: The `db connect` command has been deprecated. Use database-specific connection commands or the generic `connect` command instead.
 
-Connect to a database using connection string or interactive prompts.
+#### `ai-shell connect <connection-string>`
+
+Connect to any database using a connection string. Auto-detects database type from protocol.
 
 **Examples**:
 ```bash
-# Connection string formats
-ai-shell db connect postgres://user:pass@localhost:5432/mydb
-ai-shell db connect mysql://root:secret@localhost:3306/app
-ai-shell db connect sqlite:///path/to/database.db
-ai-shell db connect mongodb://localhost:27017/mydb
+# Generic connection (auto-detects from protocol)
+ai-shell connect postgres://user:pass@localhost:5432/mydb
+ai-shell connect mysql://root:secret@localhost:3306/app
+ai-shell connect mongodb://localhost:27017/mydb
+ai-shell connect redis://localhost:6379
 
-# Interactive mode
-ai-shell db connect --interactive
-
-# Named connection with options
-ai-shell db connect --name production \
-  --type postgres \
-  --host prod.example.com \
-  --port 5432 \
-  --database app_db \
-  --username admin \
-  --ssl
-
-# Using environment variables
-ai-shell db connect --env DATABASE_URL
+# Named connection with SSL
+ai-shell connect postgresql://user:pass@prod.example.com:5432/app_db --name production --ssl
 ```
 
 **Options**:
 - `--name, -n <name>`: Save connection with friendly name
-- `--type, -t <type>`: Database type (postgres, mysql, sqlite, mongodb, mssql, oracle)
-- `--host, -h <host>`: Database host
-- `--port, -p <port>`: Database port
-- `--database, -d <name>`: Database name
-- `--username, -u <user>`: Username
-- `--password, -P`: Prompt for password (secure)
 - `--ssl`: Enable SSL/TLS connection
 - `--read-only`: Connect in read-only mode
-- `--interactive, -i`: Interactive connection wizard
-- `--env <var>`: Use environment variable for connection string
-- `--test`: Test connection without saving
 
-#### `ai-shell db list-connections`
+#### Database-Specific Connection Commands
+
+For database-specific features and options, use dedicated commands:
+
+**PostgreSQL**:
+```bash
+ai-shell pg connect postgresql://user:pass@localhost:5432/mydb
+ai-shell pg connect --name production --host prod.example.com --port 5432 --database app_db
+```
+
+**MySQL**:
+```bash
+ai-shell mysql connect mysql://root:secret@localhost:3306/app
+ai-shell mysql connect --name local --host localhost --database myapp
+```
+
+**MongoDB**:
+```bash
+ai-shell mongo connect mongodb://localhost:27017/mydb
+ai-shell mongo connect --name dev --host localhost --port 27017
+```
+
+**Redis**:
+```bash
+ai-shell redis connect redis://localhost:6379
+ai-shell redis connect --name cache --host localhost --port 6379
+```
+
+#### `ai-shell connections`
 
 List all saved database connections.
 
 **Output**:
 ```
-Saved Connections:
+Active Connections:
 ┌──────────────┬────────────┬─────────────────────┬──────────┬──────────┐
 │ Name         │ Type       │ Host                │ Database │ Status   │
 ├──────────────┼────────────┼─────────────────────┼──────────┼──────────┤
 │ production * │ postgres   │ prod.example.com    │ app_db   │ active   │
 │ staging      │ postgres   │ staging.example.com │ app_db   │ saved    │
-│ local        │ sqlite     │ localhost           │ dev.db   │ saved    │
+│ cache        │ redis      │ localhost:6379      │ 0        │ saved    │
 └──────────────┴────────────┴─────────────────────┴──────────┴──────────┘
 
 * = currently active
 ```
 
-#### `ai-shell db switch <name>`
+#### `ai-shell use <connection-name>`
 
 Switch to a different saved connection.
 
 **Example**:
 ```bash
-ai-shell db switch staging
+ai-shell use staging
 ✓ Switched to connection 'staging' (postgres://staging.example.com/app_db)
 ```
 
-#### `ai-shell db disconnect`
+#### `ai-shell disconnect [name]`
 
-Disconnect from current database.
+Disconnect from current database or a specific named connection.
 
-#### `ai-shell db remove <name>`
-
-Remove a saved connection.
+**Examples**:
+```bash
+ai-shell disconnect              # Disconnect current
+ai-shell disconnect production   # Disconnect specific connection
+```
 
 ---
 

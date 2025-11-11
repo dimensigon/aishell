@@ -1226,6 +1226,251 @@ ai-shell backup restore backup.sql --dry-run
 
 ---
 
+## SSO (Single Sign-On)
+
+### 1. Configure SSO Provider
+
+```bash
+ai-shell sso configure <provider> [options]
+```
+
+Configure SSO provider (SAML, OAuth2, OIDC, LDAP).
+
+**Examples**:
+```bash
+ai-shell sso configure okta --domain company.okta.com --client-id abc123
+ai-shell sso configure azure-ad --tenant-id xyz789
+ai-shell sso configure google --client-id google-client-id --client-secret secret
+```
+
+### 2. Login with SSO
+
+```bash
+ai-shell sso login [provider]
+```
+
+Authenticate using configured SSO provider.
+
+### 3. Logout from SSO
+
+```bash
+ai-shell sso logout
+```
+
+End SSO session and clear tokens.
+
+### 4. SSO Status
+
+```bash
+ai-shell sso status
+```
+
+Show current SSO authentication status and active sessions.
+
+### 5. Refresh SSO Token
+
+```bash
+ai-shell sso refresh-token
+```
+
+Refresh the SSO authentication token before expiration.
+
+### 6. Map SSO Roles
+
+```bash
+ai-shell sso map-roles <provider> [options]
+```
+
+Map SSO provider roles to application permissions.
+
+**Example**:
+```bash
+ai-shell sso map-roles okta --role admin --permission full-access
+```
+
+### 7. List SSO Providers
+
+```bash
+ai-shell sso list-providers
+```
+
+Display all configured SSO providers.
+
+### 8. Show SSO Configuration
+
+```bash
+ai-shell sso show-config [provider]
+```
+
+Display SSO provider configuration details.
+
+### 9. Remove SSO Provider
+
+```bash
+ai-shell sso remove-provider <provider>
+```
+
+Remove a configured SSO provider.
+
+---
+
+## Context Management
+
+### 1. Save Context
+
+```bash
+ai-shell context save <name> [options]
+```
+
+Save current database context (connections, queries, results) for later use.
+
+**Options**:
+- `--description, -d <text>`: Context description
+- `--tags, -t <tags>`: Comma-separated tags
+
+**Example**:
+```bash
+ai-shell context save pre-migration --description "Before schema migration" --tags "backup,migration"
+```
+
+### 2. Load Context
+
+```bash
+ai-shell context load <name>
+```
+
+Restore a previously saved context.
+
+### 3. List Contexts
+
+```bash
+ai-shell context list [options]
+```
+
+List all saved contexts.
+
+**Options**:
+- `--tags, -t <tags>`: Filter by tags
+- `--format, -f <format>`: Output format (table, json, yaml)
+
+### 4. Delete Context
+
+```bash
+ai-shell context delete <name>
+```
+
+Delete a saved context.
+
+### 5. Export Context
+
+```bash
+ai-shell context export <name> [file]
+```
+
+Export context to a file for sharing or backup.
+
+**Example**:
+```bash
+ai-shell context export production-state ./contexts/prod-backup.json
+```
+
+### 6. Import Context
+
+```bash
+ai-shell context import <file>
+```
+
+Import a context from an exported file.
+
+### 7. Show Context
+
+```bash
+ai-shell context show [name]
+```
+
+Display detailed information about a context (current or specified).
+
+### 8. Context Diff
+
+```bash
+ai-shell context diff <name1> <name2>
+```
+
+Compare two contexts and show differences.
+
+**Example**:
+```bash
+ai-shell context diff before-migration after-migration
+```
+
+### 9. Current Context
+
+```bash
+ai-shell context current
+```
+
+Display information about the current active context.
+
+---
+
+## Session Management
+
+### 1. Start Session
+
+```bash
+ai-shell session start [name]
+```
+
+Start a new named session for tracking work and history.
+
+**Example**:
+```bash
+ai-shell session start migration-2024-01
+```
+
+### 2. End Session
+
+```bash
+ai-shell session end
+```
+
+End the current session and save history.
+
+### 3. List Sessions
+
+```bash
+ai-shell session list [options]
+```
+
+List all sessions with status and metadata.
+
+**Options**:
+- `--active`: Show only active sessions
+- `--format, -f <format>`: Output format
+
+### 4. Restore Session
+
+```bash
+ai-shell session restore <name>
+```
+
+Restore a previous session with all its context and history.
+
+### 5. Export Session
+
+```bash
+ai-shell session export <name> [file]
+```
+
+Export session data for backup or sharing.
+
+**Example**:
+```bash
+ai-shell session export migration-2024-01 ./sessions/migration-backup.json
+```
+
+---
+
 ## Analytics & Monitoring
 
 ### 1-10. Analytics Commands
