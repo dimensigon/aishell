@@ -20,6 +20,8 @@ import { QueryOptimizer } from './query-optimizer';
 import { NLQueryTranslator, SchemaInfo, TranslationResult } from './nl-query-translator';
 import { LLMMCPBridge } from '../llm/mcp-bridge';
 import { ErrorHandler } from '../core/error-handler';
+import { AnthropicProvider } from '../llm/anthropic-provider';
+import { MCPClient } from '../mcp/client';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -150,7 +152,14 @@ export class OptimizationCLI {
       if (!apiKey) {
         throw new Error('ANTHROPIC_API_KEY environment variable not set');
       }
-      const llmBridge = new LLMMCPBridge(apiKey);
+      const mcpClient = new MCPClient({
+        servers: [],
+        timeout: 30000
+      });
+      const llmProvider = new AnthropicProvider({
+        apiKey
+      });
+      const llmBridge = new LLMMCPBridge(llmProvider, mcpClient);
       const errorHandler = new ErrorHandler();
       this.nlQueryTranslator = new NLQueryTranslator(llmBridge, errorHandler);
     }
@@ -658,7 +667,7 @@ export class OptimizationCLI {
 
     // Export if requested
     if (options.output) {
-      await this.exportResult(result, options.output, options.format || 'json');
+      await this.exportTranslationResult(result, options.output, options.format || 'json');
     }
 
     return result;
@@ -941,6 +950,15 @@ export class OptimizationCLI {
 
     await fs.writeFile(outputPath, data, 'utf-8');
     console.log(chalk.green(`\n✅ Slow queries exported to: ${outputPath}`));
+  }
+
+  private async exportTranslationResult(result: TranslationResult, outputPath: string, format: string): Promise<void> {
+    const data = format === 'json'
+      ? JSON.stringify(result, null, 2)
+      : JSON.stringify(result, null, 2); // TranslationResult doesn't use ResultFormatter
+
+    await fs.writeFile(outputPath, data, 'utf-8');
+    console.log(chalk.green(`\n✅ Translation result exported to: ${outputPath}`));
   }
 
   private parseImprovement(improvement: string): number {

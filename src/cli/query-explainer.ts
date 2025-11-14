@@ -102,7 +102,7 @@ export class QueryExplainer {
         }
 
         const dbType = connection.type;
-        const dbName = database || connection.database || 'default';
+        const dbName = database || connection.config.database || 'default';
 
         // Get execution plan based on database type
         let executionPlan: ExecutionPlanNode;

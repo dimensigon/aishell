@@ -479,7 +479,7 @@ export class QueryExecutor extends EventEmitter<QueryExecutorEvents> {
           throw new Error('No active database connection');
         }
 
-        const explanation = await this.queryExplainer.explain(sql, connection.database, format);
+        const explanation = await this.queryExplainer.explain(sql, connection.config.database, format);
         return this.queryExplainer.formatExplanation(explanation, format);
       },
       {
@@ -506,7 +506,7 @@ export class QueryExecutor extends EventEmitter<QueryExecutorEvents> {
           throw new Error('No active database connection');
         }
 
-        return await this.queryExplainer.explain(sql, connection.database);
+        return await this.queryExplainer.explain(sql, connection.config.database);
       },
       {
         operation: 'getQueryExplanation',

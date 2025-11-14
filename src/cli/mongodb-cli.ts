@@ -236,7 +236,7 @@ export class MongoDBCLI {
         this.connections.delete(name);
 
         if (this.activeConnection === name) {
-          this.activeConnection = this.connections.size > 0 ? this.connections.keys().next().value : null;
+          this.activeConnection = this.connections.size > 0 ? (this.connections.keys().next().value || null) : null;
         }
 
         console.log(chalk.yellow(`\n✓ Disconnected from MongoDB: ${name}\n`));

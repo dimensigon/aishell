@@ -589,8 +589,8 @@ export class MySQLCLI {
 
         for (let i = 0; i < batches.length; i++) {
           const batch = batches[i];
-          const values = batch.map(record => Object.values(record));
-          const columns = Object.keys(batch[0]);
+          const values = batch.map(record => Object.values(record as any));
+          const columns = Object.keys(batch[0] as any);
 
           const placeholders = batch.map(() => `(${columns.map(() => '?').join(', ')})`).join(', ');
           const sql = `INSERT INTO ${pool.escapeId(options.table)} (${columns.map(c => pool.escapeId(c)).join(', ')}) VALUES ${placeholders}`;

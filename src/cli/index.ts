@@ -351,9 +351,9 @@ registerMongoDBCommands(program, stateManager);
 
 // Register Redis commands (Sprint 2 - 14 commands)
 function getRedisCLI(): RedisCLI {
-  return new RedisCLI(stateManager);
+  return new RedisCLI();
 }
-registerRedisCommands(program, getRedisCLI);
+registerRedisCommands(program, () => getRedisCLI());
 
 // Register Integration commands (Sprint 5 - 20 commands)
 registerIntegrationCommands(program);
@@ -1807,7 +1807,7 @@ setupBackupCommands(program);
 
 // Register optimization commands (if available)
 if (typeof registerOptimizationCommands === 'function') {
-  registerOptimizationCommands(program, getOptimizationCLI());
+  registerOptimizationCommands(program, getOptimizationCLI);
 }
 
 // ============================================================================

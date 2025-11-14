@@ -399,7 +399,7 @@ Return a JSON execution plan with this structure:
     try {
       switch (connection.type) {
         case DatabaseType.POSTGRESQL:
-          const pgResult = await connection.client.query(`
+          const pgResult = await (connection.client as any).query(`
             SELECT table_name, column_name, data_type
             FROM information_schema.columns
             WHERE table_schema = 'public'
@@ -408,7 +408,7 @@ Return a JSON execution plan with this structure:
           return this.formatSchemaInfo(pgResult.rows);
 
         case DatabaseType.MYSQL:
-          const [mysqlResult] = await connection.client.query(`
+          const [mysqlResult] = await (connection.client as any).query(`
             SELECT TABLE_NAME as table_name, COLUMN_NAME as column_name, DATA_TYPE as data_type
             FROM information_schema.COLUMNS
             WHERE TABLE_SCHEMA = DATABASE()
@@ -417,7 +417,7 @@ Return a JSON execution plan with this structure:
 
         case DatabaseType.MONGODB:
           // MongoDB is schemaless, return collection names
-          const collections = await connection.client.db().listCollections().toArray();
+          const collections = await (connection.client as any).db().listCollections().toArray();
           return { collections: collections.map((c: any) => c.name) };
 
         default:

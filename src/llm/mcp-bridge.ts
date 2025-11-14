@@ -70,6 +70,7 @@ export class LLMMCPBridge extends EventEmitter<BridgeEvents> {
   private context: BridgeContext;
   private toolCallCount = 0;
   private resourceCache = new Map<string, any>();
+  private serverName: string;
 
   constructor(
     private llmProvider: ILLMProvider,
@@ -79,9 +80,12 @@ export class LLMMCPBridge extends EventEmitter<BridgeEvents> {
       toolCallTimeout?: number;
       enableAutoContext?: boolean;
       cacheResources?: boolean;
+      serverName?: string;
     } = {}
   ) {
     super();
+
+    this.serverName = config.serverName || '';
 
     this.context = {
       sessionId: this.generateSessionId(),
@@ -311,7 +315,7 @@ export class LLMMCPBridge extends EventEmitter<BridgeEvents> {
       }
 
       // Execute tool call with MCP client
-      const executePromise = this.mcpClient.request('tools/call', {
+      const executePromise = this.mcpClient.request(this.serverName, 'tools/call', {
         name: toolName,
         arguments: params
       });
@@ -365,7 +369,7 @@ export class LLMMCPBridge extends EventEmitter<BridgeEvents> {
       }
 
       // Read resource from MCP client
-      const content = await this.mcpClient.request('resources/read', {
+      const content = await this.mcpClient.request(this.serverName, 'resources/read', {
         uri
       });
 

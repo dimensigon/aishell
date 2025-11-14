@@ -113,6 +113,7 @@ interface ExecutionStep {
  */
 interface FederationResult {
   rows: any[];
+  results?: any[]; // Alias for rows
   rowCount: number;
   executionTime: number;
   plan: ExecutionPlan;
@@ -191,6 +192,7 @@ export class FederationEngine extends EventEmitter<FederationEngineEvents> {
 
       const result: FederationResult = {
         rows: processedRows,
+        results: processedRows, // Alias for rows
         rowCount: processedRows.length,
         executionTime,
         plan,

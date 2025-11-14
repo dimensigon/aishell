@@ -14,30 +14,33 @@ import chalk from 'chalk';
 import ora from 'ora';
 import Table from 'cli-table3';
 import inquirer from 'inquirer';
-import { SlackClient } from './notification-slack';
-import { EmailClient } from './notification-email';
+import { SlackIntegration } from './notification-slack';
+import { EmailNotificationService } from './notification-email';
 import { FederationEngine } from './federation-engine';
-import { SchemaManager } from './schema-inspector';
+import { SchemaInspector } from './schema-inspector';
 import { createLogger } from '../core/logger';
+import { DatabaseConnectionManager } from './database-manager';
+import { StateManager } from '../core/state-manager';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
 const logger = createLogger('IntegrationCLI');
 
 // Singleton instances
-let slackClient: SlackClient | null = null;
-let emailClient: EmailClient | null = null;
+let slackClient: SlackIntegration | null = null;
+let emailClient: EmailNotificationService | null = null;
 let federationEngine: FederationEngine | null = null;
-let schemaManager: SchemaManager | null = null;
-let adaAgent: ADAAgent | null = null;
+let schemaManager: SchemaInspector | null = null;
+// TODO: Implement ADAAgent
+// let adaAgent: ADAAgent | null = null;
 
 /**
  * Initialize Slack client
  */
-async function getSlackClient(): Promise<SlackClient> {
+async function getSlackClient(): Promise<SlackIntegration> {
   if (!slackClient) {
-    slackClient = new SlackClient();
-    await slackClient.initialize();
+    slackClient = new SlackIntegration();
+    // SlackIntegration doesn't have initialize method
   }
   return slackClient;
 }
@@ -45,10 +48,10 @@ async function getSlackClient(): Promise<SlackClient> {
 /**
  * Initialize Email client
  */
-async function getEmailClient(): Promise<EmailClient> {
+async function getEmailClient(): Promise<EmailNotificationService> {
   if (!emailClient) {
-    emailClient = new EmailClient();
-    await emailClient.initialize();
+    emailClient = new EmailNotificationService();
+    // EmailNotificationService doesn't have initialize method
   }
   return emailClient;
 }
@@ -58,8 +61,9 @@ async function getEmailClient(): Promise<EmailClient> {
  */
 async function getFederationEngine(): Promise<FederationEngine> {
   if (!federationEngine) {
-    federationEngine = new FederationEngine();
-    await federationEngine.initialize();
+    const stateManager = new StateManager();
+    const dbManager = new DatabaseConnectionManager(stateManager);
+    federationEngine = new FederationEngine(dbManager, stateManager);
   }
   return federationEngine;
 }
@@ -67,24 +71,26 @@ async function getFederationEngine(): Promise<FederationEngine> {
 /**
  * Initialize Schema manager
  */
-async function getSchemaManager(): Promise<SchemaManager> {
+async function getSchemaManager(): Promise<SchemaInspector> {
   if (!schemaManager) {
-    schemaManager = new SchemaManager();
-    await schemaManager.initialize();
+    const stateManager = new StateManager();
+    const dbManager = new DatabaseConnectionManager(stateManager);
+    schemaManager = new SchemaInspector(dbManager, stateManager);
   }
   return schemaManager;
 }
 
 /**
  * Initialize ADA agent
+ * TODO: Implement ADAAgent
  */
-async function getADAAgent(): Promise<ADAAgent> {
-  if (!adaAgent) {
-    adaAgent = new ADAAgent();
-    await adaAgent.initialize();
-  }
-  return adaAgent;
-}
+// async function getADAAgent(): Promise<ADAAgent> {
+//   if (!adaAgent) {
+//     adaAgent = new ADAAgent();
+//     await adaAgent.initialize();
+//   }
+//   return adaAgent;
+// }
 
 // ============================================================================
 // SLACK INTEGRATION COMMANDS (4 commands)
@@ -155,9 +161,9 @@ export async function slackSetup(options: {
 
     if (testResult.success) {
       spinner.succeed('Slack integration setup successfully');
-      console.log(chalk.green('\n✓ Connected to workspace:'), testResult.workspace);
-      console.log(chalk.green('✓ Bot name:'), testResult.botName);
-      console.log(chalk.green('✓ Available channels:'), testResult.channels.length);
+      console.log(chalk.green('\n✓ Connected to workspace:'), testResult.workspace ?? 'N/A');
+      console.log(chalk.green('✓ Bot name:'), testResult.botName ?? 'N/A');
+      console.log(chalk.green('✓ Available channels:'), testResult.channels?.length ?? 0);
 
       // Save configuration
       await client.saveConfig();
@@ -220,8 +226,8 @@ export async function slackNotify(
 
     if (result.success) {
       spinner.succeed(`Notification sent to ${channel}`);
-      console.log(chalk.green('\n✓ Message ID:'), result.messageId);
-      console.log(chalk.green('✓ Timestamp:'), result.timestamp);
+      console.log(chalk.green('\n✓ Message ID:'), result.messageId ?? 'N/A');
+      console.log(chalk.green('✓ Timestamp:'), result.timestamp ?? 'N/A');
       if (result.permalink) {
         console.log(chalk.green('✓ Link:'), result.permalink);
       }
@@ -277,12 +283,12 @@ export async function slackAlert(
 
     if (result.success) {
       spinner.succeed(`${severity.toUpperCase()} alert sent`);
-      console.log(chalk.green('\n✓ Alert ID:'), result.alertId);
-      console.log(chalk.green('✓ Channel:'), result.channel);
-      console.log(chalk.green('✓ Notified users:'), result.notifiedUsers.length);
+      console.log(chalk.green('\n✓ Alert ID:'), result.alertId ?? 'N/A');
+      console.log(chalk.green('✓ Channel:'), result.channel ?? 'N/A');
+      console.log(chalk.green('✓ Notified users:'), result.notifiedUsers?.length ?? 0);
 
       if (result.incidentCreated) {
-        console.log(chalk.yellow('\n⚠ Incident created:'), result.incidentId);
+        console.log(chalk.yellow('\n⚠ Incident created:'), result.incidentId ?? 'N/A');
       }
     } else {
       spinner.fail(`Failed to send alert: ${result.error}`);
@@ -336,10 +342,10 @@ export async function slackReport(
 
     if (result.success) {
       spinner.succeed(`${type} report sent to Slack`);
-      console.log(chalk.green('\n✓ Report ID:'), result.reportId);
-      console.log(chalk.green('✓ Channel:'), result.channel);
-      console.log(chalk.green('✓ Metrics included:'), report.metrics.length);
-      console.log(chalk.green('✓ Period:'), report.period);
+      console.log(chalk.green('\n✓ Report ID:'), result.reportId ?? 'N/A');
+      console.log(chalk.green('✓ Channel:'), result.channel ?? 'N/A');
+      console.log(chalk.green('✓ Metrics included:'), report.metrics?.length ?? 0);
+      console.log(chalk.green('✓ Period:'), report.period ?? 'N/A');
 
       // Display summary
       console.log(chalk.cyan('\nReport Summary:'));
@@ -348,7 +354,7 @@ export async function slackReport(
         style: { head: ['cyan'] }
       });
 
-      report.summary.forEach((item: any) => {
+      (report.summary ?? []).forEach((item: any) => {
         const change = item.change > 0
           ? chalk.green(`+${item.change}%`)
           : item.change < 0
@@ -462,9 +468,9 @@ export async function emailSetup(options: {
 
     if (testResult.success) {
       spinner.succeed('Email integration setup successfully');
-      console.log(chalk.green('\n✓ Provider:'), testResult.provider);
-      console.log(chalk.green('✓ From email:'), testResult.fromEmail);
-      console.log(chalk.green('✓ Status:'), testResult.status);
+      console.log(chalk.green('\n✓ Provider:'), testResult.provider ?? 'N/A');
+      console.log(chalk.green('✓ From email:'), testResult.fromEmail ?? 'N/A');
+      console.log(chalk.green('✓ Status:'), testResult.status ?? 'N/A');
 
       // Save configuration
       await client.saveConfig();
@@ -540,24 +546,29 @@ export async function emailSend(
 
     // Send email
     const result = await client.sendEmail({
+      id: Date.now().toString(),
       to: toAddresses,
       cc: ccAddresses,
       bcc: bccAddresses,
       subject,
-      text: body,
-      html,
+      body: body || '',
+      text: body || '',
+      html: html || '',
       attachments,
-      priority: options.priority || 'normal'
-    });
+      priority: options.priority || 'normal',
+      severity: 'info',
+      category: 'notification',
+      createdAt: Date.now()
+    } as any);
 
-    if (result.success) {
+    if (result && result.success) {
       spinner.succeed(`Email sent to ${to}`);
-      console.log(chalk.green('\n✓ Message ID:'), result.messageId);
-      console.log(chalk.green('✓ Recipients:'), result.accepted.length);
+      console.log(chalk.green('\n✓ Message ID:'), result.messageId ?? 'N/A');
+      console.log(chalk.green('✓ Recipients:'), result.accepted?.length ?? 0);
       console.log(chalk.green('✓ Timestamp:'), new Date().toISOString());
 
-      if (result.rejected.length > 0) {
-        console.log(chalk.yellow('\n⚠ Rejected:'), result.rejected.join(', '));
+      if ((result.rejected?.length ?? 0) > 0) {
+        console.log(chalk.yellow('\n⚠ Rejected:'), result.rejected?.join(', ') ?? 'N/A');
       }
     } else {
       spinner.fail(`Failed to send email: ${result.error}`);
@@ -611,10 +622,11 @@ export async function emailAlert(
 
     if (result.success) {
       spinner.succeed(`Alert email sent to ${to}`);
-      console.log(chalk.green('\n✓ Alert ID:'), alertId);
+      console.log(chalk.green('\n✓ Alert ID:'), alertId ?? 'N/A');
       console.log(chalk.green('✓ Severity:'), options.severity || 'info');
-      console.log(chalk.green('✓ Recipients:'), result.recipients.length);
-      console.log(chalk.green('✓ Message ID:'), result.messageId);
+      const recipientCount = Array.isArray(result.recipients) ? result.recipients.length : (typeof result.recipients === 'number' ? result.recipients : 0);
+      console.log(chalk.green('✓ Recipients:'), recipientCount);
+      console.log(chalk.green('✓ Message ID:'), result.messageId ?? 'N/A');
     } else {
       spinner.fail(`Failed to send alert: ${result.error}`);
       process.exit(1);
@@ -670,13 +682,15 @@ export async function emailReport(
 
     if (result.success) {
       spinner.succeed(`${type} report sent to ${to}`);
-      console.log(chalk.green('\n✓ Report ID:'), result.reportId);
-      console.log(chalk.green('✓ Recipients:'), result.recipients.length);
+      console.log(chalk.green('\n✓ Report ID:'), result.reportId ?? 'N/A');
+      const emailRecipientsCount = Array.isArray(result.recipients) ? result.recipients.length : (typeof result.recipients === 'number' ? result.recipients : 0);
+      console.log(chalk.green('✓ Recipients:'), emailRecipientsCount);
       console.log(chalk.green('✓ Format:'), options.format || 'html');
-      console.log(chalk.green('✓ Metrics:'), report.metrics.length);
+      console.log(chalk.green('✓ Metrics:'), report.metrics?.length ?? 0);
 
       if (options.attachments) {
-        console.log(chalk.green('✓ Attachments:'), result.attachments.length);
+        const attachmentCount = Array.isArray(result.attachments) ? result.attachments.length : (typeof result.attachments === 'number' ? result.attachments : 0);
+        console.log(chalk.green('✓ Attachments:'), attachmentCount);
       }
     } else {
       spinner.fail(`Failed to send report: ${result.error}`);
@@ -714,28 +728,12 @@ export async function federationAdd(
   try {
     const engine = await getFederationEngine();
 
-    // Add database to federation
-    const result = await engine.addDatabase({
-      name: database,
-      type: options.type || 'postgresql',
-      host: options.host || 'localhost',
-      port: options.port,
-      username: options.username,
-      password: options.password,
-      alias: options.alias || database
-    });
-
-    if (result.success) {
-      spinner.succeed(`Database ${database} added to federation`);
-      console.log(chalk.green('\n✓ Federation ID:'), result.federationId);
-      console.log(chalk.green('✓ Database alias:'), result.alias);
-      console.log(chalk.green('✓ Type:'), result.type);
-      console.log(chalk.green('✓ Status:'), result.status);
-      console.log(chalk.green('✓ Schemas discovered:'), result.schemas.length);
-    } else {
-      spinner.fail(`Failed to add database: ${result.error}`);
-      process.exit(1);
-    }
+    // TODO: Implement addDatabase method in FederationEngine
+    spinner.warn(`Database management not yet implemented`);
+    console.log(chalk.yellow('\n⚠ This feature requires FederationEngine.addDatabase() to be implemented'));
+    console.log(chalk.dim('  Database:'), database);
+    console.log(chalk.dim('  Type:'), options.type || 'postgresql');
+    console.log(chalk.dim('  Host:'), options.host || 'localhost');
 
   } catch (error) {
     spinner.fail('Failed to add database to federation');
@@ -776,18 +774,10 @@ export async function federationRemove(
       }
     }
 
-    // Remove database
-    const result = await engine.removeDatabase(database);
-
-    if (result.success) {
-      spinner.succeed(`Database ${database} removed from federation`);
-      console.log(chalk.green('\n✓ Database removed:'), database);
-      console.log(chalk.green('✓ Connections closed:'), result.connectionsClosed);
-      console.log(chalk.green('✓ Cached queries cleared:'), result.cacheCleared);
-    } else {
-      spinner.fail(`Failed to remove database: ${result.error}`);
-      process.exit(1);
-    }
+    // TODO: Implement removeDatabase method in FederationEngine
+    spinner.warn(`Database management not yet implemented`);
+    console.log(chalk.yellow('\n⚠ This feature requires FederationEngine.removeDatabase() to be implemented'));
+    console.log(chalk.dim('  Database:'), database);
 
   } catch (error) {
     spinner.fail('Failed to remove database from federation');
@@ -815,66 +805,49 @@ export async function federationQuery(
     const engine = await getFederationEngine();
 
     // Parse target databases
-    const targetDatabases = options.databases
-      ? options.databases.split(',')
-      : undefined;
+    // Execute query using executeFederatedQuery
+    const result = await engine.executeFederatedQuery(sql);
 
-    // Execute query
-    const result = await engine.executeQuery({
-      sql,
-      databases: targetDatabases,
-      explain: options.explain
-    });
+    spinner.succeed('Federated query executed successfully');
 
-    if (result.success) {
-      spinner.succeed('Federated query executed successfully');
+    if (options.explain) {
+      const explanation = await engine.explainQuery(sql);
+      console.log(chalk.cyan('\nQuery Execution Plan:'));
+      console.log(explanation);
+    }
 
-      if (options.explain) {
-        console.log(chalk.cyan('\nQuery Execution Plan:'));
-        console.log(result.executionPlan);
-      }
+    console.log(chalk.green('\n✓ Databases queried:'), result.plan?.databases?.join(', ') ?? 'N/A');
+    console.log(chalk.green('✓ Rows returned:'), result.rowCount ?? 0);
+    console.log(chalk.green('✓ Execution time:'), `${result.executionTime ?? 0}ms`);
 
-      console.log(chalk.green('\n✓ Databases queried:'), result.databasesQueried);
-      console.log(chalk.green('✓ Rows returned:'), result.rowCount);
-      console.log(chalk.green('✓ Execution time:'), `${result.executionTime}ms`);
+    // Format and display results
+    const format = options.format || 'table';
 
-      // Format and display results
-      const format = options.format || 'table';
+    if (format === 'table' && (result.results?.length ?? 0) > 0) {
+      const table = new Table({
+        head: Object.keys(result.results?.[0] ?? {}),
+        style: { head: ['cyan'] }
+      });
 
-      if (format === 'table') {
-        if (result.rows.length > 0) {
-          const table = new Table({
-            head: Object.keys(result.rows[0]),
-            style: { head: ['cyan'] }
-          });
+      (result.results ?? []).forEach((row: any) => {
+        table.push(Object.values(row) as any);
+      });
 
-          result.rows.forEach((row: any) => {
-            table.push(Object.values(row));
-          });
+      console.log('\n' + table.toString());
+    } else if (format === 'json') {
+      console.log(JSON.stringify(result.results ?? [], null, 2));
+    } else if (format === 'csv' && (result.results?.length ?? 0) > 0) {
+      const headers = Object.keys(result.results?.[0] ?? {}).join(',');
+      const rows = (result.results ?? []).map((row: any) =>
+        Object.values(row).join(',')
+      ).join('\n');
+      console.log(headers + '\n' + rows);
+    }
 
-          console.log('\n' + table.toString());
-        }
-      } else if (format === 'json') {
-        console.log(JSON.stringify(result.rows, null, 2));
-      } else if (format === 'csv') {
-        if (result.rows.length > 0) {
-          const headers = Object.keys(result.rows[0]).join(',');
-          const rows = result.rows.map((row: any) =>
-            Object.values(row).join(',')
-          ).join('\n');
-          console.log(headers + '\n' + rows);
-        }
-      }
-
-      // Save to file if output specified
-      if (options.output) {
-        await fs.writeFile(options.output, JSON.stringify(result.rows, null, 2));
-        console.log(chalk.green('\n✓ Results saved to:'), options.output);
-      }
-
-    } else {
-      spinner.fail(`Query failed: ${result.error}`);
-      process.exit(1);
+    // Save to file if output specified
+    if (options.output) {
+      await fs.writeFile(options.output, JSON.stringify(result.results, null, 2));
+      console.log(chalk.green('\n✓ Results saved to:'), options.output);
     }
 
   } catch (error) {
@@ -897,42 +870,47 @@ export async function federationStatus(options: {
   try {
     const engine = await getFederationEngine();
 
-    // Get federation status
-    const status = await engine.getStatus(options.database);
+    // Get federation statistics
+    const stats = engine.getStatistics();
 
     spinner.succeed('Federation status retrieved');
 
-    console.log(chalk.cyan('\nFederation Status:'));
-    console.log(chalk.green('✓ Status:'), status.status);
-    console.log(chalk.green('✓ Total databases:'), status.totalDatabases);
-    console.log(chalk.green('✓ Active connections:'), status.activeConnections);
-    console.log(chalk.green('✓ Cached queries:'), status.cachedQueries);
+    console.log(chalk.cyan('\nFederation Statistics:'));
+    console.log(chalk.green('✓ Total queries executed:'), stats.queriesExecuted ?? 0);
+    console.log(chalk.green('✓ Cache hits:'), stats.cacheHits ?? 0);
+    console.log(chalk.green('✓ Cache misses:'), stats.cacheMisses ?? 0);
+    console.log(chalk.green('✓ Total data transferred:'), (stats.totalDataTransferred ?? 0).toLocaleString(), 'bytes');
 
     // Display database details
-    console.log(chalk.cyan('\nConnected Databases:'));
-    const table = new Table({
-      head: ['Alias', 'Type', 'Status', 'Schemas', 'Last Query'],
-      style: { head: ['cyan'] }
-    });
+    if (Object.keys(stats.databases ?? {}).length > 0) {
+      console.log(chalk.cyan('\nPer-Database Statistics:'));
+      const table = new Table({
+        head: ['Database', 'Queries', 'Rows', 'Time (ms)'],
+        style: { head: ['cyan'] }
+      });
 
-    status.databases.forEach((db: any) => {
-      table.push([
-        db.alias,
-        db.type,
-        db.status === 'connected' ? chalk.green('connected') : chalk.red('disconnected'),
-        db.schemas.length,
-        db.lastQuery || 'never'
-      ]);
-    });
+      Object.entries(stats.databases ?? {}).forEach(([dbName, dbStats]: [string, any]) => {
+        table.push([
+          dbName,
+          (dbStats?.queries ?? 0).toString(),
+          (dbStats?.rows ?? 0).toLocaleString(),
+          (dbStats?.time ?? 0).toFixed(2)
+        ]);
+      });
 
-    console.log(table.toString());
+      console.log(table.toString());
+    }
 
     if (options.detailed) {
+      const cacheHits = stats.cacheHits ?? 0;
+      const cacheMisses = stats.cacheMisses ?? 0;
+      const hitRate = cacheHits + cacheMisses > 0
+        ? ((cacheHits / (cacheHits + cacheMisses)) * 100).toFixed(2)
+        : 0;
       console.log(chalk.cyan('\nPerformance Metrics:'));
-      console.log(chalk.green('✓ Total queries:'), status.metrics.totalQueries);
-      console.log(chalk.green('✓ Avg execution time:'), `${status.metrics.avgExecutionTime}ms`);
-      console.log(chalk.green('✓ Cache hit rate:'), `${status.metrics.cacheHitRate}%`);
-      console.log(chalk.green('✓ Data transferred:'), status.metrics.dataTransferred);
+      console.log(chalk.green('✓ Total queries:'), stats.queriesExecuted ?? 0);
+      console.log(chalk.green('✓ Cache hit rate:'), `${hitRate}%`);
+      console.log(chalk.green('✓ Data transferred:'), (stats.totalDataTransferred ?? 0).toLocaleString(), 'bytes');
     }
 
   } catch (error) {
@@ -972,33 +950,33 @@ export async function schemaDiff(
     spinner.succeed('Schema comparison completed');
 
     console.log(chalk.cyan('\nSchema Differences:'));
-    console.log(chalk.green('✓ Tables added:'), diff.tablesAdded.length);
-    console.log(chalk.green('✓ Tables removed:'), diff.tablesRemoved.length);
-    console.log(chalk.green('✓ Tables modified:'), diff.tablesModified.length);
-    console.log(chalk.green('✓ Columns changed:'), diff.columnsChanged);
-    console.log(chalk.green('✓ Indexes changed:'), diff.indexesChanged);
+    console.log(chalk.green('✓ Tables added:'), diff.tablesAdded?.length ?? 0);
+    console.log(chalk.green('✓ Tables removed:'), diff.tablesRemoved?.length ?? 0);
+    console.log(chalk.green('✓ Tables modified:'), diff.tablesModified?.length ?? 0);
+    console.log(chalk.green('✓ Columns changed:'), diff.columnsChanged ?? 0);
+    console.log(chalk.green('✓ Indexes changed:'), diff.indexesChanged ?? 0);
 
     // Display detailed differences
-    if (diff.tablesAdded.length > 0) {
+    if ((diff.tablesAdded?.length ?? 0) > 0) {
       console.log(chalk.cyan('\nTables Added:'));
-      diff.tablesAdded.forEach((table: string) => {
+      (diff.tablesAdded ?? []).forEach((table: string) => {
         console.log(chalk.green('  +'), table);
       });
     }
 
-    if (diff.tablesRemoved.length > 0) {
+    if ((diff.tablesRemoved?.length ?? 0) > 0) {
       console.log(chalk.cyan('\nTables Removed:'));
-      diff.tablesRemoved.forEach((table: string) => {
+      (diff.tablesRemoved ?? []).forEach((table: string) => {
         console.log(chalk.red('  -'), table);
       });
     }
 
-    if (diff.tablesModified.length > 0) {
+    if ((diff.tablesModified?.length ?? 0) > 0) {
       console.log(chalk.cyan('\nTables Modified:'));
-      diff.tablesModified.forEach((table: any) => {
-        console.log(chalk.yellow('  ~'), table.name);
-        table.changes.forEach((change: any) => {
-          console.log(chalk.gray('    -'), change.description);
+      (diff.tablesModified ?? []).forEach((table: any) => {
+        console.log(chalk.yellow('  ~'), table.name ?? 'N/A');
+        (table.changes ?? []).forEach((change: any) => {
+          console.log(chalk.gray('    -'), change.description ?? 'N/A');
         });
       });
     }
@@ -1093,26 +1071,26 @@ export async function schemaSync(
     if (result.success) {
       spinner.succeed(`Schema sync ${options.dryRun ? 'simulated' : 'completed'} successfully`);
 
-      console.log(chalk.green('\n✓ Changes applied:'), result.changesApplied);
-      console.log(chalk.green('✓ Statements executed:'), result.statementsExecuted);
-      console.log(chalk.green('✓ Execution time:'), `${result.executionTime}ms`);
+      console.log(chalk.green('\n✓ Changes applied:'), result.changesApplied ?? 0);
+      console.log(chalk.green('✓ Statements executed:'), result.statementsExecuted ?? 0);
+      console.log(chalk.green('✓ Execution time:'), `${result.executionTime ?? 0}ms`);
 
       if (options.dryRun) {
         console.log(chalk.cyan('\nSQL Statements (dry run):'));
-        result.statements.forEach((stmt: string, i: number) => {
+        (result.statements ?? []).forEach((stmt: string, i: number) => {
           console.log(chalk.gray(`${i + 1}.`), stmt);
         });
       }
 
-      if (result.warnings.length > 0) {
+      if ((result.warnings?.length ?? 0) > 0) {
         console.log(chalk.yellow('\n⚠ Warnings:'));
-        result.warnings.forEach((warning: string) => {
+        (result.warnings ?? []).forEach((warning: string) => {
           console.log(chalk.yellow('  -'), warning);
         });
       }
 
     } else {
-      spinner.fail(`Schema sync failed: ${result.error}`);
+      spinner.fail(`Schema sync failed: ${result.error ?? 'Unknown error'}`);
       process.exit(1);
     }
 
@@ -1158,13 +1136,13 @@ export async function schemaExport(
     await fs.writeFile(outputPath, schema.content);
 
     spinner.succeed(`Schema exported from ${database}`);
-    console.log(chalk.green('\n✓ Output file:'), outputPath);
-    console.log(chalk.green('✓ Format:'), schema.format);
-    console.log(chalk.green('✓ Tables exported:'), schema.tables.length);
-    console.log(chalk.green('✓ Size:'), `${(schema.content.length / 1024).toFixed(2)} KB`);
+    console.log(chalk.green('\n✓ Output file:'), outputPath ?? 'N/A');
+    console.log(chalk.green('✓ Format:'), schema.format ?? 'N/A');
+    console.log(chalk.green('✓ Tables exported:'), schema.tables?.length ?? 0);
+    console.log(chalk.green('✓ Size:'), `${((schema.content?.length ?? 0) / 1024).toFixed(2)} KB`);
 
     if (options.includeData) {
-      console.log(chalk.green('✓ Rows exported:'), schema.rowCount);
+      console.log(chalk.green('✓ Rows exported:'), schema.rowCount ?? 0);
     }
 
   } catch (error) {
@@ -1228,23 +1206,23 @@ export async function schemaImport(
     if (result.success) {
       spinner.succeed(`Schema ${options.dryRun ? 'validated' : 'imported'} successfully`);
 
-      console.log(chalk.green('\n✓ Tables created:'), result.tablesCreated);
-      console.log(chalk.green('✓ Statements executed:'), result.statementsExecuted);
-      console.log(chalk.green('✓ Execution time:'), `${result.executionTime}ms`);
+      console.log(chalk.green('\n✓ Tables created:'), result.tablesCreated ?? 0);
+      console.log(chalk.green('✓ Statements executed:'), result.statementsExecuted ?? 0);
+      console.log(chalk.green('✓ Execution time:'), `${result.executionTime ?? 0}ms`);
 
       if (result.dataImported) {
-        console.log(chalk.green('✓ Rows inserted:'), result.rowsInserted);
+        console.log(chalk.green('✓ Rows inserted:'), result.rowsInserted ?? 0);
       }
 
-      if (result.warnings.length > 0) {
+      if ((result.warnings?.length ?? 0) > 0) {
         console.log(chalk.yellow('\n⚠ Warnings:'));
-        result.warnings.forEach((warning: string) => {
+        (result.warnings ?? []).forEach((warning: string) => {
           console.log(chalk.yellow('  -'), warning);
         });
       }
 
     } else {
-      spinner.fail(`Schema import failed: ${result.error}`);
+      spinner.fail(`Schema import failed: ${result.error ?? 'Unknown error'}`);
       process.exit(1);
     }
 
@@ -1271,36 +1249,42 @@ export async function adaStart(options: {
   const spinner = ora('Starting Autonomous Database Agent (ADA)').start();
 
   try {
-    const agent = await getADAAgent();
+    // TODO: Implement ADAAgent
+    // const agent = await getADAAgent();
 
     // Start agent
-    const result = await agent.start({
-      mode: options.mode || 'full',
-      checkInterval: options.interval || 60000, // 1 minute default
-      autoFix: options.autoFix !== false
-    });
+    // const result = await agent.start({
+    //   mode: options.mode || 'full',
+    //   checkInterval: options.interval || 60000, // 1 minute default
+    //   autoFix: options.autoFix !== false
+    // });
 
-    if (result.success) {
-      spinner.succeed('ADA started successfully');
+    // if (result.success) {
+    //   spinner.succeed('ADA started successfully');
 
-      console.log(chalk.green('\n✓ Agent ID:'), result.agentId);
-      console.log(chalk.green('✓ Mode:'), result.mode);
-      console.log(chalk.green('✓ Check interval:'), `${result.checkInterval / 1000}s`);
-      console.log(chalk.green('✓ Auto-fix enabled:'), result.autoFix);
-      console.log(chalk.green('✓ Monitoring databases:'), result.databases.length);
+    //   console.log(chalk.green('\n✓ Agent ID:'), result.agentId);
+    //   console.log(chalk.green('✓ Mode:'), result.mode);
+    //   console.log(chalk.green('✓ Check interval:'), `${result.checkInterval / 1000}s`);
+    //   console.log(chalk.green('✓ Auto-fix enabled:'), result.autoFix);
+    //   console.log(chalk.green('✓ Monitoring databases:'), result.databases?.length ?? 0);
 
-      console.log(chalk.cyan('\nActive Capabilities:'));
-      result.capabilities.forEach((cap: string) => {
-        console.log(chalk.green('  ✓'), cap);
-      });
+    //   console.log(chalk.cyan('\nActive Capabilities:'));
+    //   (result.capabilities ?? []).forEach((cap: string) => {
+    //     console.log(chalk.green('  ✓'), cap);
+    //   });
 
-      console.log(chalk.cyan('\n💡 Use "ai-shell ada status" to monitor ADA'));
-      console.log(chalk.cyan('💡 Use "ai-shell ada stop" to stop ADA'));
+    //   console.log(chalk.cyan('\n💡 Use "ai-shell ada status" to monitor ADA'));
+    //   console.log(chalk.cyan('💡 Use "ai-shell ada stop" to stop ADA'));
 
-    } else {
-      spinner.fail(`Failed to start ADA: ${result.error}`);
-      process.exit(1);
-    }
+    // } else {
+    //   spinner.fail(`Failed to start ADA: ${result.error}`);
+    //   process.exit(1);
+    // }
+
+    spinner.warn('ADA feature not yet implemented');
+    console.log(chalk.yellow('\n⚠ The Autonomous Database Agent (ADA) feature requires implementation'));
+    console.log(chalk.yellow('  Mode:'), options.mode || 'full');
+    console.log(chalk.yellow('  Check interval:'), `${(options.interval || 60000) / 1000}s`);
 
   } catch (error) {
     spinner.fail('Failed to start ADA');
@@ -1320,30 +1304,36 @@ export async function adaStop(options: {
   const spinner = ora('Stopping Autonomous Database Agent (ADA)').start();
 
   try {
-    const agent = await getADAAgent();
+    // TODO: Implement ADAAgent
+    // const agent = await getADAAgent();
 
     // Stop agent
-    const result = await agent.stop({
-      force: options.force,
-      exportMetrics: options.export
-    });
+    // const result = await agent.stop({
+    //   force: options.force,
+    //   exportMetrics: options.export
+    // });
 
-    if (result.success) {
-      spinner.succeed('ADA stopped successfully');
+    // if (result.success) {
+    //   spinner.succeed('ADA stopped successfully');
 
-      console.log(chalk.green('\n✓ Runtime:'), result.runtime);
-      console.log(chalk.green('✓ Checks performed:'), result.checksPerformed);
-      console.log(chalk.green('✓ Issues detected:'), result.issuesDetected);
-      console.log(chalk.green('✓ Fixes applied:'), result.fixesApplied);
+    //   console.log(chalk.green('\n✓ Runtime:'), result.runtime);
+    //   console.log(chalk.green('✓ Checks performed:'), result.checksPerformed ?? 0);
+    //   console.log(chalk.green('✓ Issues detected:'), result.issuesDetected ?? 0);
+    //   console.log(chalk.green('✓ Fixes applied:'), result.fixesApplied ?? 0);
 
-      if (options.export && result.metricsExported) {
-        console.log(chalk.green('\n✓ Metrics exported to:'), result.metricsPath);
-      }
+    //   if (options.export && result.metricsExported) {
+    //     console.log(chalk.green('\n✓ Metrics exported to:'), result.metricsPath);
+    //   }
 
-    } else {
-      spinner.fail(`Failed to stop ADA: ${result.error}`);
-      process.exit(1);
-    }
+    // } else {
+    //   spinner.fail(`Failed to stop ADA: ${result.error}`);
+    //   process.exit(1);
+    // }
+
+    spinner.warn('ADA feature not yet implemented');
+    console.log(chalk.yellow('\n⚠ The Autonomous Database Agent (ADA) feature requires implementation'));
+    console.log(chalk.yellow('  Force stop:'), options.force ? 'enabled' : 'disabled');
+    console.log(chalk.yellow('  Export metrics:'), options.export ? 'enabled' : 'disabled');
 
   } catch (error) {
     spinner.fail('Failed to stop ADA');
@@ -1363,63 +1353,66 @@ export async function adaStatus(options: {
 }): Promise<void> {
   const displayStatus = async () => {
     try {
-      const agent = await getADAAgent();
-      const status = await agent.getStatus();
+      // TODO: Implement ADAAgent
+      // const agent = await getADAAgent();
+      // const status = await agent.getStatus();
 
       console.clear();
       console.log(chalk.cyan.bold('╔════════════════════════════════════════╗'));
       console.log(chalk.cyan.bold('║  Autonomous Database Agent (ADA)       ║'));
       console.log(chalk.cyan.bold('╚════════════════════════════════════════╝\n'));
 
-      // Status overview
-      const statusColor = status.running ? chalk.green : chalk.red;
-      console.log(chalk.cyan('Status:'), statusColor(status.running ? 'RUNNING' : 'STOPPED'));
+      console.log(chalk.yellow('⚠ The Autonomous Database Agent (ADA) feature requires implementation'));
 
-      if (status.running) {
-        console.log(chalk.cyan('Mode:'), status.mode);
-        console.log(chalk.cyan('Uptime:'), status.uptime);
-        console.log(chalk.cyan('Next check:'), status.nextCheck);
-        console.log(chalk.cyan('Databases monitored:'), status.databases.length);
-      }
+      // // Status overview
+      // const statusColor = status.running ? chalk.green : chalk.red;
+      // console.log(chalk.cyan('Status:'), statusColor(status.running ? 'RUNNING' : 'STOPPED'));
 
-      // Recent activity
-      if (status.running && options.detailed) {
-        console.log(chalk.cyan('\nRecent Activity:'));
-        const activityTable = new Table({
-          head: ['Timestamp', 'Type', 'Description', 'Status'],
-          style: { head: ['cyan'] }
-        });
+      // if (status.running) {
+      //   console.log(chalk.cyan('Mode:'), status.mode);
+      //   console.log(chalk.cyan('Uptime:'), status.uptime);
+      //   console.log(chalk.cyan('Next check:'), status.nextCheck);
+      //   console.log(chalk.cyan('Databases monitored:'), status.databases?.length ?? 0);
+      // }
 
-        status.recentActivity.forEach((activity: any) => {
-          const statusIcon = activity.success ? chalk.green('✓') : chalk.red('✗');
-          activityTable.push([
-            activity.timestamp,
-            activity.type,
-            activity.description,
-            statusIcon
-          ]);
-        });
+      // // Recent activity
+      // if (status.running && options.detailed) {
+      //   console.log(chalk.cyan('\nRecent Activity:'));
+      //   const activityTable = new Table({
+      //     head: ['Timestamp', 'Type', 'Description', 'Status'],
+      //     style: { head: ['cyan'] }
+      //   });
 
-        console.log(activityTable.toString());
+      //   (status.recentActivity ?? []).forEach((activity: any) => {
+      //     const statusIcon = activity.success ? chalk.green('✓') : chalk.red('✗');
+      //     activityTable.push([
+      //       activity.timestamp,
+      //       activity.type,
+      //       activity.description,
+      //       statusIcon
+      //     ]);
+      //   });
 
-        // Performance metrics
-        console.log(chalk.cyan('\nPerformance Metrics:'));
-        console.log(chalk.green('✓ Checks performed:'), status.metrics.checksPerformed);
-        console.log(chalk.green('✓ Issues detected:'), status.metrics.issuesDetected);
-        console.log(chalk.green('✓ Fixes applied:'), status.metrics.fixesApplied);
-        console.log(chalk.green('✓ Success rate:'), `${status.metrics.successRate}%`);
-        console.log(chalk.green('✓ Avg response time:'), `${status.metrics.avgResponseTime}ms`);
-      }
+      //   console.log(activityTable.toString());
 
-      // Current issues
-      if (status.running && status.currentIssues.length > 0) {
-        console.log(chalk.yellow('\n⚠ Current Issues:'));
-        status.currentIssues.forEach((issue: any) => {
-          console.log(chalk.yellow('  •'), issue.description);
-          console.log(chalk.gray('    Database:'), issue.database);
-          console.log(chalk.gray('    Severity:'), issue.severity);
-        });
-      }
+      //   // Performance metrics
+      //   console.log(chalk.cyan('\nPerformance Metrics:'));
+      //   console.log(chalk.green('✓ Checks performed:'), status.metrics?.checksPerformed ?? 0);
+      //   console.log(chalk.green('✓ Issues detected:'), status.metrics?.issuesDetected ?? 0);
+      //   console.log(chalk.green('✓ Fixes applied:'), status.metrics?.fixesApplied ?? 0);
+      //   console.log(chalk.green('✓ Success rate:'), `${status.metrics?.successRate ?? 0}%`);
+      //   console.log(chalk.green('✓ Avg response time:'), `${status.metrics?.avgResponseTime ?? 0}ms`);
+      // }
+
+      // // Current issues
+      // if (status.running && (status.currentIssues?.length ?? 0) > 0) {
+      //   console.log(chalk.yellow('\n⚠ Current Issues:'));
+      //   (status.currentIssues ?? []).forEach((issue: any) => {
+      //     console.log(chalk.yellow('  •'), issue.description);
+      //     console.log(chalk.gray('    Database:'), issue.database);
+      //     console.log(chalk.gray('    Severity:'), issue.severity);
+      //   });
+      // }
 
     } catch (error) {
       console.error(chalk.red('Error fetching ADA status:'), error);
@@ -1457,7 +1450,8 @@ export async function adaConfigure(options: {
   const spinner = ora('Configuring Autonomous Database Agent').start();
 
   try {
-    const agent = await getADAAgent();
+    // TODO: Implement ADAAgent
+    // const agent = await getADAAgent();
 
     let config: any = {};
 
@@ -1524,34 +1518,40 @@ export async function adaConfigure(options: {
     }
 
     // Apply configuration
-    const result = await agent.configure(config);
+    // const result = await agent.configure(config);
 
-    if (result.success) {
-      spinner.succeed('ADA configured successfully');
+    // if (result.success) {
+    //   spinner.succeed('ADA configured successfully');
 
-      console.log(chalk.green('\n✓ Configuration updated'));
-      console.log(chalk.cyan('\nCurrent Settings:'));
-      console.log(chalk.green('  Mode:'), result.config.mode);
-      console.log(chalk.green('  Check interval:'), `${result.config.interval}s`);
-      console.log(chalk.green('  Auto-fix:'), result.config.autoFix ? 'enabled' : 'disabled');
-      console.log(chalk.green('  Alert threshold:'), `${result.config.alertThreshold}%`);
-      console.log(chalk.green('  Monitored databases:'), result.config.databases.length);
+    //   console.log(chalk.green('\n✓ Configuration updated'));
+    //   console.log(chalk.cyan('\nCurrent Settings:'));
+    //   console.log(chalk.green('  Mode:'), result.config.mode);
+    //   console.log(chalk.green('  Check interval:'), `${result.config.interval}s`);
+    //   console.log(chalk.green('  Auto-fix:'), result.config.autoFix ? 'enabled' : 'disabled');
+    //   console.log(chalk.green('  Alert threshold:'), `${result.config.alertThreshold}%`);
+    //   console.log(chalk.green('  Monitored databases:'), result.config.databases?.length ?? 0);
 
-      if (result.config.enabledCapabilities) {
-        console.log(chalk.cyan('\nEnabled Capabilities:'));
-        result.config.enabledCapabilities.forEach((cap: string) => {
-          console.log(chalk.green('  ✓'), cap);
-        });
-      }
+    //   if (result.config.enabledCapabilities) {
+    //     console.log(chalk.cyan('\nEnabled Capabilities:'));
+    //     (result.config.enabledCapabilities ?? []).forEach((cap: string) => {
+    //       console.log(chalk.green('  ✓'), cap);
+    //     });
+    //   }
 
-      // Save configuration
-      await agent.saveConfig();
-      console.log(chalk.green('\n✓ Configuration saved'));
+    //   // Save configuration
+    //   await agent.saveConfig();
+    //   console.log(chalk.green('\n✓ Configuration saved'));
 
-    } else {
-      spinner.fail(`Failed to configure ADA: ${result.error}`);
-      process.exit(1);
-    }
+    // } else {
+    //   spinner.fail(`Failed to configure ADA: ${result.error}`);
+    //   process.exit(1);
+    // }
+
+    spinner.warn('ADA feature not yet implemented');
+    console.log(chalk.yellow('\n⚠ The Autonomous Database Agent (ADA) feature requires implementation'));
+    console.log(chalk.yellow('  Mode:'), config.mode || 'full');
+    console.log(chalk.yellow('  Check interval:'), `${config.interval || 60}s`);
+    console.log(chalk.yellow('  Auto-fix:'), config.autoFix !== false ? 'enabled' : 'disabled');
 
   } catch (error) {
     spinner.fail('Failed to configure ADA');
