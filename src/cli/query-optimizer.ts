@@ -149,16 +149,16 @@ export class QueryOptimizer {
     try {
       switch (connection.type) {
         case DatabaseType.POSTGRESQL:
-          const pgResult = await connection.client.query(`EXPLAIN (FORMAT JSON) ${query}`);
+          const pgResult = await (connection.client as any).query(`EXPLAIN (FORMAT JSON) ${query}`);
           return pgResult.rows[0]['QUERY PLAN'];
 
         case DatabaseType.MYSQL:
-          const [mysqlResult] = await connection.client.query(`EXPLAIN FORMAT=JSON ${query}`);
+          const [mysqlResult] = await (connection.client as any).query(`EXPLAIN FORMAT=JSON ${query}`);
           return mysqlResult;
 
         case DatabaseType.SQLITE:
           return new Promise((resolve, reject) => {
-            connection.client.all(`EXPLAIN QUERY PLAN ${query}`, (err: Error, rows: any) => {
+            (connection.client as any).all(`EXPLAIN QUERY PLAN ${query}`, (err: Error, rows: any) => {
               if (err) reject(err);
               else resolve(rows);
             });

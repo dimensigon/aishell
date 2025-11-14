@@ -92,7 +92,7 @@ export class BackupSystem {
     const metadata: BackupMetadata = {
       id: backupId,
       timestamp: Date.now(),
-      database: connection.config.database,
+      database: connection.config.database || 'default',
       type: connection.type,
       size: 0,
       compressed: this.config.compression,

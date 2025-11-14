@@ -68,7 +68,6 @@ class NLAdminCLI {
       this.translator = new NLQueryTranslator(this.llmBridge, this.errorHandler);
       this.inspector = new SchemaInspector(
         this.connectionManager,
-        this.llmBridge,
         this.errorHandler
       );
     } catch (error) {

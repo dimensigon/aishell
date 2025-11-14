@@ -263,7 +263,9 @@ export class MCPDatabaseServer {
     // Limit cache size
     if (this.queryResults.size > 100) {
       const firstKey = this.queryResults.keys().next().value;
-      this.queryResults.delete(firstKey);
+      if (firstKey !== undefined) {
+        this.queryResults.delete(firstKey);
+      }
     }
 
     return id;

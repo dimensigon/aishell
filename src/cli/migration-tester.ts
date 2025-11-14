@@ -298,7 +298,7 @@ export class MigrationTester {
     try {
       switch (connection.type) {
         case DatabaseType.POSTGRESQL:
-          await connection.client.query(`
+          await (connection.client as any).query(`
             SELECT table_name
             FROM information_schema.tables
             WHERE table_schema = 'public'
@@ -306,7 +306,7 @@ export class MigrationTester {
           break;
 
         case DatabaseType.MYSQL:
-          await connection.client.query(`
+          await (connection.client as any).query(`
             SELECT TABLE_NAME
             FROM information_schema.TABLES
             WHERE TABLE_SCHEMA = DATABASE()
@@ -315,7 +315,7 @@ export class MigrationTester {
 
         case DatabaseType.SQLITE:
           await new Promise((resolve, reject) => {
-            connection.client.all(
+            (connection.client as any).all(
               "SELECT name FROM sqlite_master WHERE type='table'",
               (err: Error, rows: any) => {
                 if (err) reject(err);
@@ -347,11 +347,11 @@ export class MigrationTester {
     try {
       switch (connection.type) {
         case DatabaseType.POSTGRESQL:
-          await connection.client.query(`CREATE DATABASE ${testDbName}`);
+          await (connection.client as any).query(`CREATE DATABASE ${testDbName}`);
           break;
 
         case DatabaseType.MYSQL:
-          await connection.client.query(`CREATE DATABASE ${testDbName}`);
+          await (connection.client as any).query(`CREATE DATABASE ${testDbName}`);
           break;
 
         case DatabaseType.SQLITE:
@@ -399,16 +399,18 @@ export class MigrationTester {
 
         switch (originalConnection.type) {
           case DatabaseType.POSTGRESQL:
-            await originalConnection.client.query(`DROP DATABASE IF EXISTS ${testDbName}`);
+            await (originalConnection.client as any).query(`DROP DATABASE IF EXISTS ${testDbName}`);
             break;
 
           case DatabaseType.MYSQL:
-            await originalConnection.client.query(`DROP DATABASE IF EXISTS ${testDbName}`);
+            await (originalConnection.client as any).query(`DROP DATABASE IF EXISTS ${testDbName}`);
             break;
 
           case DatabaseType.SQLITE:
             // Delete SQLite file
-            await fs.unlink(testConnection.config.database);
+            if (testConnection.config.database) {
+              await fs.unlink(testConnection.config.database);
+            }
             break;
         }
       }

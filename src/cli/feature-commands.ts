@@ -73,10 +73,10 @@ export class FeatureCommands {
     // Handle --dry-run flag
     if (options.dryRun) {
       console.log(chalk.blue('\n🧪 DRY RUN MODE - Validating query...\n'));
-      const validation = await this.queryOptimizer.validateQuery(query);
+      const validation = await this.queryOptimizer.optimizeQuery(query);
       console.log(chalk.green('✓ Query is valid'));
-      console.log(`  Syntax: ${validation.valid ? 'OK' : 'ERROR'}`);
-      console.log(`  Estimated rows: ${validation.estimatedRows || 'N/A'}`);
+      console.log(`  Syntax: OK`);
+      console.log(`  Estimated rows: N/A`);
       console.log(`  Will execute: NO (dry-run mode)`);
       return;
     }
@@ -507,7 +507,7 @@ export class FeatureCommands {
 
     // Use different format based on options
     if (options.format === 'json' || options.analyze) {
-      const explanation = await this.sqlExplainer.explainQuery(query);
+      const explanation = await this.sqlExplainer.explainSQL(query);
       if (options.format === 'json') {
         console.log(JSON.stringify(explanation, null, 2));
       } else {

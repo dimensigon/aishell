@@ -309,7 +309,7 @@ Format your response as JSON:
     const connection = this.dbManager.getActive();
     if (!connection) return { tables: [] };
 
-    const result = await connection.client.query(`
+    const result = await (connection.client as any).query(`
       SELECT
         t.table_name,
         c.column_name,
@@ -337,7 +337,7 @@ Format your response as JSON:
     const connection = this.dbManager.getActive();
     if (!connection) return { tables: [] };
 
-    const [result] = await connection.client.query(`
+    const [result] = await (connection.client as any).query(`
       SELECT
         TABLE_NAME as table_name,
         COLUMN_NAME as column_name,
@@ -360,7 +360,7 @@ Format your response as JSON:
     if (!connection) return { tables: [] };
 
     return new Promise((resolve, reject) => {
-      connection.client.all(
+      (connection.client as any).all(
         "SELECT name FROM sqlite_master WHERE type='table'",
         (err: Error, tables: any[]) => {
           if (err) {
@@ -371,7 +371,7 @@ Format your response as JSON:
           const schema = { tables: [] as any[] };
 
           tables.forEach((table) => {
-            connection.client.all(
+            (connection.client as any).all(
               `PRAGMA table_info(${table.name})`,
               (err: Error, columns: any[]) => {
                 if (!err) {
@@ -401,7 +401,7 @@ Format your response as JSON:
     const connection = this.dbManager.getActive();
     if (!connection) return { collections: [] };
 
-    const collections = await connection.client.db().listCollections().toArray();
+    const collections = await (connection.client as any).db().listCollections().toArray();
 
     return {
       collections: collections.map((c: any) => c.name)

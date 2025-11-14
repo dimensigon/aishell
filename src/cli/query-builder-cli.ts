@@ -257,19 +257,17 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
    * Select query type
    */
   private async selectQueryType(): Promise<void> {
-    const { type } = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'type',
-        message: 'Select query type:',
-        choices: [
-          { name: '🔍 SELECT - Query data', value: QueryType.SELECT },
-          { name: '➕ INSERT - Add new data', value: QueryType.INSERT },
-          { name: '✏️  UPDATE - Modify existing data', value: QueryType.UPDATE },
-          { name: '🗑️  DELETE - Remove data', value: QueryType.DELETE }
-        ]
-      }
-    ]);
+    const { type } = await inquirer.prompt({
+      type: 'list',
+      name: 'type',
+      message: 'Select query type:',
+      choices: [
+        { name: '🔍 SELECT - Query data', value: QueryType.SELECT },
+        { name: '➕ INSERT - Add new data', value: QueryType.INSERT },
+        { name: '✏️  UPDATE - Modify existing data', value: QueryType.UPDATE },
+        { name: '🗑️  DELETE - Remove data', value: QueryType.DELETE }
+      ]
+    });
 
     this.state.type = type;
     this.emitStateChanged();
@@ -320,29 +318,25 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
     const columns = await this.getTableColumns(this.state.table);
 
     // Select columns to insert
-    const { selectedColumns } = await inquirer.prompt([
-      {
-        type: 'checkbox',
-        name: 'selectedColumns',
-        message: 'Select columns to insert:',
-        choices: columns,
-        validate: (input: string[]) => input.length > 0 || 'Select at least one column'
-      }
-    ]);
+    const { selectedColumns } = await inquirer.prompt({
+      type: 'checkbox',
+      name: 'selectedColumns',
+      message: 'Select columns to insert:',
+      choices: columns,
+      validate: (input: readonly unknown[]) => (input && input.length > 0) || 'Select at least one column'
+    });
 
     this.state.columns = selectedColumns;
 
     // Enter values
     this.state.values = {};
     for (const column of selectedColumns) {
-      const { value } = await inquirer.prompt([
-        {
-          type: 'input',
-          name: 'value',
-          message: `Enter value for ${chalk.cyan(column)}:`,
-          validate: (input: string) => input.trim() !== '' || 'Value cannot be empty'
-        }
-      ]);
+      const { value } = await inquirer.prompt({
+        type: 'input',
+        name: 'value',
+        message: `Enter value for ${chalk.cyan(column)}:`,
+        validate: (input: string) => input.trim() !== '' || 'Value cannot be empty'
+      });
       this.state.values[column] = this.parseValue(value);
     }
 
@@ -360,29 +354,25 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
     const columns = await this.getTableColumns(this.state.table);
 
     // Select columns to update
-    const { selectedColumns } = await inquirer.prompt([
-      {
-        type: 'checkbox',
-        name: 'selectedColumns',
-        message: 'Select columns to update:',
-        choices: columns,
-        validate: (input: string[]) => input.length > 0 || 'Select at least one column'
-      }
-    ]);
+    const { selectedColumns } = await inquirer.prompt({
+      type: 'checkbox',
+      name: 'selectedColumns',
+      message: 'Select columns to update:',
+      choices: columns,
+      validate: (input: readonly unknown[]) => (input && input.length > 0) || 'Select at least one column'
+    });
 
     this.state.columns = selectedColumns;
 
     // Enter new values
     this.state.values = {};
     for (const column of selectedColumns) {
-      const { value } = await inquirer.prompt([
-        {
-          type: 'input',
-          name: 'value',
-          message: `Enter new value for ${chalk.cyan(column)}:`,
-          validate: (input: string) => input.trim() !== '' || 'Value cannot be empty'
-        }
-      ]);
+      const { value } = await inquirer.prompt({
+        type: 'input',
+        name: 'value',
+        message: `Enter new value for ${chalk.cyan(column)}:`,
+        validate: (input: string) => input.trim() !== '' || 'Value cannot be empty'
+      });
       this.state.values[column] = this.parseValue(value);
     }
 
@@ -413,15 +403,13 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
   private async selectTable(): Promise<void> {
     const tables = await this.getTableList();
 
-    const { table } = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'table',
-        message: 'Select table:',
-        choices: tables,
-        pageSize: 15
-      }
-    ]);
+    const { table } = await inquirer.prompt({
+      type: 'list',
+      name: 'table',
+      message: 'Select table:',
+      choices: tables,
+      pageSize: 15
+    });
 
     this.state.table = table;
     this.emitStateChanged();
@@ -433,17 +421,15 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
   private async selectColumns(): Promise<void> {
     const columns = await this.getTableColumns(this.state.table);
 
-    const { selectedColumns } = await inquirer.prompt([
-      {
-        type: 'checkbox',
-        name: 'selectedColumns',
-        message: 'Select columns (leave empty for all):',
-        choices: [
-          { name: '* (All columns)', value: '*' },
-          ...columns
-        ]
-      }
-    ]);
+    const { selectedColumns } = await inquirer.prompt({
+      type: 'checkbox',
+      name: 'selectedColumns',
+      message: 'Select columns (leave empty for all):',
+      choices: [
+        { name: '* (All columns)', value: '*' } as const,
+        ...columns.map(c => typeof c === 'string' ? { name: c, value: c } as const : c)
+      ]
+    });
 
     if (selectedColumns.includes('*') || selectedColumns.length === 0) {
       this.state.columns = ['*'];
@@ -461,14 +447,12 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
     let addMore = true;
 
     while (addMore) {
-      const { shouldAddJoin } = await inquirer.prompt([
-        {
-          type: 'confirm',
-          name: 'shouldAddJoin',
-          message: 'Add JOIN clause?',
-          default: false
-        }
-      ]);
+      const { shouldAddJoin } = await inquirer.prompt({
+        type: 'confirm',
+        name: 'shouldAddJoin',
+        message: 'Add JOIN clause?',
+        default: false
+      });
 
       if (!shouldAddJoin) {
         break;
@@ -479,35 +463,35 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
         t !== this.state.table && !this.state.joins.some(j => j.table === t)
       );
 
-      const answers = await inquirer.prompt([
-        {
-          type: 'list',
-          name: 'joinType',
-          message: 'Select JOIN type:',
-          choices: Object.values(JoinType)
-        },
-        {
-          type: 'list',
-          name: 'table',
-          message: 'Select table to join:',
-          choices: availableTables
-        },
-        {
-          type: 'input',
-          name: 'on',
-          message: 'Enter ON condition (e.g., table1.id = table2.user_id):',
-          validate: (input: string) => input.trim() !== '' || 'ON condition is required'
-        }
-      ]);
+      const { joinType } = await inquirer.prompt({
+        type: 'list',
+        name: 'joinType',
+        message: 'Select JOIN type:',
+        choices: Object.values(JoinType)
+      });
+
+      const { table } = await inquirer.prompt({
+        type: 'list',
+        name: 'table',
+        message: 'Select table to join:',
+        choices: availableTables
+      });
+
+      const { on } = await inquirer.prompt({
+        type: 'input',
+        name: 'on',
+        message: 'Enter ON condition (e.g., table1.id = table2.user_id):',
+        validate: (input: string) => input.trim() !== '' || 'ON condition is required'
+      });
 
       this.state.joins.push({
-        type: answers.joinType,
-        table: answers.table,
-        on: answers.on
+        type: joinType,
+        table: table,
+        on: on
       });
 
       this.emitStateChanged();
-      console.log(chalk.green(`✓ Added ${answers.joinType} ${answers.table}`));
+      console.log(chalk.green(`✓ Added ${joinType} ${table}`));
     }
   }
 
@@ -519,14 +503,12 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
 
     while (true) {
       if (!required) {
-        const { shouldAddCondition } = await inquirer.prompt([
-          {
-            type: 'confirm',
-            name: 'shouldAddCondition',
-            message: 'Add WHERE condition?',
-            default: addMore
-          }
-        ]);
+        const { shouldAddCondition } = await inquirer.prompt({
+          type: 'confirm',
+          name: 'shouldAddCondition',
+          message: 'Add WHERE condition?',
+          default: addMore
+        });
 
         if (!shouldAddCondition) {
           break;
@@ -535,52 +517,49 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
 
       const columns = await this.getTableColumns(this.state.table);
 
-      const answers = await inquirer.prompt([
-        {
-          type: 'list',
-          name: 'column',
-          message: 'Select column:',
-          choices: columns
-        },
-        {
-          type: 'list',
-          name: 'operator',
-          message: 'Select operator:',
-          choices: Object.values(ConditionOperator)
-        }
-      ]);
+      const { column } = await inquirer.prompt({
+        type: 'list',
+        name: 'column',
+        message: 'Select column:',
+        choices: columns
+      });
+
+      const { operator } = await inquirer.prompt({
+        type: 'list',
+        name: 'operator',
+        message: 'Select operator:',
+        choices: Object.values(ConditionOperator)
+      });
 
       let value: any;
       let secondValue: any;
 
       // Get value(s) based on operator
-      if (![ConditionOperator.IS_NULL, ConditionOperator.IS_NOT_NULL].includes(answers.operator)) {
-        if (answers.operator === ConditionOperator.BETWEEN) {
-          const values = await inquirer.prompt([
-            {
-              type: 'input',
-              name: 'value1',
-              message: 'Enter first value:',
-              validate: (input: string) => input.trim() !== '' || 'Value is required'
-            },
-            {
-              type: 'input',
-              name: 'value2',
-              message: 'Enter second value:',
-              validate: (input: string) => input.trim() !== '' || 'Value is required'
-            }
-          ]);
-          value = this.parseValue(values.value1);
-          secondValue = this.parseValue(values.value2);
+      if (![ConditionOperator.IS_NULL, ConditionOperator.IS_NOT_NULL].includes(operator)) {
+        if (operator === ConditionOperator.BETWEEN) {
+          const { value1 } = await inquirer.prompt({
+            type: 'input',
+            name: 'value1',
+            message: 'Enter first value:',
+            validate: (input: string) => input.trim() !== '' || 'Value is required'
+          });
+
+          const { value2 } = await inquirer.prompt({
+            type: 'input',
+            name: 'value2',
+            message: 'Enter second value:',
+            validate: (input: string) => input.trim() !== '' || 'Value is required'
+          });
+
+          value = this.parseValue(value1);
+          secondValue = this.parseValue(value2);
         } else {
-          const { inputValue } = await inquirer.prompt([
-            {
-              type: 'input',
-              name: 'inputValue',
-              message: 'Enter value:',
-              validate: (input: string) => input.trim() !== '' || 'Value is required'
-            }
-          ]);
+          const { inputValue } = await inquirer.prompt({
+            type: 'input',
+            name: 'inputValue',
+            message: 'Enter value:',
+            validate: (input: string) => input.trim() !== '' || 'Value is required'
+          });
           value = this.parseValue(inputValue);
         }
       }
@@ -588,27 +567,25 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
       // Logical operator for subsequent conditions
       let logicalOperator: 'AND' | 'OR' | undefined;
       if (this.state.conditions.length > 0) {
-        const { logical } = await inquirer.prompt([
-          {
-            type: 'list',
-            name: 'logical',
-            message: 'Combine with previous condition using:',
-            choices: ['AND', 'OR']
-          }
-        ]);
+        const { logical } = await inquirer.prompt({
+          type: 'list',
+          name: 'logical',
+          message: 'Combine with previous condition using:',
+          choices: ['AND', 'OR']
+        });
         logicalOperator = logical;
       }
 
       this.state.conditions.push({
-        column: answers.column,
-        operator: answers.operator,
+        column: column,
+        operator: operator,
         value,
         secondValue,
         logicalOperator
       });
 
       this.emitStateChanged();
-      console.log(chalk.green(`✓ Added condition: ${answers.column} ${answers.operator}`));
+      console.log(chalk.green(`✓ Added condition: ${column} ${operator}`));
 
       addMore = false;
       required = false;
@@ -619,14 +596,12 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
    * Add GROUP BY
    */
   private async addGroupBy(): Promise<void> {
-    const { shouldAddGroupBy } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'shouldAddGroupBy',
-        message: 'Add GROUP BY clause?',
-        default: false
-      }
-    ]);
+    const { shouldAddGroupBy } = await inquirer.prompt({
+      type: 'confirm',
+      name: 'shouldAddGroupBy',
+      message: 'Add GROUP BY clause?',
+      default: false
+    });
 
     if (!shouldAddGroupBy) {
       return;
@@ -634,15 +609,13 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
 
     const columns = await this.getTableColumns(this.state.table);
 
-    const { groupColumns } = await inquirer.prompt([
-      {
-        type: 'checkbox',
-        name: 'groupColumns',
-        message: 'Select columns to group by:',
-        choices: columns,
-        validate: (input: string[]) => input.length > 0 || 'Select at least one column'
-      }
-    ]);
+    const { groupColumns } = await inquirer.prompt({
+      type: 'checkbox',
+      name: 'groupColumns',
+      message: 'Select columns to group by:',
+      choices: columns,
+      validate: (input: readonly unknown[]) => (input && input.length > 0) || 'Select at least one column'
+    });
 
     this.state.groupBy = groupColumns;
     this.emitStateChanged();
@@ -652,14 +625,12 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
    * Add HAVING clause
    */
   private async addHaving(): Promise<void> {
-    const { shouldAddHaving } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'shouldAddHaving',
-        message: 'Add HAVING clause?',
-        default: false
-      }
-    ]);
+    const { shouldAddHaving } = await inquirer.prompt({
+      type: 'confirm',
+      name: 'shouldAddHaving',
+      message: 'Add HAVING clause?',
+      default: false
+    });
 
     if (!shouldAddHaving) {
       return;
@@ -668,31 +639,31 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
     // Similar to WHERE conditions but for HAVING
     const columns = await this.getTableColumns(this.state.table);
 
-    const answers = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'column',
-        message: 'Select aggregate column:',
-        choices: columns
-      },
-      {
-        type: 'list',
-        name: 'operator',
-        message: 'Select operator:',
-        choices: Object.values(ConditionOperator)
-      },
-      {
-        type: 'input',
-        name: 'value',
-        message: 'Enter value:',
-        validate: (input: string) => input.trim() !== '' || 'Value is required'
-      }
-    ]);
+    const { column } = await inquirer.prompt({
+      type: 'list',
+      name: 'column',
+      message: 'Select aggregate column:',
+      choices: columns
+    });
+
+    const { operator } = await inquirer.prompt({
+      type: 'list',
+      name: 'operator',
+      message: 'Select operator:',
+      choices: Object.values(ConditionOperator)
+    });
+
+    const { value } = await inquirer.prompt({
+      type: 'input',
+      name: 'value',
+      message: 'Enter value:',
+      validate: (input: string) => input.trim() !== '' || 'Value is required'
+    });
 
     this.state.having.push({
-      column: answers.column,
-      operator: answers.operator,
-      value: this.parseValue(answers.value)
+      column: column,
+      operator: operator,
+      value: this.parseValue(value)
     });
 
     this.emitStateChanged();
@@ -705,14 +676,12 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
     let addMore = true;
 
     while (addMore) {
-      const { shouldAddOrder } = await inquirer.prompt([
-        {
-          type: 'confirm',
-          name: 'shouldAddOrder',
-          message: 'Add ORDER BY clause?',
-          default: this.state.orderBy.length === 0
-        }
-      ]);
+      const { shouldAddOrder } = await inquirer.prompt({
+        type: 'confirm',
+        name: 'shouldAddOrder',
+        message: 'Add ORDER BY clause?',
+        default: this.state.orderBy.length === 0
+      });
 
       if (!shouldAddOrder) {
         break;
@@ -720,28 +689,27 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
 
       const columns = await this.getTableColumns(this.state.table);
 
-      const answers = await inquirer.prompt([
-        {
-          type: 'list',
-          name: 'column',
-          message: 'Select column to order by:',
-          choices: columns
-        },
-        {
-          type: 'list',
-          name: 'direction',
-          message: 'Select order direction:',
-          choices: ['ASC', 'DESC']
-        }
-      ]);
+      const { column } = await inquirer.prompt({
+        type: 'list',
+        name: 'column',
+        message: 'Select column to order by:',
+        choices: columns
+      });
+
+      const { direction } = await inquirer.prompt({
+        type: 'list',
+        name: 'direction',
+        message: 'Select order direction:',
+        choices: ['ASC', 'DESC']
+      });
 
       this.state.orderBy.push({
-        column: answers.column,
-        direction: answers.direction
+        column: column,
+        direction: direction
       });
 
       this.emitStateChanged();
-      console.log(chalk.green(`✓ Added ORDER BY ${answers.column} ${answers.direction}`));
+      console.log(chalk.green(`✓ Added ORDER BY ${column} ${direction}`));
 
       addMore = false;
     }
@@ -751,45 +719,40 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
    * Add LIMIT and OFFSET
    */
   private async addLimitOffset(): Promise<void> {
-    const { shouldAddLimit } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'shouldAddLimit',
-        message: 'Add LIMIT clause?',
-        default: false
-      }
-    ]);
+    const { shouldAddLimit } = await inquirer.prompt({
+      type: 'confirm',
+      name: 'shouldAddLimit',
+      message: 'Add LIMIT clause?',
+      default: false
+    });
 
     if (!shouldAddLimit) {
       return;
     }
 
-    const answers = await inquirer.prompt([
-      {
+    const { limit } = await inquirer.prompt({
+      type: 'number',
+      name: 'limit',
+      message: 'Enter LIMIT:',
+      validate: (input: number | undefined) => (input !== undefined && input > 0) ? true : 'LIMIT must be positive'
+    });
+
+    const { shouldAddOffset } = await inquirer.prompt({
+      type: 'confirm',
+      name: 'shouldAddOffset',
+      message: 'Add OFFSET?',
+      default: false
+    });
+
+    this.state.limit = limit;
+
+    if (shouldAddOffset) {
+      const { offset } = await inquirer.prompt({
         type: 'number',
-        name: 'limit',
-        message: 'Enter LIMIT:',
-        validate: (input: number) => input > 0 || 'LIMIT must be positive'
-      },
-      {
-        type: 'confirm',
-        name: 'shouldAddOffset',
-        message: 'Add OFFSET?',
-        default: false
-      }
-    ]);
-
-    this.state.limit = answers.limit;
-
-    if (answers.shouldAddOffset) {
-      const { offset } = await inquirer.prompt([
-        {
-          type: 'number',
-          name: 'offset',
-          message: 'Enter OFFSET:',
-          validate: (input: number) => input >= 0 || 'OFFSET must be non-negative'
-        }
-      ]);
+        name: 'offset',
+        message: 'Enter OFFSET:',
+        validate: (input: number | undefined) => (input !== undefined && input >= 0) ? true : 'OFFSET must be non-negative'
+      });
       this.state.offset = offset;
     }
 
@@ -800,14 +763,12 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
    * Add DISTINCT option
    */
   private async addDistinct(): Promise<void> {
-    const { distinct } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'distinct',
-        message: 'Use DISTINCT?',
-        default: false
-      }
-    ]);
+    const { distinct } = await inquirer.prompt({
+      type: 'confirm',
+      name: 'distinct',
+      message: 'Use DISTINCT?',
+      default: false
+    });
 
     this.state.distinct = distinct;
     this.emitStateChanged();
@@ -822,20 +783,18 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
     console.log(chalk.cyan('\n📋 Generated Query:'));
     console.log(chalk.white(this.formatSQL(sql)));
 
-    const { action } = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'action',
-        message: 'What would you like to do?',
-        choices: [
-          { name: '▶️  Execute query', value: 'execute' },
-          { name: '💾 Save as draft', value: 'save' },
-          { name: '📋 Copy to clipboard', value: 'copy' },
-          { name: '✏️  Edit query', value: 'edit' },
-          { name: '❌ Cancel', value: 'cancel' }
-        ]
-      }
-    ]);
+    const { action } = await inquirer.prompt({
+      type: 'list',
+      name: 'action',
+      message: 'What would you like to do?',
+      choices: [
+        { name: '▶️  Execute query', value: 'execute' },
+        { name: '💾 Save as draft', value: 'save' },
+        { name: '📋 Copy to clipboard', value: 'copy' },
+        { name: '✏️  Edit query', value: 'edit' },
+        { name: '❌ Cancel', value: 'cancel' }
+      ]
+    });
 
     switch (action) {
       case 'execute':
@@ -865,10 +824,8 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
       console.log(chalk.cyan('\n⏳ Executing query...'));
 
       const startTime = Date.now();
-      const result = await this.queryExecutor.execute(
-        sql,
-        this.connectionManager.getActiveConnectionName() || ''
-      );
+      const activeConn = this.connectionManager.getActive();
+      const result = await this.queryExecutor.execute(sql);
       const executionTime = Date.now() - startTime;
 
       this.emit('queryExecuted', result);
@@ -881,7 +838,7 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
       console.log(chalk.cyan(`Rows: ${result.rowCount}`));
 
       if (result.rows && result.rows.length > 0) {
-        const formatted = this.formatter.format(result.rows, {
+        const formatted = ResultFormatter.format(result.rows, {
           format: 'table',
           colors: true,
           headers: true
@@ -899,14 +856,12 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
    * Edit query manually
    */
   private async editQuery(sql: string): Promise<void> {
-    const { editedSQL } = await inquirer.prompt([
-      {
-        type: 'editor',
-        name: 'editedSQL',
-        message: 'Edit query:',
-        default: sql
-      }
-    ]);
+    const { editedSQL } = await inquirer.prompt({
+      type: 'editor',
+      name: 'editedSQL',
+      message: 'Edit query:',
+      default: sql
+    });
 
     if (editedSQL.trim()) {
       await this.executeQuery(editedSQL.trim());
@@ -917,7 +872,7 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
    * Generate SQL from state
    */
   generateSQL(): string {
-    const dbType = this.connectionManager.getActiveConnection()?.type;
+    const dbType = this.connectionManager.getActive()?.type;
 
     switch (this.state.type) {
       case QueryType.SELECT:
@@ -944,7 +899,7 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
     }
 
     sql += this.state.columns.join(', ');
-    sql += ` FROM ${this.escapeIdentifier(this.state.table, dbType)}`;
+    sql += ` FROM ${this.escapeIdentifier(this.state.table || '', dbType)}`;
 
     // JOINs
     for (const join of this.state.joins) {
@@ -1155,20 +1110,18 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
    */
   async saveDraft(name?: string): Promise<void> {
     if (!name) {
-      const { draftName } = await inquirer.prompt([
-        {
-          type: 'input',
-          name: 'draftName',
-          message: 'Enter draft name:',
-          validate: (input: string) => input.trim() !== '' || 'Name is required'
-        }
-      ]);
+      const { draftName } = await inquirer.prompt({
+        type: 'input',
+        name: 'draftName',
+        message: 'Enter draft name:',
+        validate: (input: string) => input.trim() !== '' || 'Name is required'
+      });
       name = draftName;
     }
 
     const draft: QueryDraft = {
       id: uuidv4(),
-      name,
+      name: name || 'untitled',
       state: { ...this.state },
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -1194,17 +1147,15 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
         return;
       }
 
-      const { selectedDraft } = await inquirer.prompt([
-        {
-          type: 'list',
-          name: 'selectedDraft',
-          message: 'Select draft to load:',
-          choices: drafts.map(d => ({
-            name: `${d.name} (${new Date(d.updatedAt).toLocaleString()})`,
-            value: d.id
-          }))
-        }
-      ]);
+      const { selectedDraft } = await inquirer.prompt({
+        type: 'list',
+        name: 'selectedDraft',
+        message: 'Select draft to load:',
+        choices: drafts.map(d => ({
+          name: `${d.name} (${new Date(d.updatedAt).toLocaleString()})`,
+          value: d.id
+        }))
+      });
 
       draftId = selectedDraft;
     }
@@ -1247,17 +1198,15 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
    */
   async applyTemplate(templateId?: string): Promise<void> {
     if (!templateId) {
-      const { selectedTemplate } = await inquirer.prompt([
-        {
-          type: 'list',
-          name: 'selectedTemplate',
-          message: 'Select template:',
-          choices: this.templates.map(t => ({
-            name: `${t.name} - ${t.description}`,
-            value: t.id
-          }))
-        }
-      ]);
+      const { selectedTemplate } = await inquirer.prompt({
+        type: 'list',
+        name: 'selectedTemplate',
+        message: 'Select template:',
+        choices: this.templates.map(t => ({
+          name: `${t.name} - ${t.description}`,
+          value: t.id
+        }))
+      });
 
       templateId = selectedTemplate;
     }
@@ -1428,7 +1377,7 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
    * Get table list
    */
   private async getTableList(): Promise<string[]> {
-    const connection = this.connectionManager.getActiveConnection();
+    const connection = this.connectionManager.getActive();
     if (!connection) {
       throw new Error('No active connection');
     }
@@ -1442,7 +1391,7 @@ export class QueryBuilderCLI extends EventEmitter<QueryBuilderEvents> {
    * Get table columns
    */
   private async getTableColumns(table: string): Promise<string[]> {
-    const connection = this.connectionManager.getActiveConnection();
+    const connection = this.connectionManager.getActive();
     if (!connection) {
       throw new Error('No active connection');
     }

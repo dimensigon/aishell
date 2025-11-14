@@ -410,6 +410,11 @@ export class SSOCLI {
         }
       }
 
+      // Ensure providerName is defined
+      if (!providerName) {
+        throw new Error('Provider name could not be determined');
+      }
+
       console.log(chalk.blue(`\n🔐 Logging in with ${providerName}...\n`));
 
       // Start login flow
@@ -417,7 +422,7 @@ export class SSOCLI {
 
       console.log(chalk.green('\n✅ Authentication successful!\n'));
       console.log(chalk.dim(`   Session ID: ${session.sessionId}`));
-      console.log(chalk.dim(`   User: ${session.name || session.email || session.userId}`));
+      console.log(chalk.dim(`   User: ${session.name || session.email || session.userId || 'Unknown'}`));
       console.log(chalk.dim(`   Roles: ${session.roles.join(', ')}`));
       console.log('');
 
