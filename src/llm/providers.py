@@ -266,7 +266,7 @@ class LocalTransformersProvider(LocalLLMProvider):
 
 
 class OpenAIProvider(LocalLLMProvider):
-    """OpenAI API provider"""
+    """OpenAI API provider with full API support"""
 
     def __init__(self, model_name: str = "gpt-3.5-turbo", api_key: Optional[str] = None) -> None:
         super().__init__(model_name, "")
@@ -277,7 +277,7 @@ class OpenAIProvider(LocalLLMProvider):
         """Initialize OpenAI client"""
         try:
             if not self.api_key:
-                logger.warning("No OpenAI API key found")
+                logger.warning("No OpenAI API key found. Set OPENAI_API_KEY env var.")
                 return False
             self.initialized = True
             logger.info(f"OpenAI provider initialized with model: {self.model_name}")
@@ -287,21 +287,70 @@ class OpenAIProvider(LocalLLMProvider):
             return False
 
     def generate(self, prompt: str, max_tokens: int = 500, temperature: float = 0.7) -> str:
-        """Generate text using OpenAI"""
+        """Generate text using OpenAI (synchronous wrapper)"""
         if not self.initialized:
             raise RuntimeError("Provider not initialized")
 
-        # In production, would use openai library
-        # For testing, return mock response
-        return f"OpenAI response for: {prompt[:50]}..."
+        # Run async method synchronously
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            # If already in async context, use the existing loop
+            try:
+                import nest_asyncio
+                nest_asyncio.apply()
+            except ImportError:
+                logger.warning("nest_asyncio not available, using direct async call")
+
+        return loop.run_until_complete(self.agenerate(prompt, max_tokens, temperature))
 
     def chat(self, messages: List[Dict[str, str]], max_tokens: int = 500) -> str:
         """Chat using OpenAI"""
         if not self.initialized:
             raise RuntimeError("Provider not initialized")
 
-        # In production, would use openai library
-        return f"OpenAI chat response"
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            try:
+                import nest_asyncio
+                nest_asyncio.apply()
+            except ImportError:
+                pass
+
+        return loop.run_until_complete(self._achat(messages, max_tokens))
+
+    async def _achat(self, messages: List[Dict[str, str]], max_tokens: int = 500) -> str:
+        """Async chat implementation"""
+        if not self.session:
+            self.session = aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=30)
+            )
+
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+
+        payload = {
+            "model": self.model_name,
+            "messages": messages,
+            "max_tokens": max_tokens
+        }
+
+        try:
+            async with self.session.post(
+                f"{self.base_url}/chat/completions",
+                headers=headers,
+                json=payload
+            ) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    return data["choices"][0]["message"]["content"]
+                else:
+                    error_text = await response.text()
+                    raise RuntimeError(f"OpenAI API error ({response.status}): {error_text}")
+        except Exception as e:
+            logger.error(f"OpenAI chat error: {e}")
+            raise
 
     async def agenerate(self, prompt: str, max_tokens: int = 500, temperature: float = 0.7) -> str:
         """Async generate with OpenAI"""
@@ -309,7 +358,9 @@ class OpenAIProvider(LocalLLMProvider):
             raise RuntimeError("Provider not initialized")
 
         if not self.session:
-            self.session = aiohttp.ClientSession()
+            self.session = aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=30)
+            )
 
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -324,39 +375,87 @@ class OpenAIProvider(LocalLLMProvider):
         }
 
         try:
-            async with self.session.post(f"{self.base_url}/chat/completions",
-                                        headers=headers, json=payload) as response:
+            async with self.session.post(
+                f"{self.base_url}/chat/completions",
+                headers=headers,
+                json=payload
+            ) as response:
                 if response.status == 200:
                     data = await response.json()
                     return data["choices"][0]["message"]["content"]
                 else:
-                    # Mock response for testing
-                    return f"OpenAI response for: {prompt[:50]}..."
+                    error_text = await response.text()
+                    raise RuntimeError(f"OpenAI API error ({response.status}): {error_text}")
         except Exception as e:
             logger.error(f"OpenAI async generation error: {e}")
-            return f"OpenAI response for: {prompt[:50]}..."
+            raise
 
     async def stream_generate(self, prompt: str, **kwargs) -> AsyncIterator[str]:
         """Stream response from OpenAI"""
-        response = await self.agenerate(prompt, **kwargs)
-        for word in response.split():
-            yield word + " "
-            await asyncio.sleep(0.01)
+        if not self.initialized:
+            raise RuntimeError("Provider not initialized")
+
+        if not self.session:
+            self.session = aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=60)
+            )
+
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+
+        payload = {
+            "model": self.model_name,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": kwargs.get('temperature', 0.7),
+            "max_tokens": kwargs.get('max_tokens', 500),
+            "stream": True
+        }
+
+        try:
+            async with self.session.post(
+                f"{self.base_url}/chat/completions",
+                headers=headers,
+                json=payload
+            ) as response:
+                if response.status == 200:
+                    async for line in response.content:
+                        line_str = line.decode('utf-8').strip()
+                        if line_str.startswith('data: '):
+                            data_str = line_str[6:]  # Remove 'data: ' prefix
+                            if data_str == '[DONE]':
+                                break
+                            try:
+                                data = json.loads(data_str)
+                                if 'choices' in data and len(data['choices']) > 0:
+                                    delta = data['choices'][0].get('delta', {})
+                                    if 'content' in delta:
+                                        yield delta['content']
+                            except json.JSONDecodeError:
+                                continue
+                else:
+                    error_text = await response.text()
+                    raise RuntimeError(f"OpenAI stream error ({response.status}): {error_text}")
+        except Exception as e:
+            logger.error(f"OpenAI stream generation error: {e}")
+            raise
 
 
 class AnthropicProvider(LocalLLMProvider):
-    """Anthropic Claude API provider"""
+    """Anthropic Claude API provider with full API support"""
 
-    def __init__(self, model_name: str = "claude-3-sonnet-20240229", api_key: Optional[str] = None) -> None:
+    def __init__(self, model_name: str = "claude-3-5-sonnet-20241022", api_key: Optional[str] = None) -> None:
         super().__init__(model_name, "")
         self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
         self.base_url = "https://api.anthropic.com/v1"
+        self.api_version = "2023-06-01"
 
     def initialize(self) -> bool:
         """Initialize Anthropic client"""
         try:
             if not self.api_key:
-                logger.warning("No Anthropic API key found")
+                logger.warning("No Anthropic API key found. Set ANTHROPIC_API_KEY env var.")
                 return False
             self.initialized = True
             logger.info(f"Anthropic provider initialized with model: {self.model_name}")
@@ -366,19 +465,69 @@ class AnthropicProvider(LocalLLMProvider):
             return False
 
     def generate(self, prompt: str, max_tokens: int = 500, temperature: float = 0.7) -> str:
-        """Generate text using Anthropic"""
+        """Generate text using Anthropic (synchronous wrapper)"""
         if not self.initialized:
             raise RuntimeError("Provider not initialized")
 
-        # Mock response for testing
-        return f"Anthropic response for: {prompt[:50]}..."
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            try:
+                import nest_asyncio
+                nest_asyncio.apply()
+            except ImportError:
+                pass
+
+        return loop.run_until_complete(self.agenerate(prompt, max_tokens, temperature))
 
     def chat(self, messages: List[Dict[str, str]], max_tokens: int = 500) -> str:
         """Chat using Anthropic"""
         if not self.initialized:
             raise RuntimeError("Provider not initialized")
 
-        return f"Anthropic chat response"
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            try:
+                import nest_asyncio
+                nest_asyncio.apply()
+            except ImportError:
+                pass
+
+        return loop.run_until_complete(self._achat(messages, max_tokens))
+
+    async def _achat(self, messages: List[Dict[str, str]], max_tokens: int = 500) -> str:
+        """Async chat implementation"""
+        if not self.session:
+            self.session = aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=30)
+            )
+
+        headers = {
+            "x-api-key": self.api_key,
+            "anthropic-version": self.api_version,
+            "Content-Type": "application/json"
+        }
+
+        payload = {
+            "model": self.model_name,
+            "messages": messages,
+            "max_tokens": max_tokens
+        }
+
+        try:
+            async with self.session.post(
+                f"{self.base_url}/messages",
+                headers=headers,
+                json=payload
+            ) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    return data["content"][0]["text"]
+                else:
+                    error_text = await response.text()
+                    raise RuntimeError(f"Anthropic API error ({response.status}): {error_text}")
+        except Exception as e:
+            logger.error(f"Anthropic chat error: {e}")
+            raise
 
     async def agenerate(self, prompt: str, max_tokens: int = 500, temperature: float = 0.7) -> str:
         """Async generate with Anthropic"""
@@ -386,11 +535,13 @@ class AnthropicProvider(LocalLLMProvider):
             raise RuntimeError("Provider not initialized")
 
         if not self.session:
-            self.session = aiohttp.ClientSession()
+            self.session = aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=30)
+            )
 
         headers = {
             "x-api-key": self.api_key,
-            "anthropic-version": "2023-06-01",
+            "anthropic-version": self.api_version,
             "Content-Type": "application/json"
         }
 
@@ -402,24 +553,72 @@ class AnthropicProvider(LocalLLMProvider):
         }
 
         try:
-            async with self.session.post(f"{self.base_url}/messages",
-                                        headers=headers, json=payload) as response:
+            async with self.session.post(
+                f"{self.base_url}/messages",
+                headers=headers,
+                json=payload
+            ) as response:
                 if response.status == 200:
                     data = await response.json()
                     return data["content"][0]["text"]
                 else:
-                    # Mock response for testing
-                    return f"Anthropic response for: {prompt[:50]}..."
+                    error_text = await response.text()
+                    raise RuntimeError(f"Anthropic API error ({response.status}): {error_text}")
         except Exception as e:
             logger.error(f"Anthropic async generation error: {e}")
-            return f"Anthropic response for: {prompt[:50]}..."
+            raise
 
     async def stream_generate(self, prompt: str, **kwargs) -> AsyncIterator[str]:
         """Stream response from Anthropic"""
-        response = await self.agenerate(prompt, **kwargs)
-        for word in response.split():
-            yield word + " "
-            await asyncio.sleep(0.01)
+        if not self.initialized:
+            raise RuntimeError("Provider not initialized")
+
+        if not self.session:
+            self.session = aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=60)
+            )
+
+        headers = {
+            "x-api-key": self.api_key,
+            "anthropic-version": self.api_version,
+            "Content-Type": "application/json"
+        }
+
+        payload = {
+            "model": self.model_name,
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": kwargs.get('max_tokens', 500),
+            "temperature": kwargs.get('temperature', 0.7),
+            "stream": True
+        }
+
+        try:
+            async with self.session.post(
+                f"{self.base_url}/messages",
+                headers=headers,
+                json=payload
+            ) as response:
+                if response.status == 200:
+                    async for line in response.content:
+                        line_str = line.decode('utf-8').strip()
+                        if line_str.startswith('data: '):
+                            data_str = line_str[6:]  # Remove 'data: ' prefix
+                            if data_str == '[DONE]':
+                                break
+                            try:
+                                data = json.loads(data_str)
+                                if data.get('type') == 'content_block_delta':
+                                    delta = data.get('delta', {})
+                                    if delta.get('type') == 'text_delta':
+                                        yield delta.get('text', '')
+                            except json.JSONDecodeError:
+                                continue
+                else:
+                    error_text = await response.text()
+                    raise RuntimeError(f"Anthropic stream error ({response.status}): {error_text}")
+        except Exception as e:
+            logger.error(f"Anthropic stream generation error: {e}")
+            raise
 
 
 class MockProvider(LocalLLMProvider):
@@ -462,6 +661,7 @@ class LLMProviderFactory:
         "ollama": OllamaProvider,
         "openai": OpenAIProvider,
         "anthropic": AnthropicProvider,
+        "deepseek": DeepSeekProvider,
         "transformers": LocalTransformersProvider,
         "mock": MockProvider
     }
@@ -469,12 +669,24 @@ class LLMProviderFactory:
     @classmethod
     def create(cls, provider_type: str, **kwargs) -> LocalLLMProvider:
         """Create an LLM provider based on type"""
-        provider_class = cls.PROVIDERS.get(provider_type.lower())
+        # Import DeepSeek here to avoid circular import
+        from src.llm.providers.deepseek import DeepSeekProvider
+
+        # Update providers with DeepSeek
+        providers = {
+            **cls.PROVIDERS,
+            "deepseek": DeepSeekProvider
+        }
+
+        provider_class = providers.get(provider_type.lower())
         if not provider_class:
-            raise ValueError(f"Unknown provider: {provider_type}")
+            raise ValueError(f"Unknown provider: {provider_type}. Available: {', '.join(providers.keys())}")
         return provider_class(**kwargs)
 
     @classmethod
     def list_providers(cls) -> List[str]:
         """List available providers"""
-        return list(cls.PROVIDERS.keys())
+        providers = list(cls.PROVIDERS.keys())
+        if "deepseek" not in providers:
+            providers.append("deepseek")
+        return providers
