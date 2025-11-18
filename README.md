@@ -31,7 +31,31 @@
 
 ---
 
-## Latest Updates - October 29, 2025
+## Latest Updates - November 18, 2025
+
+**🚀 NEW: Dual LLM Functionality & Oracle Database Support**
+
+AI-Shell now supports **flexible LLM provider selection** with dual functionality (self-hosted + public APIs) and **production-ready Oracle database connectivity** with zero dependencies.
+
+### November 2025 Features
+
+1. **Dual LLM Functionality** ✅ (Nov 16, 2025)
+   - Mix self-hosted (Ollama) and public APIs (OpenAI, Claude, DeepSeek)
+   - Per-function provider selection: intent, completion, anonymizer
+   - 6 supported providers: Ollama, OpenAI, Anthropic, DeepSeek, Transformers, Mock
+   - Cost optimization: Use cloud for intent, keep code local
+   - [Documentation](./docs/reports/PUBLIC_LLM_FUNCTIONALITY_REPORT.md) | [Guide](./docs/PUBLIC_LLM_PROVIDERS.md)
+
+2. **Oracle Database Support** ✅ (Nov 18, 2025)
+   - Zero-dependency connectivity (thin mode - no Oracle Client required)
+   - 100% test coverage (43 unit + 30+ integration tests)
+   - CDB & PDB support, async operations, connection pooling
+   - Supports Oracle 11g through 23c (Free)
+   - [User Guide](./docs/oracle/ORACLE_SUPPORT_GUIDE.md) | [Implementation Summary](./docs/oracle/ORACLE_IMPLEMENTATION_SUMMARY.md)
+
+---
+
+## Previous Updates - October 29, 2025
 
 **🎉 EXCEPTIONAL MILESTONE: Phase 4 Complete - 96.0% Production Ready**
 
@@ -197,11 +221,12 @@ ai-shell
 
 ### Core Capabilities
 
-1. **Advanced Agent System**: 54+ specialized agents for autonomous database operations
-2. **Cognitive AI**: Production-ready memory, pattern recognition, and anomaly detection
-3. **Claude-Powered**: Natural language understanding powered by Anthropic's Claude AI (in development)
-4. **Strong Security**: 15 security modules with active SQL injection prevention
-5. **Quality Focused**: 100% test coverage, 188 test files, comprehensive architecture
+1. **Dual LLM Functionality**: Mix self-hosted (Ollama) and public APIs (OpenAI, Claude, DeepSeek) per function
+2. **Advanced Agent System**: 54+ specialized agents for autonomous database operations
+3. **Cognitive AI**: Production-ready memory, pattern recognition, and anomaly detection
+4. **Multi-Database Support**: PostgreSQL, Oracle (zero-dependency), MySQL, MongoDB, Redis
+5. **Strong Security**: 15 security modules with active SQL injection prevention
+6. **Quality Focused**: 100% test coverage, 188 test files, comprehensive architecture
 
 ### Development Highlights
 
@@ -624,6 +649,84 @@ ai-shell
 
 ---
 
+### 11. Dual LLM Functionality (New!)
+**✅ Production Ready** - Mix self-hosted and public API providers
+
+**Current Status:**
+- ✅ Per-function provider selection (intent, completion, anonymizer)
+- ✅ 6 supported providers: Ollama, OpenAI, Anthropic, DeepSeek, Transformers, Mock
+- ✅ Cost optimization strategies
+- ✅ Privacy control (keep code local, use cloud selectively)
+- ✅ Streaming support for all providers
+- ✅ Python and TypeScript implementations
+
+**Three Core Functions:**
+
+1. **Intent Analysis** - Understanding database query intent
+2. **Code Completion** - Generating SQL and code completions
+3. **Data Anonymization** - Pseudo-anonymizing sensitive data
+
+**Configuration Examples:**
+
+```yaml
+# Hybrid mode (recommended) - balance cost, privacy, performance
+llm:
+  function_providers:
+    intent:
+      provider: "openai"            # Fast intent classification
+      model: "gpt-3.5-turbo"
+      api_key_env: "OPENAI_API_KEY"
+
+    completion:
+      provider: "ollama"            # Keep code local for privacy
+      model: "codellama:13b"
+
+    anonymizer:
+      provider: "deepseek"          # Cost-effective anonymization
+      model: "deepseek-chat"
+      api_key_env: "DEEPSEEK_API_KEY"
+```
+
+**Python Usage:**
+
+```python
+from src.llm.manager import LocalLLMManager, FunctionProviderConfig
+
+manager = LocalLLMManager()
+manager.initialize_function_providers(
+    intent_config=FunctionProviderConfig(
+        provider_type="openai",
+        model_name="gpt-3.5-turbo",
+        api_key="sk-..."
+    ),
+    completion_config=FunctionProviderConfig(
+        provider_type="ollama",
+        model_name="codellama:13b"
+    ),
+    anonymizer_config=FunctionProviderConfig(
+        provider_type="deepseek",
+        model_name="deepseek-chat",
+        api_key="sk-..."
+    )
+)
+
+# Each function uses its configured provider automatically
+intent_result = manager.analyze_intent("SELECT * FROM users")
+completion = manager.explain_query("SELECT COUNT(*) FROM orders")
+anonymized, mapping = manager.anonymize_query("email@example.com")
+```
+
+**Benefits:**
+- 💰 **Cost Optimization**: ~$15/month vs $120/month (all cloud)
+- 🔒 **Privacy Control**: Keep sensitive code local
+- ⚡ **Performance**: Fast cloud intent + quality local completion
+- 🔄 **Flexibility**: Switch providers without code changes
+- 📊 **A/B Testing**: Compare model performance
+
+[📚 Complete Guide](./docs/PUBLIC_LLM_PROVIDERS.md) | [Technical Report](./docs/reports/PUBLIC_LLM_FUNCTIONALITY_REPORT.md)
+
+---
+
 ## Use Cases
 
 ### Database Administration
@@ -828,13 +931,21 @@ pip install -r requirements-dev.txt
 ### Environment Variables
 
 ```bash
-# Required
-export ANTHROPIC_API_KEY="your-api-key"
+# LLM Provider API Keys (Optional - for public APIs)
+export OPENAI_API_KEY="sk-..."           # OpenAI GPT models
+export ANTHROPIC_API_KEY="sk-ant-..."   # Anthropic Claude models
+export DEEPSEEK_API_KEY="sk-..."        # DeepSeek models
 
-# Optional
+# Self-Hosted Model Settings
+export OLLAMA_HOST="http://localhost:11434"
+export MODEL_PATH="/data0/models"
+
+# Database Credentials
+export DATABASE_URL="postgres://user:pass@localhost:5432/mydb"
+
+# Optional Configuration
 export AI_SHELL_CONFIG="/path/to/config.yaml"
 export AI_SHELL_LOG_LEVEL="info"
-export DATABASE_URL="postgres://user:pass@localhost:5432/mydb"
 ```
 
 ### Configuration
@@ -852,13 +963,36 @@ databases:
     username: user
     password: pass  # Use vault for production
 
-# LLM configuration
+# LLM configuration - Dual Functionality Mode
 llm:
-  provider: anthropic
-  model: claude-3-sonnet
-  temperature: 0.1
-  maxTokens: 4096
-  apiKey: ${ANTHROPIC_API_KEY}
+  # Option 1: Use self-hosted models for all functions (default)
+  models:
+    intent: "llama2:7b"         # Model for intent classification
+    completion: "codellama:13b" # Model for code completion
+    anonymizer: "mistral:7b"    # Model for data anonymization
+
+  # Option 2: Per-function provider configuration (mix self-hosted + public APIs)
+  # Uncomment to use different providers for each function
+  # function_providers:
+  #   intent:
+  #     provider: "openai"           # Options: ollama, openai, anthropic, deepseek
+  #     model: "gpt-3.5-turbo"
+  #     api_key_env: "OPENAI_API_KEY"
+  #
+  #   completion:
+  #     provider: "ollama"           # Keep code local for privacy
+  #     model: "codellama:13b"
+  #
+  #   anonymizer:
+  #     provider: "deepseek"         # Cost-effective anonymization
+  #     model: "deepseek-chat"
+  #     api_key_env: "DEEPSEEK_API_KEY"
+
+  # Self-hosted settings
+  ollama_host: "localhost:11434"
+  model_path: "/data0/models"
+  timeout: 30
+  max_retries: 3
 
 # Security settings
 security:
