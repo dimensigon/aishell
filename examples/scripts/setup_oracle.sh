@@ -20,10 +20,10 @@ if ! command -v ai-shell &> /dev/null; then
     exit 1
 fi
 
-# Check if Python cx_Oracle is installed
-if ! python3 -c "import cx_Oracle" &> /dev/null; then
-    echo -e "${YELLOW}Installing cx_Oracle (thin mode)...${NC}"
-    pip install cx-Oracle==8.3.0
+# Check if Python oracledb is installed
+if ! python3 -c "import oracledb" &> /dev/null; then
+    echo -e "${YELLOW}Installing python-oracledb (thin mode)...${NC}"
+    pip install oracledb==2.0.0
 fi
 
 # Prompt for connection details
@@ -60,21 +60,19 @@ echo ""
 echo -e "${YELLOW}Testing connection...${NC}"
 
 python3 << EOF
-import cx_Oracle
+import oracledb
 import sys
 
 try:
-    # Enable thin mode - no Oracle client required
-    cx_Oracle.init_oracle_client(lib_dir=None)
+    # Build DSN for thin mode (no Oracle client required)
+    dsn = "$HOST:$PORT/$DSN_VALUE"
 
-    # Build DSN
-    if "$DSN_TYPE" == "service_name":
-        dsn = cx_Oracle.makedsn("$HOST", $PORT, service_name="$DSN_VALUE")
-    else:
-        dsn = cx_Oracle.makedsn("$HOST", $PORT, sid="$DSN_VALUE")
-
-    # Test connection
-    connection = cx_Oracle.connect("$USERNAME", "$PASSWORD", dsn)
+    # Test connection using thin mode
+    connection = oracledb.connect(
+        user="$USERNAME",
+        password="$PASSWORD",
+        dsn=dsn
+    )
     cursor = connection.cursor()
 
     # Get database version
