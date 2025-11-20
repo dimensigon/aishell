@@ -294,17 +294,15 @@ class DatabaseMetadataCache:
         self,
         query: str,
         connection_id: Optional[str] = None,
-        limit: int = 5,
-        threshold: float = 0.3
+        k: int = 5
     ) -> List[Dict[str, Any]]:
         """
-        Search for tables semantically.
+        Search for tables by semantic query.
 
         Args:
-            query: Search query
+            query: Search query (e.g., "find tables related to users")
             connection_id: Optional filter by connection
-            limit: Maximum results
-            threshold: Minimum similarity threshold
+            k: Number of results to return
 
         Returns:
             List of matching tables with metadata
@@ -313,9 +311,9 @@ class DatabaseMetadataCache:
 
         results = self.vector_db.search_similar(
             query_vector=query_vector,
-            k=limit * 2,  # Get more for filtering
+            k=k * 2,  # Get more for filtering
             object_type='table',
-            threshold=threshold
+            threshold=0.0  # No threshold filter, return top-k
         )
 
         matches = []
@@ -332,7 +330,7 @@ class DatabaseMetadataCache:
                 'similarity': 1.0 / (1.0 + distance)  # Convert distance to similarity
             })
 
-            if len(matches) >= limit:
+            if len(matches) >= k:
                 break
 
         return matches
@@ -340,20 +338,16 @@ class DatabaseMetadataCache:
     async def search_columns(
         self,
         query: str,
-        connection_id: Optional[str] = None,
-        table_name: Optional[str] = None,
-        limit: int = 5,
-        threshold: float = 0.3
+        table: Optional[str] = None,
+        k: int = 5
     ) -> List[Dict[str, Any]]:
         """
-        Search for columns semantically.
+        Search for columns by semantic query.
 
         Args:
-            query: Search query
-            connection_id: Optional filter by connection
-            table_name: Optional filter by table
-            limit: Maximum results
-            threshold: Minimum similarity threshold
+            query: Search query (e.g., "timestamp columns")
+            table: Optional filter by table name
+            k: Number of results to return
 
         Returns:
             List of matching columns with metadata
@@ -362,19 +356,15 @@ class DatabaseMetadataCache:
 
         results = self.vector_db.search_similar(
             query_vector=query_vector,
-            k=limit * 3,  # Get more for filtering
+            k=k * 3,  # Get more for filtering
             object_type='column',
-            threshold=threshold
+            threshold=0.0  # No threshold filter, return top-k
         )
 
         matches = []
         for entry, distance in results:
-            # Filter by connection if specified
-            if connection_id and entry.metadata.get('connection_id') != connection_id:
-                continue
-
             # Filter by table if specified
-            if table_name and entry.metadata.get('table_name') != table_name:
+            if table and entry.metadata.get('table_name') != table:
                 continue
 
             matches.append({
@@ -387,7 +377,7 @@ class DatabaseMetadataCache:
                 'similarity': 1.0 / (1.0 + distance)
             })
 
-            if len(matches) >= limit:
+            if len(matches) >= k:
                 break
 
         return matches
@@ -456,6 +446,98 @@ class DatabaseMetadataCache:
                 for conn_id, timestamp in self.last_refresh.items()
             }
         }
+
+    async def get_table_schema(
+        self,
+        table_name: str,
+        connection_id: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Get cached schema for a specific table.
+
+        Args:
+            table_name: Name of the table
+            connection_id: Optional connection ID filter
+
+        Returns:
+            Table schema dictionary or None if not found
+        """
+        # Search through all tables
+        for key, table_meta in self.tables.items():
+            if table_meta.name == table_name:
+                if connection_id is None or table_meta.connection_id == connection_id:
+                    return table_meta.to_dict()
+        return None
+
+    async def get_database_stats(self, connection_id: str) -> Dict[str, Any]:
+        """
+        Get statistics about cached database.
+
+        Args:
+            connection_id: Database connection identifier
+
+        Returns:
+            Statistics dictionary
+        """
+        tables_count = sum(
+            1 for table in self.tables.values()
+            if table.connection_id == connection_id
+        )
+        columns_count = sum(
+            1 for column in self.columns.values()
+            if column.connection_id == connection_id
+        )
+
+        # Get table names for this connection
+        table_names = [
+            table.name for table in self.tables.values()
+            if table.connection_id == connection_id
+        ]
+
+        # Get schema names
+        schemas = set(
+            table.schema for table in self.tables.values()
+            if table.connection_id == connection_id
+        )
+
+        return {
+            'connection_id': connection_id,
+            'total_tables': tables_count,
+            'total_columns': columns_count,
+            'schemas': list(schemas),
+            'table_names': table_names,
+            'last_refresh': (
+                self.last_refresh[connection_id].isoformat()
+                if connection_id in self.last_refresh
+                else None
+            )
+        }
+
+    async def invalidate_connection(self, connection_id: str) -> None:
+        """
+        Remove all cached data for a connection.
+
+        Args:
+            connection_id: Database connection identifier
+        """
+        self.clear_connection(connection_id)
+        logger.info(f"Invalidated cache for connection: {connection_id}")
+
+    async def refresh_connection(self, connection_id: str, metadata: Dict[str, Any]) -> None:
+        """
+        Update cached data for a connection.
+
+        Args:
+            connection_id: Database connection identifier
+            metadata: New metadata to index
+        """
+        # Clear existing data for this connection
+        self.clear_connection(connection_id)
+
+        # Re-index with new metadata
+        await self.index_database(connection_id, metadata)
+
+        logger.info(f"Refreshed cache for connection: {connection_id}")
 
     async def save_to_disk(self) -> None:
         """Save cache to disk."""
