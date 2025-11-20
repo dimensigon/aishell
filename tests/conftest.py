@@ -602,12 +602,42 @@ async def mock_state_sync(mock_redis_client):
 
 
 @pytest.fixture
-def mock_vector_db():
-    """Mock VectorDatabase for UI tests with sample data"""
+def faiss_cache_dir(tmp_path):
+    """Temporary directory for FAISS cache."""
+    cache_dir = tmp_path / "faiss_cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    return cache_dir
+
+
+@pytest.fixture
+def ensure_faiss_installed():
+    """Ensure FAISS is installed before running tests."""
+    try:
+        import faiss
+        return True
+    except ImportError:
+        pytest.skip("FAISS is required but not installed. Install with: pip install faiss-cpu==1.12.0")
+
+
+@pytest.fixture
+def metadata_cache(faiss_cache_dir):
+    """Create DatabaseMetadataCache fixture."""
+    from src.database.metadata_cache import DatabaseMetadataCache
+
+    cache = DatabaseMetadataCache(
+        cache_dir=str(faiss_cache_dir),
+        dimension=384
+    )
+    return cache
+
+
+@pytest.fixture
+def mock_vector_db(ensure_faiss_installed):
+    """VectorDatabase for UI tests with sample data (requires FAISS)"""
     from src.vector.store import VectorDatabase
 
-    # Use mock FAISS implementation
-    vector_db = VectorDatabase(dimension=384, use_faiss=False)
+    # Use real FAISS implementation
+    vector_db = VectorDatabase(dimension=384)
 
     # Add sample database objects for testing
     sample_objects = [

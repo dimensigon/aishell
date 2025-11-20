@@ -24,8 +24,8 @@ ollama==0.1.7
 sentence-transformers==2.2.2
 transformers==4.53.0  # Security: Updated from 4.36.2 to fix CVE vulnerabilities
 
-# Vector Database
-faiss-cpu==1.12.0
+# Vector Database (Required)
+faiss-cpu==1.12.0  # Required: FAISS backend for vector operations
 
 # Security
 cryptography==46.0.3  # Security: Updated from 44.0.1 for pyOpenSSL compatibility

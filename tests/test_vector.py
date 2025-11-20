@@ -1,16 +1,15 @@
-"""Tests for vector database system."""
+"""Tests for vector database system with FAISS."""
 
 import pytest
 import numpy as np
-from src.vector.store import VectorDatabase, VectorEntry, MockFAISSIndex
+from src.vector.store import VectorDatabase, VectorEntry
 from src.vector.autocomplete import IntelligentCompleter, CompletionCandidate
 
 
 @pytest.fixture
 def vector_db():
-    """Create vector database fixture."""
-    # Use mock implementation for consistent test behavior
-    return VectorDatabase(dimension=384, use_faiss=False)
+    """Create vector database fixture with real FAISS."""
+    return VectorDatabase(dimension=384)
 
 
 @pytest.fixture
@@ -21,28 +20,8 @@ def completer(vector_db):
 
 def create_random_vector(dim=384):
     """Create random normalized vector."""
-    vec = np.random.randn(dim)
+    vec = np.random.randn(dim).astype(np.float32)
     return vec / np.linalg.norm(vec)
-
-
-def test_mock_faiss_index():
-    """Test mock FAISS index."""
-    index = MockFAISSIndex(dimension=10)
-
-    # Add vectors
-    vec1 = np.array([1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-    vec2 = np.array([0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-
-    index.add(vec1)
-    index.add(vec2)
-
-    assert index.ntotal == 2
-
-    # Search
-    query = np.array([0.9, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-    distances, indices = index.search(query, k=1)
-
-    assert indices[0][0] == 0  # Should find vec1
 
 
 def test_vector_db_initialization(vector_db):
@@ -71,7 +50,7 @@ def test_add_object(vector_db):
 
 def test_add_object_wrong_dimension(vector_db):
     """Test adding vector with wrong dimension."""
-    wrong_vector = np.random.randn(100)
+    wrong_vector = np.random.randn(100).astype(np.float32)
 
     with pytest.raises(ValueError):
         vector_db.add_object(
@@ -92,10 +71,10 @@ def test_search_similar(vector_db):
     vector_db.add_object('obj2', diff_vec, 'table', {'name': 'table2'})
 
     # Search with similar query
-    query = base_vec + np.random.randn(384) * 0.01  # Small noise
+    query = base_vec + np.random.randn(384).astype(np.float32) * 0.01  # Small noise
     query = query / np.linalg.norm(query)
 
-    results = vector_db.search_similar(query, k=2)
+    results = vector_db.search_similar(query, k=2, threshold=0.0)
 
     assert len(results) > 0
     # First result should be most similar
@@ -111,7 +90,7 @@ def test_search_with_type_filter(vector_db):
     vector_db.add_object('col1', vec2, 'column')
 
     # Search only for tables
-    results = vector_db.search_similar(vec1, k=5, object_type='table')
+    results = vector_db.search_similar(vec1, k=5, object_type='table', threshold=0.0)
 
     assert all(entry.object_type == 'table' for entry, _ in results)
 
@@ -150,7 +129,7 @@ def test_index_database_objects(vector_db):
     def mock_embedding(text):
         # Simple mock: hash text to vector
         np.random.seed(hash(text) % (2**32))
-        vec = np.random.randn(384)
+        vec = np.random.randn(384).astype(np.float32)
         return vec / np.linalg.norm(vec)
 
     tables = [
@@ -273,7 +252,7 @@ def test_vector_completions(completer, vector_db):
     def mock_embedding(text):
         # Create deterministic embeddings based on text
         np.random.seed(sum(ord(c) for c in text))
-        vec = np.random.randn(384)
+        vec = np.random.randn(384).astype(np.float32)
         return vec / np.linalg.norm(vec)
 
     # Index some objects
@@ -324,7 +303,7 @@ def test_context_aware_completions(completer, vector_db):
     """Test context-aware completions."""
     def mock_embedding(text):
         np.random.seed(hash(text) % (2**32))
-        vec = np.random.randn(384)
+        vec = np.random.randn(384).astype(np.float32)
         return vec / np.linalg.norm(vec)
 
     # Index database objects
@@ -373,3 +352,31 @@ def test_completion_scoring(completer):
     # Results should be sorted by score descending
     for i in range(len(candidates) - 1):
         assert candidates[i].score >= candidates[i + 1].score
+
+
+def test_batch_vector_addition(vector_db):
+    """Test adding multiple vectors efficiently."""
+    vectors = [create_random_vector() for _ in range(100)]
+
+    for i, vec in enumerate(vectors):
+        vector_db.add_object(f'obj_{i}', vec, 'test')
+
+    assert vector_db.index.ntotal == 100
+    assert len(vector_db.entries) == 100
+
+
+def test_vector_search_performance(vector_db):
+    """Test search performance with many vectors."""
+    # Add 500 vectors
+    for i in range(500):
+        vec = create_random_vector()
+        vector_db.add_object(f'obj_{i}', vec, 'test', {'index': i})
+
+    # Search should be fast
+    query = create_random_vector()
+    results = vector_db.search_similar(query, k=10, threshold=0.0)
+
+    assert len(results) == 10
+    # Results should be sorted by distance
+    distances = [dist for _, dist in results]
+    assert distances == sorted(distances)

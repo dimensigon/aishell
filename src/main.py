@@ -2,7 +2,12 @@
 """
 AI-Shell main entry point.
 
-Provides command-line interface for AI-powered database management.
+Provides command-line interface for AI-powered database management with:
+- MCP (Model Context Protocol) connection management
+- Database metadata caching with FAISS-based semantic search
+- LLM-powered query assistance
+- Intelligent agent delegation
+- Performance monitoring and optimization
 """
 
 import argparse
@@ -19,6 +24,7 @@ from .llm.manager import LocalLLMManager
 from .ai.command_suggester import CommandSuggester, CommandContext, Suggestion
 from .mcp_clients.enhanced_manager import EnhancedConnectionManager
 from .database.module import DatabaseModule
+from .database.metadata_cache import DatabaseMetadataCache
 from .performance.optimizer import PerformanceOptimizer
 from .performance.monitor import SystemMonitor
 from .performance.cache import QueryCache
@@ -38,23 +44,27 @@ logger = logging.getLogger(__name__)
 class AIShell:
     """Main AI-Shell application."""
 
-    def __init__(self, config_path: Optional[str] = None, db_path: Optional[str] = None, mock_mode: bool = False) -> None:
+    def __init__(self, config_path: Optional[str] = None, db_path: Optional[str] = None,
+                 cache_dir: Optional[str] = None, mock_mode: bool = False) -> None:
         """
         Initialize AI-Shell.
 
         Args:
             config_path: Optional custom config file path
             db_path: Optional database path override
+            cache_dir: Optional metadata cache directory (default: ~/.aishell/cache)
             mock_mode: Run in mock mode without real connections
         """
         self.mock_mode = mock_mode
         self.config = ConfigManager(config_path=config_path) if config_path else ConfigManager()
         self.db_path_override = db_path
+        self.cache_dir = cache_dir or str(Path.home() / '.aishell' / 'cache')
         self.core = AIShellCore()
         self.vault = None
         self.llm_manager = None
         self.mcp_manager = None
         self.db_module = None
+        self.metadata_cache = None
         self.autocomplete = None
         self.agent_manager = None
         self.optimizer = None
@@ -160,6 +170,25 @@ class AIShell:
             # Note: DatabaseModule doesn't have async initialize, already ready
             logger.info("Database module initialized")
 
+            # Initialize metadata cache with FAISS backend
+            try:
+                self.metadata_cache = DatabaseMetadataCache(
+                    cache_dir=self.cache_dir,
+                    dimension=self.config.get('vector.dimension', 384)
+                )
+                # Load existing cache from disk
+                await self.metadata_cache.load_from_disk()
+                logger.info("Metadata cache initialized")
+            except ImportError as e:
+                logger.warning(
+                    "FAISS not available - metadata cache disabled. "
+                    "Install with: pip install faiss-cpu==1.12.0"
+                )
+                self.metadata_cache = None
+            except Exception as e:
+                logger.warning(f"Failed to initialize metadata cache: {e}")
+                self.metadata_cache = None
+
             # Initialize autocomplete (requires VectorDatabase instance)
             # Note: IntelligentCompleter requires VectorDatabase, skipping for now
             # TODO: Initialize VectorDatabase first, then create IntelligentCompleter
@@ -183,6 +212,11 @@ class AIShell:
         logger.info("Shutting down AI-Shell...")
 
         try:
+            # Save metadata cache before shutdown
+            if self.metadata_cache:
+                await self.metadata_cache.save_to_disk()
+                logger.info("Metadata cache saved to disk")
+
             # Stop monitoring
             if self.monitor:
                 await self.monitor.stop_monitoring()
@@ -296,6 +330,43 @@ class AIShell:
             'system': monitor_metrics
         }
 
+    async def index_mcp_connection(self, connection_id: str, metadata: Optional[Dict[str, Any]] = None) -> None:
+        """
+        Index metadata for an MCP connection.
+
+        This method should be called when a new MCP connection is created to automatically
+        cache its database metadata for faster semantic search.
+
+        Args:
+            connection_id: MCP connection identifier
+            metadata: Optional metadata dict. If not provided, will try to fetch from MCP manager
+        """
+        if not self.metadata_cache:
+            logger.debug("Metadata cache not available, skipping indexing")
+            return
+
+        try:
+            if metadata is None:
+                # Try to get metadata from MCP manager
+                if not self.mcp_manager:
+                    logger.warning("Cannot index connection: MCP manager not available")
+                    return
+
+                # Note: This would require implementing get_connection_metadata on EnhancedConnectionManager
+                # For now, we'll just log a warning
+                logger.info(
+                    f"Automatic metadata fetching not yet implemented for connection {connection_id}. "
+                    f"Metadata should be provided explicitly."
+                )
+                return
+
+            # Index the metadata
+            await self.metadata_cache.index_database(connection_id, metadata)
+            logger.info(f"Indexed metadata for connection: {connection_id}")
+
+        except Exception as e:
+            logger.error(f"Failed to index connection metadata: {e}")
+
     async def interactive_mode(self) -> None:
         """Method implementation."""
         if not self._initialized:
@@ -304,24 +375,29 @@ class AIShell:
         print("AI-Shell Interactive Mode")
         print("=" * 50)
         print("Commands:")
-        print("  query <sql>    - Execute SQL query")
-        print("  ask <question> - Ask AI assistant")
-        print("  agent <task>   - Delegate task to intelligent agents")
-        print("  agents         - List available agents")
-        print("  mcp resources  - List available MCP resources")
-        print("  mcp tools      - List available MCP tools")
-        print("  mcp connect    - Create MCP connection")
-        print("  mcp status     - Show MCP connection status")
-        print("  llm providers  - List available LLM providers")
-        print("  llm switch     - Switch LLM provider")
-        print("  llm status     - Show current LLM provider")
-        print("  llm generate   - Generate text with LLM")
-        print("  suggest        - Get command suggestions")
-        print("  help [cmd]     - Get help on commands")
-        print("  history        - Show command history")
-        print("  health         - Show health status")
-        print("  metrics        - Show performance metrics")
-        print("  exit           - Exit shell")
+        print("  query <sql>         - Execute SQL query")
+        print("  ask <question>      - Ask AI assistant")
+        print("  agent <task>        - Delegate task to intelligent agents")
+        print("  agents              - List available agents")
+        print("  mcp resources       - List available MCP resources")
+        print("  mcp tools           - List available MCP tools")
+        print("  mcp connect         - Create MCP connection")
+        print("  mcp status          - Show MCP connection status")
+        print("  cache status        - Show metadata cache statistics")
+        print("  cache refresh <id>  - Refresh cache for connection")
+        print("  cache clear [id]    - Clear cache (all or specific connection)")
+        print("  search tables <q>   - Search tables semantically")
+        print("  search columns <q>  - Search columns semantically")
+        print("  llm providers       - List available LLM providers")
+        print("  llm switch          - Switch LLM provider")
+        print("  llm status          - Show current LLM provider")
+        print("  llm generate        - Generate text with LLM")
+        print("  suggest             - Get command suggestions")
+        print("  help [cmd]          - Get help on commands")
+        print("  history             - Show command history")
+        print("  health              - Show health status")
+        print("  metrics             - Show performance metrics")
+        print("  exit                - Exit shell")
         print("=" * 50)
 
         while True:
@@ -579,6 +655,143 @@ class AIShell:
                         print("\nConnections by State:")
                         for state, count in stats['connections_by_state'].items():
                             print(f"  {state}: {count}")
+
+                    # Show cache stats if available
+                    if self.metadata_cache:
+                        cache_stats = self.metadata_cache.get_stats()
+                        if cache_stats['total_tables'] > 0:
+                            print("\nMetadata Cache:")
+                            print(f"  Cached Tables: {cache_stats['total_tables']}")
+                            print(f"  Cached Columns: {cache_stats['total_columns']}")
+                    continue
+
+                # Cache commands
+                if user_input == 'cache status':
+                    if not self.metadata_cache:
+                        print("\nMetadata cache not available.")
+                        print("Install FAISS to enable: pip install faiss-cpu==1.12.0")
+                        continue
+
+                    stats = self.metadata_cache.get_stats()
+                    print("\nMetadata Cache Status:")
+                    print("-" * 40)
+                    print(f"Total Tables: {stats['total_tables']}")
+                    print(f"Total Columns: {stats['total_columns']}")
+                    print(f"Connections Cached: {stats['connections_cached']}")
+
+                    if stats['last_refresh']:
+                        print("\nLast Refresh:")
+                        for conn_id, timestamp in stats['last_refresh'].items():
+                            print(f"  {conn_id}: {timestamp}")
+
+                    print(f"\nVector DB Stats:")
+                    vdb_stats = stats['vector_db_stats']
+                    print(f"  Total Entries: {vdb_stats['total_entries']}")
+                    print(f"  Index Size: {vdb_stats['index_size']}")
+                    if vdb_stats['type_counts']:
+                        print("  Types:")
+                        for obj_type, count in vdb_stats['type_counts'].items():
+                            print(f"    {obj_type}: {count}")
+                    continue
+
+                if user_input.startswith('cache refresh'):
+                    if not self.metadata_cache:
+                        print("\nMetadata cache not available.")
+                        continue
+
+                    parts = user_input.split(maxsplit=2)
+                    if len(parts) < 3:
+                        print("\nUsage: cache refresh <connection_id>")
+                        continue
+
+                    conn_id = parts[2]
+
+                    try:
+                        # Get metadata from MCP manager (would need to implement this)
+                        print(f"\nRefreshing cache for connection: {conn_id}")
+                        print("Note: Automatic metadata fetching not yet implemented.")
+                        print("Metadata should be indexed when MCP connection is created.")
+                    except Exception as e:
+                        print(f"\n✗ Failed to refresh cache: {e}")
+                    continue
+
+                if user_input.startswith('cache clear'):
+                    if not self.metadata_cache:
+                        print("\nMetadata cache not available.")
+                        continue
+
+                    parts = user_input.split(maxsplit=2)
+
+                    if len(parts) >= 3:
+                        # Clear specific connection
+                        conn_id = parts[2]
+                        self.metadata_cache.clear_connection(conn_id)
+                        print(f"\n✓ Cleared cache for connection: {conn_id}")
+                    else:
+                        # Clear all
+                        confirm = input("\nClear all cached metadata? (yes/no): ").strip().lower()
+                        if confirm == 'yes':
+                            self.metadata_cache.clear_all()
+                            print("\n✓ Cleared all metadata cache")
+                        else:
+                            print("\nCancelled")
+                    continue
+
+                if user_input.startswith('search tables'):
+                    if not self.metadata_cache:
+                        print("\nMetadata cache not available.")
+                        continue
+
+                    query = user_input[14:].strip()
+                    if not query:
+                        print("\nUsage: search tables <query>")
+                        continue
+
+                    try:
+                        results = await self.metadata_cache.search_tables(query, limit=10)
+                        if results:
+                            print(f"\nFound {len(results)} matching tables:")
+                            print("-" * 60)
+                            for result in results:
+                                print(f"• {result['schema']}.{result['name']}")
+                                print(f"  Connection: {result['connection_id']}")
+                                if result.get('description'):
+                                    print(f"  Description: {result['description']}")
+                                print(f"  Similarity: {result['similarity']:.2%}")
+                                print()
+                        else:
+                            print("\nNo matching tables found")
+                    except Exception as e:
+                        print(f"\n✗ Search failed: {e}")
+                    continue
+
+                if user_input.startswith('search columns'):
+                    if not self.metadata_cache:
+                        print("\nMetadata cache not available.")
+                        continue
+
+                    query = user_input[15:].strip()
+                    if not query:
+                        print("\nUsage: search columns <query>")
+                        continue
+
+                    try:
+                        results = await self.metadata_cache.search_columns(query, limit=10)
+                        if results:
+                            print(f"\nFound {len(results)} matching columns:")
+                            print("-" * 60)
+                            for result in results:
+                                print(f"• {result['schema']}.{result['table_name']}.{result['name']}")
+                                print(f"  Connection: {result['connection_id']}")
+                                print(f"  Type: {result['data_type']}")
+                                if result.get('description'):
+                                    print(f"  Description: {result['description']}")
+                                print(f"  Similarity: {result['similarity']:.2%}")
+                                print()
+                        else:
+                            print("\nNo matching columns found")
+                    except Exception as e:
+                        print(f"\n✗ Search failed: {e}")
                     continue
 
                 if user_input == 'mcp connect':
@@ -753,6 +966,13 @@ For more information, visit: https://github.com/yourusername/AIShell
     )
 
     parser.add_argument(
+        '--cache-dir',
+        type=str,
+        metavar='PATH',
+        help='Metadata cache directory (default: ~/.aishell/cache)'
+    )
+
+    parser.add_argument(
         '--mock',
         action='store_true',
         help='Run in mock mode without real database/LLM connections'
@@ -866,8 +1086,13 @@ For more information, visit: https://github.com/yourusername/AIShell
         await handle_ada_command(args)
         return
 
-    # Create shell instance with optional config, db path, and mock mode
-    shell = AIShell(config_path=args.config, db_path=args.db_path, mock_mode=args.mock)
+    # Create shell instance with optional config, db path, cache dir, and mock mode
+    shell = AIShell(
+        config_path=args.config,
+        db_path=args.db_path,
+        cache_dir=args.cache_dir,
+        mock_mode=args.mock
+    )
 
     try:
         # Handle different execution modes
