@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/security/vault.py
+# hypothesis_version: 6.140.3
+
+[384, 448, 100000, '.vault_salt', 'Credential', 'ai-shell-vault', 'api', 'auto_redact', 'by_type', 'custom', 'database', 'oauth', 'password', 'ssh', 'standard', 'total_credentials', 'type', 'use_keyring', 'vault_path']

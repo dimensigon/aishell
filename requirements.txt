@@ -1,50 +1,70 @@
-# Core Python dependencies
-prompt-toolkit>=3.0.0
-rich>=13.0.0
-asyncio-throttle>=0.1.1
-aiofiles>=23.0.0
-pydantic>=2.0.0
+# AI-Shell Dependencies
 
-# Database clients
-asyncpg>=0.29.0
-motor>=3.3.0
-pymongo>=4.0.0
-redis>=5.0.0
-aiomysql>=0.2.0
-pymysql>=1.1.0
-psycopg2-binary>=2.9.0
-oracledb>=3.0.0
+# Core UI Framework
+prompt-toolkit==3.0.43
+textual==0.47.1
+click==8.1.7
+rich==13.7.0
 
-# AI/LLM dependencies
-openai>=1.0.0
-anthropic>=0.32.0
-transformers>=4.35.0
-torch>=2.0.0
-sentence-transformers>=2.2.0
-numpy>=1.24.0
+# Database Clients (Thin/Pure Python)
+oracledb==2.0.0
+psycopg2-binary==2.9.10  # Updated from 2.9.9
+psycopg[binary]==3.2.12  # psycopg3 for async PostgreSQL (MCP tests)
+aiosqlite==0.21.0  # Async SQLite for integration tests
 
-# MCP support
-websockets>=12.0.0
-jsonschema>=4.0.0
+# MongoDB Support (v1.2.0)
+motor==3.3.2
+pymongo==4.6.3  # Security: Updated from 4.6.1 to fix medium severity CVE
 
-# Vector database
-faiss-cpu>=1.12.0
-chromadb>=0.4.0
+# Redis Support (v1.2.0)
+redis[asyncio]==5.0.1
 
-# Utilities
-python-dotenv>=1.0.0
-pyyaml>=6.0.0
-click>=8.1.0
-typer>=0.9.0
-psutil>=5.9.0
-dnspython>=2.4.0
+# LLM & Embeddings
+ollama==0.1.7
+sentence-transformers==2.2.2
+transformers==4.53.0  # Security: Updated from 4.36.2 to fix CVE vulnerabilities
+
+# Vector Database (Required)
+faiss-cpu==1.12.0  # Required: FAISS backend for vector operations
+
+# Security
+cryptography==46.0.3  # Security: Updated from 44.0.1 for pyOpenSSL compatibility
+pyOpenSSL==25.3.0  # Security: Updated from 21.0.0 for cryptography compatibility
+keyring==24.3.0
+
+# Configuration
+pyyaml==6.0.1
+
+# Async & Utilities
+aiofiles==23.2.1
+asyncio-mqtt==0.16.1
+psutil==5.9.8  # System monitoring and memory tracking
 
 # Testing
-pytest>=7.4.0
-pytest-asyncio>=0.21.0
-pytest-cov>=4.1.0
+pytest==8.3.5
+pytest-asyncio==0.26.0
+pytest-cov==6.1.1
+pytest-mock==3.14.0
 
 # Development
-black>=23.0.0
-flake8>=6.0.0
-mypy>=1.5.0
+black==24.3.0  # Security: Updated from 23.12.1 to fix medium severity CVE
+mypy==1.8.0
+flake8==7.0.0
+
+# v2.0.0 AI Features (Optional - for enhanced query assistance)
+# anthropic>=0.18.0  # Uncomment to enable Claude API features
+
+# v2.0.0 Security Features (Optional - for advanced authentication)
+# pyotp>=2.9.0  # Uncomment for 2FA/TOTP support
+# requests-oauthlib>=1.3.1  # Uncomment for OAuth 2.0 support
+# python3-saml>=1.15.0  # Uncomment for SAML 2.0 support
+
+# v2.0.0 GraphQL API (Optional - for GraphQL interface)
+# strawberry-graphql[fastapi]>=0.216.0  # Uncomment for GraphQL API
+# fastapi>=0.109.0  # Required for GraphQL server
+# uvicorn[standard]>=0.27.0  # Required for GraphQL server
+
+# Security Updates (v2.0.0)
+python-jose[cryptography]==3.4.0  # Security: Added to fix critical CVE
+python-multipart==0.0.18  # Security: Added to fix high severity CVE
+python-socketio==5.14.0  # Security: Added to fix medium severity CVE

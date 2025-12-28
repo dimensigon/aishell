@@ -1,17 +1,14 @@
-"""Vector database implementation with FAISS backend."""
+"""Vector database implementation with FAISS backend.
+
+FAISS (Facebook AI Similarity Search) is required for vector operations.
+Install with: pip install faiss-cpu==1.12.0
+"""
 
 import numpy as np
 from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass
 import logging
-
-# Try to import real FAISS, fall back to mock if not available
-try:
-    import faiss
-    FAISS_AVAILABLE = True
-except ImportError:
-    FAISS_AVAILABLE = False
-    logging.warning("FAISS not available, using mock implementation")
+import faiss
 
 logger = logging.getLogger(__name__)
 
@@ -25,88 +22,28 @@ class VectorEntry:
     object_type: str
 
 
-class MockFAISSIndex:
-    """Mock FAISS index for testing without external dependencies."""
-
-    def __init__(self, dimension: int) -> None:
-        """Initialize mock index.
-
-        Args:
-            dimension: Vector dimension
-        """
-        self.dimension = dimension
-        self.vectors: List[np.ndarray] = []
-        self.ntotal = 0
-
-    def add(self, vectors: np.ndarray) -> None:
-        """Add vectors to index.
-
-        Args:
-            vectors: Array of vectors to add
-        """
-        if vectors.ndim == 1:
-            vectors = vectors.reshape(1, -1)
-
-        for vec in vectors:
-            self.vectors.append(vec.copy())
-        self.ntotal = len(self.vectors)
-
-    def search(self, query: np.ndarray, k: int) -> Tuple[np.ndarray, np.ndarray]:
-        """Search for nearest neighbors.
-
-        Args:
-            query: Query vector
-            k: Number of neighbors
-
-        Returns:
-            Tuple of (distances, indices)
-        """
-        if query.ndim == 1:
-            query = query.reshape(1, -1)
-
-        if not self.vectors:
-            return np.array([[]]), np.array([[]])
-
-        # Calculate cosine similarity
-        similarities = []
-        for vec in self.vectors:
-            dot_product = np.dot(query[0], vec)
-            norm_product = np.linalg.norm(query[0]) * np.linalg.norm(vec)
-            similarity = dot_product / (norm_product + 1e-8)
-            similarities.append(similarity)
-
-        similarities = np.array(similarities)
-
-        # Get top k indices
-        k = min(k, len(similarities))
-        top_indices = np.argsort(similarities)[-k:][::-1]
-        top_distances = 1 - similarities[top_indices]  # Convert to distance
-
-        return top_distances.reshape(1, -1), top_indices.reshape(1, -1)
-
-
 class VectorDatabase:
-    """Vector database for semantic search and indexing."""
+    """Vector database for semantic search and indexing.
 
-    def __init__(self, dimension: int = 384, use_faiss: bool = True) -> None:
-        """Initialize vector database.
+    Requires FAISS (Facebook AI Similarity Search) library.
+    Uses FAISS IndexFlatL2 for exact L2 distance search.
+    """
+
+    def __init__(self, dimension: int = 384) -> None:
+        """Initialize vector database with FAISS backend.
 
         Args:
-            dimension: Vector dimension for embeddings
-            use_faiss: Whether to use real FAISS (True) or mock (False)
+            dimension: Vector dimension for embeddings (default: 384)
+
+        Raises:
+            ImportError: If FAISS is not installed
         """
         self.dimension = dimension
-        self.use_faiss = use_faiss and FAISS_AVAILABLE
 
-        if self.use_faiss:
-            # Use real FAISS with L2 distance (IndexFlatL2)
-            # FAISS 1.12.0 API is compatible with 1.7.4
-            self.index = faiss.IndexFlatL2(dimension)
-            logger.info(f"Initialized FAISS IndexFlatL2 with dimension {dimension}")
-        else:
-            # Use mock implementation for testing
-            self.index = MockFAISSIndex(dimension)
-            logger.info(f"Initialized Mock FAISS index with dimension {dimension}")
+        # Initialize FAISS index with L2 distance (IndexFlatL2)
+        # FAISS 1.12.0 API is compatible with 1.7.4
+        self.index = faiss.IndexFlatL2(dimension)
+        logger.info(f"Initialized FAISS IndexFlatL2 with dimension {dimension}")
 
         self.entries: List[VectorEntry] = []
         self._id_to_idx: Dict[str, int] = {}
@@ -143,14 +80,9 @@ class VectorDatabase:
         self.entries.append(entry)
         self._id_to_idx[object_id] = idx
 
-        # Add to index - real FAISS expects 2D array with float32
-        if self.use_faiss:
-            # FAISS requires float32 2D array (n_vectors, dimension)
-            vec_2d = vector.reshape(1, -1).astype(np.float32)
-            self.index.add(vec_2d)
-        else:
-            # Mock implementation handles various formats
-            self.index.add(vector)
+        # Add to FAISS index - requires float32 2D array (n_vectors, dimension)
+        vec_2d = vector.reshape(1, -1).astype(np.float32)
+        self.index.add(vec_2d)
 
         logger.debug(f"Added {object_type} object: {object_id}")
 
@@ -161,27 +93,30 @@ class VectorDatabase:
         object_type: Optional[str] = None,
         threshold: float = 0.5
     ) -> List[Tuple[VectorEntry, float]]:
-        """Search for similar objects.
+        """Search for similar objects using FAISS L2 distance.
 
         Args:
             query_vector: Query embedding vector
             k: Number of results to return
             object_type: Filter by object type
-            threshold: Similarity threshold (0-1)
+            threshold: Similarity threshold (0-1, higher is more similar)
 
         Returns:
-            List of (entry, distance) tuples
+            List of (entry, L2_distance) tuples, sorted by distance (ascending)
+
+        Note:
+            Uses L2 distance where smaller values indicate higher similarity.
+            For normalized vectors, L2 distance ranges from 0 to 2.
+            Threshold is converted to similarity metric: similarity = 1.0 / (1.0 + distance)
         """
         if not self.entries:
             return []
 
-        # Prepare query for FAISS - needs 2D float32 array
-        if self.use_faiss:
-            query_2d = query_vector.reshape(1, -1).astype(np.float32)
-        else:
-            query_2d = query_vector
+        # Prepare query for FAISS - requires float32 2D array
+        query_2d = query_vector.reshape(1, -1).astype(np.float32)
 
-        distances, indices = self.index.search(query_2d, k * 2)  # Get more for filtering
+        # Get more results than needed to allow for filtering
+        distances, indices = self.index.search(query_2d, k * 2)
 
         results = []
         for dist, idx in zip(distances[0], indices[0]):
@@ -194,21 +129,12 @@ class VectorDatabase:
             if object_type and entry.object_type != object_type:
                 continue
 
-            # Apply threshold
-            # For real FAISS with L2 distance, smaller is better
-            # For mock with cosine similarity, distance is 1 - similarity
-            if self.use_faiss:
-                # L2 distance threshold - adjust based on normalized vectors
-                # For normalized vectors, L2 distance ranges from 0 to 2
-                # Convert to similarity-like metric for threshold
-                similarity = 1.0 / (1.0 + dist)
-                if similarity < threshold:
-                    continue
-            else:
-                # Mock uses 1 - cosine_similarity
-                similarity = 1 - dist
-                if similarity < threshold:
-                    continue
+            # Apply threshold using L2 distance
+            # Convert L2 distance to similarity-like metric for threshold comparison
+            # For normalized vectors, L2 distance ranges from 0 to 2
+            similarity = 1.0 / (1.0 + dist)
+            if similarity < threshold:
+                continue
 
             results.append((entry, float(dist)))
 

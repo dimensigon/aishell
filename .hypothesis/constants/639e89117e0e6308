@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/database/impact_estimator.py
+# hypothesis_version: 6.140.3
+
+[-0.2, 0.01, 0.1, 0.15, 0.2, 0.25, 0.3, 0.5, 0.7, 0.9, 0.95, 1.0, 1.5, 1000, 5000, 10000, 30000, 50000, 80000, 150000, 200000, 1000000, ' AND ', ' OR ', ',', '<', '<=', '=\\s*[\\\'"]?\\w+[\\\'"]?', '>', '>=', 'ALTER', 'BETWEEN', 'CREATE', 'DELETE', 'DROP', 'IN', 'INSERT', 'IN\\s*\\(([^)]+)\\)', 'LIKE', 'SELECT', 'TRUNCATE', 'UNKNOWN', 'UPDATE', 'VALUES', '\\bWHERE\\b', 'confidence', 'customers', 'estimated_rows', 'has_where_clause', 'inventory', 'is_safe', 'logs', 'operation_type', 'orders', 'products', 'sessions', 'table_name', 'table_size', 'transactions', 'unknown', 'users']

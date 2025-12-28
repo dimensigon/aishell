@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/enterprise/audit/audit_logger.py
+# hypothesis_version: 6.140.3
+
+[100, ' AND action = ?', ' AND level = ?', ' AND tenant_id = ?', ' AND timestamp <= ?', ' AND timestamp >= ?', ' AND user_id = ?', ' WHERE tenant_id = ?', '.ai-shell', 'audit.db', 'critical', 'error', 'info', 'level', 'statistics', 'success', 'warning']

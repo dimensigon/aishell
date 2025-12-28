@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/enterprise/rbac/role_manager.py
+# hypothesis_version: 6.140.3
+
+[' AND is_system = 0', ' AND role_type = ?', '*', '.ai-shell', 'Analyst', 'Database Admin', 'Database management', 'Developer', 'Development access', 'Full system access', 'Full tenant access', 'Read-only access', 'Role', 'Super Admin', 'Tenant Admin', 'Viewer', 'analyst', 'created_at', 'custom', 'database:*', 'database:backup', 'database:execute', 'database:read', 'database:schema', 'database:write', 'database_admin', 'description', 'developer', 'id', 'is_system', 'metadata', 'name', 'parent_roles', 'permissions', 'query:*', 'query:execute', 'query:history', 'rbac.db', 'role:*', 'role_analyst', 'role_database_admin', 'role_developer', 'role_super_admin', 'role_tenant_admin', 'role_type', 'role_viewer', 'super_admin', 'tenant:*', 'tenant_admin', 'tenant_id', 'tenant_owner', 'updated_at', 'updated_at = ?', 'user:*', 'viewer']

@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/agents/workflow_orchestrator.py
+# hypothesis_version: 6.140.3
+
+[300, ', ', '=', 'WorkflowOrchestrator', '_result', 'cancelled', 'completed', 'failed', 'none', 'partial', 'pending', 'running', 'skipped', 'step_', 'workflow']

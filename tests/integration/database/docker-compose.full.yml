@@ -1,0 +1,318 @@
+version: '3.8'
+
+# AI-Shell Complete Database Test Environment
+# Includes: PostgreSQL, MongoDB, MySQL, Redis + Optional databases
+
+services:
+  # ================================
+  # CORE DATABASES (Required)
+  # ================================
+
+  # PostgreSQL 16 - Relational Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: test_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: MyPostgresPass123
+      POSTGRES_DB: postgres
+      POSTGRES_INITDB_ARGS: "-E UTF8 --locale=en_US.UTF-8"
+    volumes:
+      - ./init-postgres.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - test_network
+    restart: unless-stopped
+
+  # MongoDB 7.0 - NoSQL Document Database
+  mongodb:
+    image: mongo:7.0
+    container_name: test_mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: MyMongoPass123
+      MONGO_INITDB_DATABASE: test_integration_db
+    volumes:
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    networks:
+      - test_network
+    restart: unless-stopped
+
+  # MySQL 8.0 - Relational Database
+  mysql:
+    image: mysql:8.0
+    container_name: test_mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: MyMySQLPass123
+      MYSQL_DATABASE: test_integration_db
+      MYSQL_USER: testuser
+      MYSQL_PASSWORD: testpass
+    volumes:
+      - ./init-mysql.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pMyMySQLPass123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - test_network
+    restart: unless-stopped
+
+  # Redis 7.2 - In-Memory Data Store
+  redis:
+    image: redis:7.2-alpine
+    container_name: test_redis
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --requirepass MyRedisPass123
+      --save 60 1
+      --loglevel warning
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --databases 16
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "MyRedisPass123", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - test_network
+    restart: unless-stopped
+
+  # ================================
+  # OPTIONAL DATABASES
+  # ================================
+
+  # Neo4j 5.x - Graph Database
+  neo4j:
+    image: neo4j:5-community
+    container_name: test_neo4j
+    ports:
+      - "7474:7474"  # HTTP
+      - "7687:7687"  # Bolt
+    environment:
+      NEO4J_AUTH: neo4j/MyNeo4jPass123
+      NEO4J_PLUGINS: '["apoc"]'
+      NEO4J_dbms_memory_heap_max__size: 512M
+      NEO4J_dbms_memory_pagecache_size: 256M
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:7474"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - test_network
+    restart: unless-stopped
+    profiles:
+      - optional
+
+  # Cassandra 4.x - Wide-Column NoSQL Database
+  cassandra:
+    image: cassandra:4.1
+    container_name: test_cassandra
+    ports:
+      - "9042:9042"  # CQL
+      - "9160:9160"  # Thrift (deprecated but still used)
+    environment:
+      CASSANDRA_CLUSTER_NAME: TestCluster
+      CASSANDRA_DC: dc1
+      CASSANDRA_RACK: rack1
+      CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
+      MAX_HEAP_SIZE: 512M
+      HEAP_NEWSIZE: 128M
+    volumes:
+      - cassandra_data:/var/lib/cassandra
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'describe cluster'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    networks:
+      - test_network
+    restart: unless-stopped
+    profiles:
+      - optional
+
+  # Oracle XE 21c - Oracle Database Express Edition
+  oracle:
+    image: gvenzl/oracle-xe:21-slim
+    container_name: test_oracle
+    ports:
+      - "1521:1521"
+      - "5500:5500"  # Oracle Enterprise Manager
+    environment:
+      ORACLE_PASSWORD: MyOraclePass123
+      ORACLE_DATABASE: TESTDB
+      APP_USER: testuser
+      APP_USER_PASSWORD: testpass
+    volumes:
+      - ./init-oracle.sql:/container-entrypoint-initdb.d/init.sql:ro
+      - oracle_data:/opt/oracle/oradata
+    healthcheck:
+      test: ["CMD", "/opt/oracle/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    networks:
+      - test_network
+    restart: unless-stopped
+    profiles:
+      - optional
+    shm_size: 1g
+
+  # ================================
+  # OPTIONAL MANAGEMENT UIs
+  # ================================
+
+  # Redis Commander - Redis Web UI
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: test_redis_commander
+    environment:
+      REDIS_HOSTS: local:redis:6379:0:MyRedisPass123
+    ports:
+      - "8081:8081"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - test_network
+    restart: unless-stopped
+    profiles:
+      - ui
+
+  # Mongo Express - MongoDB Web UI
+  mongo-express:
+    image: mongo-express:latest
+    container_name: test_mongo_express
+    ports:
+      - "8082:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: MyMongoPass123
+      ME_CONFIG_MONGODB_URL: mongodb://admin:MyMongoPass123@mongodb:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin123
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - test_network
+    restart: unless-stopped
+    profiles:
+      - ui
+
+  # phpMyAdmin - MySQL Web UI
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: test_phpmyadmin
+    ports:
+      - "8083:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: MyMySQLPass123
+      UPLOAD_LIMIT: 50M
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - test_network
+    restart: unless-stopped
+    profiles:
+      - ui
+
+  # pgAdmin - PostgreSQL Web UI
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: test_pgadmin
+    ports:
+      - "8084:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@aishell.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - test_network
+    restart: unless-stopped
+    profiles:
+      - ui
+
+volumes:
+  # Core database volumes
+  postgres_data:
+    driver: local
+    name: aishell_postgres_test_data
+  mongodb_data:
+    driver: local
+    name: aishell_mongodb_test_data
+  mysql_data:
+    driver: local
+    name: aishell_mysql_test_data
+  redis_data:
+    driver: local
+    name: aishell_redis_test_data
+
+  # Optional database volumes
+  neo4j_data:
+    driver: local
+    name: aishell_neo4j_test_data
+  neo4j_logs:
+    driver: local
+    name: aishell_neo4j_test_logs
+  cassandra_data:
+    driver: local
+    name: aishell_cassandra_test_data
+  oracle_data:
+    driver: local
+    name: aishell_oracle_test_data
+
+  # UI volumes
+  pgadmin_data:
+    driver: local
+    name: aishell_pgadmin_data
+
+networks:
+  test_network:
+    driver: bridge
+    name: aishell_test_network

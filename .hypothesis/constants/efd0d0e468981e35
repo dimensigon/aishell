@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/ui/widgets/risk_indicator.py
+# hypothesis_version: 6.140.3
+
+['#risk-bar', '#risk-text', '?', 'bold red', 'bright_red', 'critical', 'green', 'high', 'low', 'medium', 'red', 'risk-bar', 'risk-text', 'white', 'yellow', '▁▁▁▁▁▁▁▁▁▁', '▄▄▄▄▄▄▄▄▄▄', '▆▆▆▆▆▆▆▆▆▆', '█████████████', '⚠', '⚠⚠', '✓', '✗']

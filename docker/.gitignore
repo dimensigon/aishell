@@ -1,0 +1,25 @@
+# Docker environment file (contains passwords)
+.env
+.env.local
+.env.*.local
+
+# Keep .env.test as it's for testing only
+!.env.test
+
+# Docker volumes and data
+data/
+volumes/
+
+# Logs
+*.log
+logs/
+
+# Backup files
+*.backup
+*.bak
+*.tar.gz
+*.sql.gz
+
+# OS files
+.DS_Store
+Thumbs.db

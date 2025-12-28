@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/security/command_sanitizer.py
+# hypothesis_version: 6.140.3
+
+['&&.*rm\\s', '..', '/', '/boot/', '/dev/', '/etc/passwd', '/etc/shadow', '/etc/sudoers', '/proc/', '/sys/', ':\\(\\)\\{.*\\};', ';.*rm\\s', '>\\s*/dev/sd[a-z]', 'Empty command', '\\$\\(.*\\)', '\\|.*bash', '\\|.*sh\\b', '`.*`', 'cat', 'cd', 'chgrp', 'chmod', 'chown', 'cp', 'curl', 'dd', 'dd\\s+.*of=/dev', 'del', 'diff', 'diskpart', 'docker', 'echo', 'fdisk', 'find', 'format', 'git', 'grep', 'halt', 'head', 'init', 'less', 'ls', 'mkdir', 'mkfs', 'mkfs\\.', 'more', 'mv', 'nc', 'ncat', 'netcat', 'node', 'npm', 'poweroff', 'pwd', 'python', 'python3', 'reboot', 'rm', 'rm\\s+-rf\\s+/', 'rm\\s+-rf\\s+\\*', 'rmdir', 'rsync', 'scp', 'shutdown', 'sort', 'ssh', 'su', 'sudo', 'tail', 'telnet', 'touch', 'uniq', 'wc', 'wget']

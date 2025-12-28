@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/mcp_clients/base.py
+# hypothesis_version: 6.140.3
+
+['CONNECTION_FAILED', 'DDL_FAILED', 'NOT_CONNECTED', 'QUERY_FAILED', 'closed', 'columns', 'connected', 'connecting', 'connection_time', 'disconnected', 'error', 'last_error', 'metadata', 'ping_error', 'ping_successful', 'ping_time', 'rowcount', 'rows', 'state']

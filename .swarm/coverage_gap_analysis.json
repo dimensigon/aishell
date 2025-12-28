@@ -1,0 +1,199 @@
+{
+  "analysis_date": "2025-10-12",
+  "total_files": 138,
+  "files_below_50_percent": 110,
+  "coverage_deficit_percentage": 79.7,
+  "critical_security_gaps": [
+    {
+      "file": "src/security/vault.py",
+      "coverage": 32.4,
+      "missing_lines": 117,
+      "risk": "CRITICAL",
+      "impact": "Credential encryption and storage - core security primitive"
+    },
+    {
+      "file": "src/security/encryption.py",
+      "coverage": 0.0,
+      "missing_lines": 54,
+      "risk": "CRITICAL",
+      "impact": "Fernet encryption - all encrypted data depends on this"
+    },
+    {
+      "file": "src/security/rbac.py",
+      "coverage": 0.0,
+      "missing_lines": 109,
+      "risk": "CRITICAL",
+      "impact": "Role-based access control - authorization bypass risk"
+    },
+    {
+      "file": "src/security/audit.py",
+      "coverage": 0.0,
+      "missing_lines": 105,
+      "risk": "CRITICAL",
+      "impact": "Security audit logging - compliance requirement"
+    },
+    {
+      "file": "src/security/sql_guard.py",
+      "coverage": 0.0,
+      "missing_lines": 67,
+      "risk": "CRITICAL",
+      "impact": "SQL injection prevention - data breach risk"
+    }
+  ],
+  "async_database_gaps": [
+    {
+      "file": "src/core/event_bus.py",
+      "coverage": 0.0,
+      "missing_lines": 98,
+      "risk": "HIGH",
+      "impact": "Async messaging backbone - race conditions possible"
+    },
+    {
+      "file": "src/database/pool.py",
+      "coverage": 0.0,
+      "missing_lines": 68,
+      "risk": "HIGH",
+      "impact": "Connection pooling - resource exhaustion risk"
+    },
+    {
+      "file": "src/mcp_clients/retry.py",
+      "coverage": 0.0,
+      "missing_lines": 245,
+      "risk": "HIGH",
+      "impact": "Retry logic - infinite loops or connection failures"
+    },
+    {
+      "file": "src/database/ha.py",
+      "coverage": 0.0,
+      "missing_lines": 102,
+      "risk": "HIGH",
+      "impact": "High availability features - failover untested"
+    }
+  ],
+  "readme_feature_gaps": {
+    "Health Check System": {
+      "file": "src/core/health_checks.py",
+      "coverage": 0.0,
+      "missing_lines": 166,
+      "readme_section": "Phase 11 & 12 Features"
+    },
+    "Custom AI Agents": {
+      "files": [
+        "src/agents/base.py",
+        "src/agents/workflow_orchestrator.py"
+      ],
+      "coverage": [
+        69.0,
+        27.8
+      ],
+      "readme_section": "Phase 11 - Custom AI Agents"
+    },
+    "Tool Registry System": {
+      "file": "src/agents/tools/registry.py",
+      "coverage": 35.2,
+      "readme_section": "Phase 11 - Tool Registry System"
+    },
+    "Safety & Approval System": {
+      "file": "src/agents/safety/controller.py",
+      "coverage": 19.9,
+      "readme_section": "Phase 12 - Safety & Approvals"
+    },
+    "LLM Integration": {
+      "files": [
+        "src/llm/manager.py",
+        "src/llm/providers.py",
+        "src/llm/embeddings.py"
+      ],
+      "coverage": [
+        26.2,
+        22.9,
+        17.6
+      ],
+      "readme_section": "LLM Configuration"
+    },
+    "Vector-Based Auto-completion": {
+      "files": [
+        "src/vector/store.py",
+        "src/vector/autocomplete.py"
+      ],
+      "coverage": [
+        20.8,
+        21.1
+      ],
+      "readme_section": "Advanced Features"
+    }
+  },
+  "error_handling_gaps": [
+    "Network timeout scenarios in MCP clients",
+    "Database connection failure recovery",
+    "Memory exhaustion handling",
+    "Concurrent access race conditions",
+    "Invalid input validation in security modules",
+    "Resource cleanup on async operation errors",
+    "Circuit breaker state transitions",
+    "Retry exponential backoff edge cases"
+  ],
+  "test_priorities": [
+    {
+      "priority": 1,
+      "category": "Security-Critical",
+      "files": 15,
+      "average_coverage": 8.3,
+      "target_coverage": 80,
+      "estimated_effort": "2 weeks",
+      "risk_if_untested": "Data breaches, unauthorized access, SQL injection"
+    },
+    {
+      "priority": 2,
+      "category": "Async/Database Operations",
+      "files": 20,
+      "average_coverage": 12.1,
+      "target_coverage": 70,
+      "estimated_effort": "2 weeks",
+      "risk_if_untested": "Connection leaks, race conditions, data corruption"
+    },
+    {
+      "priority": 3,
+      "category": "README Feature Completeness",
+      "files": 12,
+      "average_coverage": 28.5,
+      "target_coverage": 80,
+      "estimated_effort": "2 weeks",
+      "risk_if_untested": "Feature claims not validated, user-facing bugs"
+    },
+    {
+      "priority": 4,
+      "category": "Plugin & Enterprise",
+      "files": 8,
+      "average_coverage": 16.7,
+      "target_coverage": 70,
+      "estimated_effort": "2 weeks",
+      "risk_if_untested": "Plugin isolation failures, tenant data leaks"
+    },
+    {
+      "priority": 5,
+      "category": "Error Handling Paths",
+      "files": "All",
+      "average_coverage": "Unknown",
+      "target_coverage": 90,
+      "estimated_effort": "2 weeks",
+      "risk_if_untested": "Production failures, poor user experience"
+    }
+  ],
+  "recommendations": [
+    "IMMEDIATE: Add tests for security/* modules (CRITICAL risk)",
+    "HIGH: Test async event bus and connection pooling (data integrity)",
+    "HIGH: Validate all README-advertised features have tests",
+    "MEDIUM: Test error handling paths in MCP clients",
+    "MEDIUM: Add integration tests for multi-step agent workflows",
+    "LOW: Improve UI component test coverage"
+  ],
+  "metrics": {
+    "current_overall_coverage": 85.0,
+    "target_overall_coverage": 95.0,
+    "files_with_zero_coverage": 78,
+    "critical_files_below_50": 25,
+    "total_missing_lines": 4127,
+    "estimated_tests_needed": 350
+  }
+}

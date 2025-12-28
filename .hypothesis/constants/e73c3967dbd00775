@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/mcp_clients/neo4j_client.py
+# hypothesis_version: 6.140.3
+
+['(n)-[r]-', '(n)-[r]->', '(n)<-[r]-', ':', 'Connected to Neo4j', 'DETACH ', 'both', 'count', 'deleted', 'from_value', 'incoming', 'match_value', 'n', 'neo4j', 'outgoing', 'props', 'r', 'to_value', 'value']

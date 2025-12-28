@@ -1,0 +1,179 @@
+{
+  "name": "ecommerce-platform",
+  "version": "1.0.0",
+  "description": "E-Commerce Platform with Multi-Database Management",
+
+  "connections": {
+    "ecommerce_main": {
+      "type": "postgres",
+      "host": "localhost",
+      "port": 5432,
+      "database": "ecommerce",
+      "user": "admin",
+      "password": "ecommerce123",
+      "schema": "public",
+      "pool": {
+        "min": 5,
+        "max": 20,
+        "idleTimeoutMillis": 30000,
+        "connectionTimeoutMillis": 2000
+      },
+      "ssl": false,
+      "tags": ["primary", "transactional", "postgres"]
+    },
+
+    "ecommerce_reviews": {
+      "type": "mongodb",
+      "host": "localhost",
+      "port": 27017,
+      "database": "ecommerce",
+      "authSource": "admin",
+      "options": {
+        "maxPoolSize": 10,
+        "minPoolSize": 2,
+        "serverSelectionTimeoutMS": 5000,
+        "socketTimeoutMS": 45000
+      },
+      "tags": ["analytics", "reviews", "mongodb"]
+    },
+
+    "ecommerce_cache": {
+      "type": "redis",
+      "host": "localhost",
+      "port": 6379,
+      "database": 0,
+      "options": {
+        "maxRetriesPerRequest": 3,
+        "enableReadyCheck": true,
+        "connectTimeout": 10000,
+        "commandTimeout": 5000
+      },
+      "keyPrefix": "ecommerce:",
+      "ttl": 3600,
+      "tags": ["cache", "session", "redis"]
+    }
+  },
+
+  "federation": {
+    "enabled": true,
+    "primary": "ecommerce_main",
+    "sources": ["ecommerce_main", "ecommerce_reviews", "ecommerce_cache"],
+    "joinStrategies": {
+      "products_with_reviews": {
+        "type": "left_join",
+        "left": {
+          "connection": "ecommerce_main",
+          "table": "products",
+          "key": "id"
+        },
+        "right": {
+          "connection": "ecommerce_reviews",
+          "collection": "reviews",
+          "key": "product_id"
+        },
+        "cache": true,
+        "cacheTTL": 3600
+      },
+      "customer_analytics": {
+        "type": "inner_join",
+        "left": {
+          "connection": "ecommerce_main",
+          "table": "customers",
+          "key": "id"
+        },
+        "right": {
+          "connection": "ecommerce_reviews",
+          "collection": "product_views",
+          "key": "customer_id"
+        }
+      }
+    }
+  },
+
+  "performance": {
+    "queryTimeout": 30000,
+    "slowQueryThreshold": 1000,
+    "enableQueryLogging": true,
+    "logSlowQueries": true,
+    "explainSlowQueries": true,
+    "cacheStrategy": "aggressive",
+    "indexRecommendations": true
+  },
+
+  "backup": {
+    "enabled": true,
+    "schedule": "0 2 * * *",
+    "retention": {
+      "daily": 7,
+      "weekly": 4,
+      "monthly": 12
+    },
+    "targets": [
+      {
+        "connection": "ecommerce_main",
+        "type": "pg_dump",
+        "compression": "gzip",
+        "path": "./backups/postgres"
+      },
+      {
+        "connection": "ecommerce_reviews",
+        "type": "mongodump",
+        "compression": true,
+        "path": "./backups/mongodb"
+      }
+    ]
+  },
+
+  "monitoring": {
+    "enabled": true,
+    "healthCheck": {
+      "interval": 30000,
+      "timeout": 5000,
+      "retries": 3
+    },
+    "metrics": {
+      "connections": true,
+      "queries": true,
+      "cache": true,
+      "performance": true
+    },
+    "alerts": {
+      "slowQueries": {
+        "threshold": 5000,
+        "action": "log"
+      },
+      "connectionPool": {
+        "threshold": 0.8,
+        "action": "warn"
+      },
+      "cacheHitRate": {
+        "threshold": 0.7,
+        "action": "warn"
+      }
+    }
+  },
+
+  "optimization": {
+    "autoIndexing": true,
+    "queryCache": true,
+    "preparedStatements": true,
+    "batchOperations": true,
+    "connectionPooling": true
+  },
+
+  "nlp": {
+    "provider": "anthropic",
+    "model": "claude-3-5-sonnet-20241022",
+    "contextWindow": 200000,
+    "temperature": 0.3,
+    "maxTokens": 4000,
+    "systemPrompt": "You are an expert database administrator for an e-commerce platform. Provide clear, actionable insights and SQL queries optimized for performance."
+  },
+
+  "security": {
+    "encryptConnections": false,
+    "maskSensitiveData": true,
+    "auditLog": true,
+    "maxQueryComplexity": 100
+  }
+}

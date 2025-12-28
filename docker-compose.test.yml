@@ -1,0 +1,105 @@
+version: '3.8'
+
+# AI-Shell Test Database Environment
+# Optimized for fast test execution with tmpfs volumes and dedicated test ports
+
+services:
+  # PostgreSQL - Test Database (Port 5432)
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: aishell_test_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: MyPostgresPass123
+      POSTGRES_DB: postgres
+      POSTGRES_INITDB_ARGS: "-E UTF8"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - test_network
+
+  # MongoDB - Test Database (Port 27017)
+  mongodb-test:
+    image: mongo:7.0
+    container_name: aishell_test_mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: MyMongoPass123
+      MONGO_INITDB_DATABASE: test_integration_db
+    tmpfs:
+      - /data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - test_network
+
+  # MySQL - Test Database (Port 3306)
+  mysql-test:
+    image: mysql:8.0
+    container_name: aishell_test_mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: MyMySQLPass123
+      MYSQL_DATABASE: test_db
+    tmpfs:
+      - /var/lib/mysql
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --skip-log-bin
+      --max_connections=200
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pMyMySQLPass123"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - test_network
+
+  # Redis - Test Database (Port 6379, No Password)
+  redis-test:
+    image: redis:7.2-alpine
+    container_name: aishell_test_redis
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --save ""
+      --appendonly no
+      --loglevel warning
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --databases 16
+    tmpfs:
+      - /data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - test_network
+
+networks:
+  test_network:
+    driver: bridge
+    name: aishell_test_network

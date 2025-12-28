@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/performance/cache.py
+# hypothesis_version: 6.140.3
+
+[0.0, 100, 300, 1000, 1024, '*', '...', 'access_count', 'age_seconds', 'evictions', 'hit_rate', 'hits', 'key', 'max_memory_mb', 'max_size', 'memory', 'memory_usage_mb', 'misses', 'original_key', 'size', 'size_bytes', 'total_requests']

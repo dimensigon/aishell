@@ -1,0 +1,4 @@
+# Winston log files
+logs/*.log
+logs/*.log.*
+!logs/.gitkeep

@@ -7,7 +7,7 @@ from fastapi import FastAPI, HTTPException, Depends, status, WebSocket, WebSocke
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, validator
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
 import jwt
@@ -76,8 +76,7 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
 
-    @field_validator('password')
-    @classmethod
+    @validator('password')
     def validate_password(cls, v):
         if len(v) < 8:
             raise ValueError('Password must be at least 8 characters')

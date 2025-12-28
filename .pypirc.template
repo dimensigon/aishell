@@ -1,0 +1,18 @@
+# PyPI Configuration Template
+# Copy this to ~/.pypirc and add your API tokens
+# DO NOT commit the actual .pypirc file with real tokens!
+
+[distutils]
+index-servers =
+    pypi
+    testpypi
+
+[pypi]
+repository = https://upload.pypi.org/legacy/
+username = __token__
+password = pypi-YOUR-API-TOKEN-HERE
+
+[testpypi]
+repository = https://test.pypi.org/legacy/
+username = __token__
+password = pypi-YOUR-TESTPYPI-TOKEN-HERE

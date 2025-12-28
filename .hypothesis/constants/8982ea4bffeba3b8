@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/enterprise/audit/__init__.py
+# hypothesis_version: 6.140.3
+
+['AuditEvent', 'AuditLevel', 'AuditLogger', 'ChangeEvent', 'ChangeTracker', 'ComplianceFramework', 'ComplianceReporter']

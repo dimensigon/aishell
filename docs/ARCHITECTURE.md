@@ -1,6 +1,6 @@
 # AI-Shell System Architecture
 
-**Version:** 2.0.0
+**Version:** 1.0.0
 **Last Updated:** October 11, 2025
 **Status:** Production
 
@@ -1017,6 +1017,6 @@ class CustomDBClient(BaseMCPClient):
 
 ---
 
-**Document Version:** 2.0.0
+**Document Version:** 1.0.0
 **Last Reviewed:** October 11, 2025
 **Next Review:** January 2026

@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/config/settings.py
+# hypothesis_version: 6.140.3
+
+[384, '5432', 'DB_HOST', 'DB_NAME', 'DB_PASSWORD', 'DB_PORT', 'DB_USER', 'INFO', 'LOG_LEVEL', 'MODEL_NAME', 'OPENAI_API_KEY', 'db_host', 'db_name', 'db_port', 'db_user', 'gpt-4', 'localhost', 'log_level', 'model_name', 'postgres', 'vector_dimension']

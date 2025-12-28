@@ -1,0 +1,685 @@
+# AI-Shell Advanced Configuration Example
+# Enterprise-grade configuration with all features enabled
+
+system:
+  startup_animation: true
+  matrix_style: enhanced
+  theme: custom
+  log_level: DEBUG
+  log_file: ~/.ai-shell/logs/ai-shell.log
+
+  # Audit logging
+  audit_log: true
+  audit_file: ~/.ai-shell/logs/audit.log
+  audit_events:
+    - connect
+    - disconnect
+    - execute_ddl
+    - execute_dml
+    - vault_access
+    - config_change
+
+# Multi-Provider LLM Configuration
+llm:
+  # Use different providers for different tasks
+  providers:
+    # Intent analysis - local for speed and privacy
+    intent:
+      provider: ollama
+      model: llama2:7b
+      timeout: 5
+      fallback:
+        provider: openai
+        model: gpt-3.5-turbo
+
+    # Code completion - cloud for quality
+    completion:
+      provider: openai
+      model: gpt-4
+      temperature: 0.3
+      fallback:
+        provider: ollama
+        model: codellama:13b
+
+    # Data anonymization - always local for security
+    anonymizer:
+      provider: ollama
+      model: mistral:7b
+      no_fallback: true
+
+    # Complex reasoning
+    general:
+      provider: anthropic
+      model: claude-3-opus-20240229
+      max_tokens: 4096
+      fallback:
+        - provider: openai
+          model: gpt-4-turbo-preview
+        - provider: ollama
+          model: llama2:13b
+
+  # Provider configurations
+  ollama:
+    host: http://localhost:11434
+    models:
+      intent: llama2:7b
+      completion: codellama:13b
+      anonymizer: mistral:7b
+      general: llama2:13b
+
+    gpu: true
+    gpu_layers: 35
+    num_ctx: 8192
+    num_predict: 2048
+    keep_alive: 15m
+
+    # Batch processing
+    batch_size: 5
+
+  openai:
+    api_key: $vault.openai_key
+    base_url: https://api.openai.com/v1
+    organization: $vault.openai_org
+
+    # Rate limiting
+    max_requests_per_minute: 100
+    max_tokens_per_minute: 150000
+
+    # Retry strategy
+    retry_on_rate_limit: true
+    max_retries: 3
+    retry_delay: 2
+
+    # Caching
+    cache_responses: true
+    cache_ttl: 3600
+
+    # Privacy
+    disable_training: true
+
+  anthropic:
+    api_key: $vault.anthropic_key
+    base_url: https://api.anthropic.com/v1
+
+    max_tokens: 8192
+    temperature: 0.7
+
+    # Headers
+    headers:
+      anthropic-version: "2023-06-01"
+
+  deepseek:
+    api_key: $vault.deepseek_key
+    base_url: https://api.deepseek.com/v1
+
+    models:
+      coder: deepseek-coder
+      chat: deepseek-chat
+
+# Advanced MCP Configuration
+mcp:
+  # Oracle with full features
+  oracle:
+    thin_mode: true
+
+    # Connection pools per environment
+    pools:
+      production:
+        min: 5
+        max: 20
+        increment: 2
+      development:
+        min: 2
+        max: 10
+        increment: 1
+
+    # Advanced timeouts
+    timeout: 60
+    connect_timeout: 15
+    query_timeout: 300
+
+    # Statement caching
+    statement_cache_size: 50
+
+    # Pre-loading
+    preload_objects: true
+    preload_schemas:
+      - SYS
+      - SYSTEM
+      - DBSNMP
+    preload_types:
+      - TABLES
+      - VIEWS
+      - PROCEDURES
+      - FUNCTIONS
+      - PACKAGES
+      - SEQUENCES
+
+    # Event monitoring
+    events: true
+    event_types:
+      - startup
+      - shutdown
+      - logon
+      - logoff
+      - ddl
+
+    # Encryption
+    encryption: required
+    crypto_checksum: SHA256
+
+  # PostgreSQL with SSL
+  postgresql:
+    connection_pool_size: 10
+    min_pool_size: 3
+    max_pool_size: 25
+
+    timeout: 60
+    connect_timeout: 15
+
+    # SSL/TLS
+    sslmode: verify-full
+    sslrootcert: /etc/ssl/certs/ca-bundle.crt
+    sslcert: ~/.ai-shell/ssl/client-cert.pem
+    sslkey: ~/.ai-shell/ssl/client-key.pem
+
+    # Preloading
+    preload_objects: true
+    preload_schemas:
+      - public
+      - pg_catalog
+      - information_schema
+
+    # Statement timeout
+    statement_timeout: 300000  # 5 minutes
+
+  # MySQL support
+  mysql:
+    enabled: true
+    connection_pool_size: 5
+    charset: utf8mb4
+
+  # MongoDB support
+  mongodb:
+    enabled: true
+    connection_pool_size: 10
+
+# Advanced UI Configuration
+ui:
+  framework: textual
+
+  # Dynamic panel sizing
+  panel_weights:
+    output: 0.45
+    module: 0.35
+    prompt: 0.20
+
+  auto_size_panels: true
+
+  # Panel size constraints
+  panel_constraints:
+    output:
+      min: 10  # lines
+      max: 100
+    module:
+      min: 5
+      max: 50
+    prompt:
+      min: 3
+      max: 30
+
+  # Advanced output formatting
+  output:
+    max_table_width: 160
+    word_wrap: true
+    syntax_highlighting: true
+    default_theme: dracula
+
+    # Paging for large output
+    auto_page: true
+    page_threshold: 100  # lines
+
+    # Table rendering
+    table_style: grid  # ascii, simple, grid, fancy
+    truncate_columns: true
+    max_column_width: 50
+
+  # Module panel customization
+  module_panel:
+    update_interval: 500  # ms
+    auto_collapse: true
+    collapse_threshold: 5  # lines
+
+  # Prompt customization
+  prompt:
+    style: PS1  # PS1, custom
+    show_git_branch: true
+    show_python_venv: true
+    show_db_connection: true
+    multiline_indicator: "... "
+
+# Enhanced Security
+security:
+  vault_backend: keyring
+
+  # Encryption
+  encryption:
+    algorithm: AES-256-GCM
+    key_derivation: PBKDF2
+    iterations: 100000
+
+  # Auto-redaction with custom patterns
+  auto_redaction: true
+  redaction_patterns:
+    - type: password
+      regex: '(?:password|pwd|pass)[:=]\s*([^\s,]+)'
+    - type: api_key
+      regex: '(?:api[_-]?key|apikey)[:=]\s*([^\s,]+)'
+    - type: token
+      regex: '(?:token|auth)[:=]\s*([^\s,]+)'
+    - type: ip_address
+      regex: '\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b'
+    - type: email
+      regex: '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-Z]{2,}'
+    - type: credit_card
+      regex: '\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b'
+
+  # Pseudo-anonymization
+  pseudo_anonymize: true
+  anonymization_storage: encrypted
+
+  # Data residency - never send to cloud
+  local_only_patterns:
+    - customer_data
+    - pii
+    - financial_data
+    - health_records
+
+  # Operation confirmations
+  require_confirmation_for:
+    - rm
+    - rmdir
+    - DROP
+    - DELETE
+    - TRUNCATE
+    - ALTER
+    - GRANT
+    - REVOKE
+
+  risk_levels:
+    critical:
+      method: confirm_text
+      text: "I UNDERSTAND THE RISK AND APPROVE"
+    high:
+      method: confirm_text
+      text: "DELETE CONFIRMED"
+    medium:
+      method: confirm_key
+      key: "y"
+    low:
+      method: auto_execute
+
+  # Audit trail
+  audit:
+    enabled: true
+    log_file: ~/.ai-shell/logs/audit.log
+    rotate_size: 100MB
+    retention_days: 90
+
+    events:
+      - vault_access
+      - credential_usage
+      - database_connection
+      - ddl_execution
+      - sensitive_data_access
+
+  # Session security
+  session:
+    timeout: 3600  # 1 hour
+    max_concurrent: 5
+    require_reauth_for:
+      - vault_access
+      - database_admin
+
+# Performance Optimization
+performance:
+  # Worker pools
+  async_workers: 8
+  io_workers: 4
+  cpu_workers: 4
+
+  # Caching
+  cache_size: 5000
+  cache_ttl: 7200  # 2 hours
+
+  command_history_size: 50000
+
+  # Vector database
+  vector_db_dimension: 768  # Larger for better accuracy
+  vector_db_cache: true
+  vector_index_type: IVF  # Inverted file index for speed
+
+  # Memory management
+  max_memory_mb: 2048
+  gc_threshold: 1500
+
+  # Lazy loading
+  lazy_loading: true
+  preload_modules:
+    - os_base
+    - ai_helper
+    - vault
+    - database
+
+  # Connection pooling
+  pool_recycle_time: 3600
+  pool_pre_ping: true
+
+  # Query optimization
+  query_cache: true
+  prepared_statements: true
+
+  # Background processing
+  background_tasks:
+    - intent_analysis
+    - panel_enrichment
+    - vector_indexing
+    - cache_warming
+
+# Advanced Module Configuration
+modules:
+  os_base:
+    enabled: true
+    editor: nvim  # Or vim, nano, emacs
+
+    # Enhanced history
+    history:
+      file: ~/.ai-shell/history.db  # SQLite for advanced queries
+      max_size: 100000
+      save_exit_code: true
+      save_timing: true
+      save_environment: true
+
+      # History deduplication
+      deduplicate: true
+      ignore_patterns:
+        - "^ls$"
+        - "^pwd$"
+
+    # Session management
+    sessions:
+      save_sessions: true
+      session_dir: ~/.ai-shell/sessions
+      auto_restore: true
+      max_sessions: 100
+
+  ai_helper:
+    enabled: true
+
+    # Agent configuration
+    agents:
+      enabled: true
+      max_steps: 20
+      max_parallel: 5
+      timeout: 300
+
+      # Agent types
+      types:
+        - researcher
+        - coder
+        - tester
+        - optimizer
+        - architect
+
+    # Tool configuration
+    tools:
+      file_viewer:
+        enabled: true
+        max_file_size: 10MB
+
+      file_creation:
+        enabled: true
+        require_confirm: true
+
+      command_execution:
+        enabled: true
+        allowed_commands:
+          - git
+          - npm
+          - pip
+          - docker
+        blocked_commands:
+          - rm -rf /
+
+      database_query:
+        enabled: true
+        max_rows: 10000
+
+  vault:
+    enabled: true
+    vault_file: ~/.ai-shell/vault.enc
+
+    # Auto-rotation
+    rotate_secrets: true
+    rotation_days: 90
+
+    # Secret templates
+    templates:
+      database:
+        fields:
+          - username
+          - password
+          - host
+          - port
+          - database/service
+      api_service:
+        fields:
+          - api_key
+          - api_secret
+          - endpoint
+      ssh_key:
+        fields:
+          - private_key
+          - public_key
+          - passphrase
+
+  database:
+    enabled: true
+
+    # Risk analyzer
+    risk_analyzer:
+      enabled: true
+      analyze_on_execute: true
+
+      # AI-powered analysis
+      use_llm: true
+      llm_provider: ollama
+
+      # Impact estimation
+      estimate_impact: true
+
+    # Query optimizer
+    optimizer:
+      enabled: true
+      auto_suggest: true
+
+      # Provider-specific optimizers
+      optimizers:
+        oracle:
+          use_hints: true
+          analyze_execution_plan: true
+        postgresql:
+          analyze_explain: true
+          suggest_indexes: true
+
+    # SQL formatting
+    formatter:
+      enabled: true
+      style: expanded  # standard, compact, expanded
+      keyword_case: upper
+      indent_size: 2
+
+    # Natural language to SQL
+    nlp:
+      enabled: true
+      llm_provider: openai
+      llm_model: gpt-4
+
+      # Schema awareness
+      include_schema: true
+      max_tables: 20
+
+# Web Interface Configuration
+web_interface:
+  enabled: true
+
+  # Server settings
+  host: 0.0.0.0
+  port: 5000
+  debug: false
+
+  # SSL/TLS
+  ssl_enabled: true
+  ssl_cert: ~/.ai-shell/ssl/cert.pem
+  ssl_key: ~/.ai-shell/ssl/key.pem
+
+  # Authentication
+  auth:
+    enabled: true
+    method: oauth2  # basic, oauth2, saml
+
+    # OAuth2
+    oauth2:
+      provider: google
+      client_id: $vault.oauth_client_id
+      client_secret: $vault.oauth_client_secret
+
+  # Session management
+  session:
+    secret_key: $vault.web_session_key
+    timeout: 3600
+
+  # CORS
+  cors:
+    enabled: true
+    origins:
+      - https://app.example.com
+
+  # Rate limiting
+  rate_limit:
+    enabled: true
+    requests_per_minute: 100
+
+# Monitoring & Telemetry
+monitoring:
+  enabled: true
+
+  # Metrics collection
+  metrics:
+    enabled: true
+    interval: 60  # seconds
+
+    collect:
+      - command_execution_time
+      - llm_latency
+      - database_query_time
+      - cache_hit_rate
+      - memory_usage
+      - cpu_usage
+
+  # Health checks
+  health_check:
+    enabled: true
+    interval: 300
+
+    checks:
+      - llm_providers
+      - database_connections
+      - vault_access
+      - disk_space
+
+  # Alerting
+  alerts:
+    enabled: true
+
+    rules:
+      - name: high_error_rate
+        condition: error_rate > 0.1
+        action: notify
+
+      - name: slow_queries
+        condition: avg_query_time > 5
+        action: log
+
+    # Notification channels
+    channels:
+      email:
+        enabled: false
+        smtp_server: smtp.example.com
+        from: ai-shell@example.com
+        to:
+          - admin@example.com
+
+      slack:
+        enabled: false
+        webhook_url: $vault.slack_webhook
+
+# Backup & Recovery
+backup:
+  enabled: true
+
+  # Automatic backups
+  schedule: "0 2 * * *"  # Daily at 2 AM
+
+  # Backup targets
+  targets:
+    - vault
+    - history
+    - configuration
+    - sessions
+
+  # Retention
+  retention:
+    daily: 7
+    weekly: 4
+    monthly: 12
+
+  # Backup location
+  location: ~/.ai-shell/backups
+
+  # Compression
+  compress: true
+  encryption: true
+
+# Plugin System
+plugins:
+  enabled: true
+  plugin_dir: ~/.ai-shell/plugins
+
+  # Auto-load plugins
+  auto_load: true
+
+  # Installed plugins
+  installed:
+    - name: git-integration
+      enabled: true
+    - name: docker-manager
+      enabled: true
+    - name: kubernetes-cli
+      enabled: false
+
+# Feature Flags
+features:
+  experimental:
+    neural_completion: true
+    advanced_agents: true
+    distributed_execution: false
+
+  beta:
+    web_interface: true
+    multi_user: false
+    cloud_sync: false
+
+  alpha:
+    quantum_optimizer: false
+    blockchain_audit: false

@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/agents/base.py
+# hypothesis_version: 6.140.3
+
+[0.0, 200, 300, 'SimpleConfig', 'actions_count', 'agent', 'agent_id', 'agent_type', 'approved', 'approver', 'backup_create', 'backup_restore', 'base', 'capabilities', 'completed', 'database_ddl', 'database_read', 'database_write', 'executing', 'failed', 'failure', 'file_read', 'file_write', 'idle', 'index_manage', 'llm_config', 'max_retries', 'moderate', 'paused', 'plan', 'plan_created', 'planning', 'query_optimize', 'reason', 'requires_approval', 'result', 'safety_level', 'schema_analyze', 'schema_modify', 'step', 'step_index', 'success', 'system', 'timeout_seconds', 'timestamp', 'waiting_approval']

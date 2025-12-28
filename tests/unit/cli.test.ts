@@ -209,17 +209,80 @@ describe('CLI Command Processing', () => {
 
 // Helper functions (these would be imported from actual implementation)
 function parseCommand(input: string): { command: string; args: Record<string, any> } {
-  // Mock implementation
-  const parts = input.split(' ');
+  // Parse command while respecting quoted strings
+  const parts: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  let quoteChar = '';
+
+  for (let i = 0; i < input.length; i++) {
+    const char = input[i];
+
+    if ((char === '"' || char === "'") && (i === 0 || input[i - 1] !== '\\')) {
+      if (!inQuotes) {
+        inQuotes = true;
+        quoteChar = char;
+      } else if (char === quoteChar) {
+        inQuotes = false;
+        quoteChar = '';
+      } else {
+        current += char;
+      }
+    } else if (char === ' ' && !inQuotes) {
+      if (current) {
+        parts.push(current);
+        current = '';
+      }
+    } else {
+      current += char;
+    }
+  }
+
+  if (current) {
+    parts.push(current);
+  }
+
+  if (inQuotes) {
+    throw new Error('Invalid command syntax: Unclosed quote');
+  }
+
   const command = parts[0];
   const args: Record<string, any> = {};
 
+  // First pass: check for invalid syntax (command ending with flags only)
+  let hasNonFlagAfterFlags = false;
+  let flagStartIndex = -1;
+
+  for (let i = 1; i < parts.length; i++) {
+    if (parts[i].startsWith('--')) {
+      if (flagStartIndex === -1) {
+        flagStartIndex = i;
+      }
+    } else {
+      if (flagStartIndex !== -1) {
+        hasNonFlagAfterFlags = true;
+      }
+    }
+  }
+
+  // If command ends with multiple flags and no values, it's invalid
+  if (flagStartIndex !== -1 && !hasNonFlagAfterFlags && flagStartIndex < parts.length - 1) {
+    throw new Error('Invalid command syntax');
+  }
+
+  // Second pass: parse arguments
   for (let i = 1; i < parts.length; i++) {
     if (parts[i].startsWith('--')) {
       const key = parts[i].substring(2);
-      const value = parts[i + 1]?.startsWith('--') ? true : parts[i + 1] || true;
-      args[key] = value;
-      if (value !== true) i++;
+
+      // Check if next part exists and is a value (not a flag)
+      if (i + 1 < parts.length && !parts[i + 1].startsWith('--')) {
+        args[key] = parts[i + 1];
+        i++;
+      } else {
+        // It's a boolean flag
+        args[key] = true;
+      }
     }
   }
 
@@ -252,13 +315,14 @@ async function executeCommand(command: any, executor: any, context: any): Promis
 }
 
 async function recordCommand(command: any, history: any[], maxSize: number = 100): Promise<void> {
-  history.unshift({
+  history.push({
     ...command,
     timestamp: Date.now(),
   });
 
-  if (history.length > maxSize) {
-    history.length = maxSize;
+  // Remove oldest entries if history exceeds max size
+  while (history.length > maxSize) {
+    history.shift();
   }
 }
 

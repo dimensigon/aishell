@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/agents/coordinator_mocks.py
+# hypothesis_version: 6.140.3
+
+['No agents available', 'No agents registered', 'agent_count', 'agent_id', 'args', 'broadcast', 'config', 'data', 'direct', 'executor', 'from', 'least_loaded', 'load', 'round_robin', 'task', 'timestamp', 'to', 'unknown']

@@ -12,7 +12,10 @@ import hashlib
 import logging
 from enum import Enum
 
-from src.llm.providers import LocalLLMProvider, OllamaProvider
+from src.llm.providers import (
+    LocalLLMProvider, OllamaProvider, LocalTransformersProvider,
+    OpenAIProvider, AnthropicProvider, MockProvider, LLMProviderFactory
+)
 from src.llm.embeddings import EmbeddingModel
 
 logger = logging.getLogger(__name__)
@@ -45,14 +48,27 @@ class LLMConfig:
     max_tokens: int = 2048
 
 
+@dataclass
+class FunctionProviderConfig:
+    """Configuration for per-function LLM providers (dual functionality)"""
+    provider_type: str
+    model_name: str
+    api_key: Optional[str] = None
+
+
 class LocalLLMManager:
-    """Manages all LLM operations for AI-Shell"""
+    """Manages all LLM operations for AI-Shell with dual provider support"""
 
     def __init__(self, provider: Optional[LocalLLMProvider] = None,
                  model_path: str = "/data0/models") -> None:
         self.model_path = model_path
         self.provider = provider
         self.embedding_model = EmbeddingModel(model_path=model_path)
+
+        # Per-function providers for dual mode (self-hosted + public APIs)
+        self.intent_provider: Optional[LocalLLMProvider] = None
+        self.completion_provider: Optional[LocalLLMProvider] = None
+        self.anonymizer_provider: Optional[LocalLLMProvider] = None
 
         # Anonymization mappings
         self.anonymization_map: Dict[str, str] = {}
@@ -61,13 +77,14 @@ class LocalLLMManager:
 
         self.initialized = False
 
-    def initialize(self, provider_type: str = "ollama", model_name: str = "llama2") -> bool:
+    def initialize(self, provider_type: str = "ollama", model_name: str = "llama2", api_key: Optional[str] = None) -> bool:
         """
         Initialize LLM manager with specified provider
 
         Args:
-            provider_type: Type of provider (ollama, transformers)
+            provider_type: Type of provider (ollama, transformers, openai, anthropic, deepseek, mock)
             model_name: Name of the model to use
+            api_key: API key for cloud providers (OpenAI, Anthropic, DeepSeek)
 
         Returns:
             True if initialization successful
@@ -75,13 +92,14 @@ class LocalLLMManager:
         try:
             # Initialize provider if not provided
             if self.provider is None:
-                if provider_type == "ollama":
-                    self.provider = OllamaProvider(
-                        model_name=model_name,
-                        model_path=self.model_path
-                    )
-                else:
-                    raise ValueError(f"Unknown provider type: {provider_type}")
+                # Use factory to create provider
+                kwargs = {"model_name": model_name}
+                if provider_type in ["openai", "anthropic", "deepseek"]:
+                    kwargs["api_key"] = api_key
+                elif provider_type in ["ollama", "transformers"]:
+                    kwargs["model_path"] = self.model_path
+
+                self.provider = LLMProviderFactory.create(provider_type, **kwargs)
 
             # Initialize provider and embeddings
             provider_success = self.provider.initialize()
@@ -90,7 +108,7 @@ class LocalLLMManager:
             self.initialized = provider_success and embedding_success
 
             if self.initialized:
-                logger.info("LLM Manager initialized successfully")
+                logger.info(f"LLM Manager initialized successfully with {provider_type} provider")
             else:
                 logger.error("LLM Manager initialization failed")
 
@@ -98,6 +116,138 @@ class LocalLLMManager:
         except Exception as e:
             logger.error(f"Failed to initialize LLM Manager: {e}")
             return False
+
+    def initialize_function_providers(
+        self,
+        intent_config: Optional[FunctionProviderConfig] = None,
+        completion_config: Optional[FunctionProviderConfig] = None,
+        anonymizer_config: Optional[FunctionProviderConfig] = None
+    ) -> bool:
+        """
+        Initialize separate providers for each function (dual functionality mode)
+
+        This allows using different providers (self-hosted or public API) for each function.
+
+        Args:
+            intent_config: Provider config for intent analysis
+            completion_config: Provider config for code completion
+            anonymizer_config: Provider config for data anonymization
+
+        Returns:
+            True if initialization successful
+
+        Example:
+            manager.initialize_function_providers(
+                intent_config=FunctionProviderConfig(
+                    provider_type="openai",
+                    model_name="gpt-3.5-turbo",
+                    api_key="sk-..."
+                ),
+                completion_config=FunctionProviderConfig(
+                    provider_type="ollama",
+                    model_name="codellama:13b"
+                ),
+                anonymizer_config=FunctionProviderConfig(
+                    provider_type="deepseek",
+                    model_name="deepseek-chat",
+                    api_key="..."
+                )
+            )
+        """
+        try:
+            # Initialize intent provider
+            if intent_config:
+                kwargs = {"model_name": intent_config.model_name}
+                if intent_config.provider_type in ["openai", "anthropic", "deepseek"]:
+                    kwargs["api_key"] = intent_config.api_key
+                elif intent_config.provider_type in ["ollama", "transformers"]:
+                    kwargs["model_path"] = self.model_path
+
+                self.intent_provider = LLMProviderFactory.create(
+                    intent_config.provider_type, **kwargs
+                )
+                self.intent_provider.initialize()
+                logger.info(f"Intent provider initialized: {intent_config.provider_type}/{intent_config.model_name}")
+
+            # Initialize completion provider
+            if completion_config:
+                kwargs = {"model_name": completion_config.model_name}
+                if completion_config.provider_type in ["openai", "anthropic", "deepseek"]:
+                    kwargs["api_key"] = completion_config.api_key
+                elif completion_config.provider_type in ["ollama", "transformers"]:
+                    kwargs["model_path"] = self.model_path
+
+                self.completion_provider = LLMProviderFactory.create(
+                    completion_config.provider_type, **kwargs
+                )
+                self.completion_provider.initialize()
+                logger.info(f"Completion provider initialized: {completion_config.provider_type}/{completion_config.model_name}")
+
+            # Initialize anonymizer provider
+            if anonymizer_config:
+                kwargs = {"model_name": anonymizer_config.model_name}
+                if anonymizer_config.provider_type in ["openai", "anthropic", "deepseek"]:
+                    kwargs["api_key"] = anonymizer_config.api_key
+                elif anonymizer_config.provider_type in ["ollama", "transformers"]:
+                    kwargs["model_path"] = self.model_path
+
+                self.anonymizer_provider = LLMProviderFactory.create(
+                    anonymizer_config.provider_type, **kwargs
+                )
+                self.anonymizer_provider.initialize()
+                logger.info(f"Anonymizer provider initialized: {anonymizer_config.provider_type}/{anonymizer_config.model_name}")
+
+            # Initialize embeddings
+            embedding_success = self.embedding_model.initialize()
+
+            self.initialized = True
+            logger.info("LLM Manager initialized with per-function providers (dual mode)")
+
+            return True
+        except Exception as e:
+            logger.error(f"Failed to initialize function providers: {e}")
+            return False
+
+    def switch_provider(self, provider_type: str, model_name: str, api_key: Optional[str] = None) -> bool:
+        """
+        Switch to a different LLM provider
+
+        Args:
+            provider_type: Type of provider to switch to
+            model_name: Name of the model to use
+            api_key: API key for cloud providers
+
+        Returns:
+            True if switch successful
+        """
+        try:
+            # Cleanup current provider
+            if self.provider:
+                self.provider.cleanup()
+
+            # Create new provider
+            kwargs = {"model_name": model_name}
+            if provider_type in ["openai", "anthropic"]:
+                kwargs["api_key"] = api_key
+            elif provider_type in ["ollama", "transformers"]:
+                kwargs["model_path"] = self.model_path
+
+            self.provider = LLMProviderFactory.create(provider_type, **kwargs)
+
+            # Initialize new provider
+            success = self.provider.initialize()
+
+            if success:
+                logger.info(f"Switched to {provider_type} provider with model {model_name}")
+
+            return success
+        except Exception as e:
+            logger.error(f"Failed to switch provider: {e}")
+            return False
+
+    def list_providers(self) -> List[str]:
+        """List available LLM providers"""
+        return LLMProviderFactory.list_providers()
 
     def analyze_intent(self, query: str) -> Dict[str, Any]:
         """
@@ -163,7 +313,10 @@ Respond with JSON in this format:
 }}"""
 
         try:
-            response = self.provider.generate(prompt, max_tokens=200, temperature=0.3)
+            # Use intent-specific provider if available, otherwise use default
+            provider = self.intent_provider if self.intent_provider else self.provider
+
+            response = provider.generate(prompt, max_tokens=200, temperature=0.3)
 
             # Parse JSON response
             result = json.loads(response)
@@ -276,7 +429,7 @@ Respond with JSON in this format:
 
     def explain_query(self, query: str, context: Optional[str] = None) -> str:
         """
-        Generate natural language explanation of query
+        Generate natural language explanation of query (uses completion provider)
 
         Args:
             query: SQL query to explain
@@ -297,7 +450,10 @@ Query: {query}
 Provide a clear, concise explanation of what this query does."""
 
         try:
-            explanation = self.provider.generate(prompt, max_tokens=300, temperature=0.5)
+            # Use completion provider if available, otherwise use default
+            provider = self.completion_provider if self.completion_provider else self.provider
+
+            explanation = provider.generate(prompt, max_tokens=300, temperature=0.5)
             return explanation.strip()
         except Exception as e:
             logger.error(f"Query explanation failed: {e}")
@@ -305,7 +461,7 @@ Provide a clear, concise explanation of what this query does."""
 
     def suggest_optimization(self, query: str, execution_plan: Optional[str] = None) -> List[str]:
         """
-        Suggest query optimizations
+        Suggest query optimizations (uses completion provider)
 
         Args:
             query: SQL query to optimize
@@ -326,7 +482,10 @@ Query: {query}
 Provide 3-5 specific optimization suggestions. Format as a JSON array of strings."""
 
         try:
-            response = self.provider.generate(prompt, max_tokens=500, temperature=0.4)
+            # Use completion provider if available, otherwise use default
+            provider = self.completion_provider if self.completion_provider else self.provider
+
+            response = provider.generate(prompt, max_tokens=500, temperature=0.4)
 
             # Try to parse as JSON
             try:

@@ -1,0 +1,309 @@
+# E-Commerce Platform - AI-Shell Command Examples
+# Copy-paste these commands into AI-Shell for interactive use
+
+# ============================================
+# Product Management
+# ============================================
+
+# Find top selling products with ratings
+"Show me the top 10 products by revenue with their average ratings from MongoDB"
+
+# Check low stock items
+"Find products with stock below their reorder point"
+
+# Product performance by category
+"Which product categories have the highest profit margins?"
+
+# Identify underperforming products
+"Show products with high inventory value but low sales in the last 30 days"
+
+# ============================================
+# Customer Analytics
+# ============================================
+
+# VIP customers
+"List VIP customers with lifetime value over $10,000"
+
+# Customer segmentation
+"Segment customers by purchase frequency: active, at-risk, churned"
+
+# Abandoned carts
+"Find customers with abandoned carts worth more than $500"
+
+# Customer lifetime value trends
+"Show monthly customer lifetime value trends for the past year"
+
+# New vs returning customers
+"Compare revenue from new vs returning customers this month"
+
+# ============================================
+# Order Management
+# ============================================
+
+# Recent orders by status
+"Show orders from the last 7 days grouped by status"
+
+# High value orders
+"Find orders over $1000 that are still pending"
+
+# Shipping delays
+"Which orders were shipped more than 5 days after creation?"
+
+# Order fulfillment rate
+"What's our order fulfillment rate for the last 30 days?"
+
+# Payment failures
+"Show failed payment attempts and their reasons from error logs"
+
+# ============================================
+# Inventory Management
+# ============================================
+
+# Stock alerts
+"Alert me about products that need restocking based on sales velocity"
+
+# Inventory turnover
+"Calculate inventory turnover ratio for each product category"
+
+# Dead stock
+"Find products with no sales in the last 90 days and high stock"
+
+# Stock value by category
+"What's the total inventory value by category?"
+
+# Seasonal inventory
+"Which products show seasonal sales patterns?"
+
+# ============================================
+# Performance Monitoring
+# ============================================
+
+# Slow queries
+"Find queries that took longer than 1 second in the last hour"
+
+# Missing indexes
+"Analyze query patterns and suggest missing indexes"
+
+# Database size
+"Show database size and growth trend"
+
+# Connection pool usage
+"What's the current connection pool utilization?"
+
+# Table bloat
+"Identify tables with significant bloat that need vacuuming"
+
+# ============================================
+# Cache Management
+# ============================================
+
+# Cache hit rate
+"What's the current Redis cache hit rate?"
+
+# Popular cached items
+"Show the most frequently accessed items in the cache"
+
+# Cache memory usage
+"How much memory is Redis using and what's the eviction rate?"
+
+# Warm cache
+"Pre-load the top 100 best-selling products into cache"
+
+# ============================================
+# Reviews & Sentiment
+# ============================================
+
+# Low rated products
+"Show products with average rating below 3 stars"
+
+# Sentiment analysis
+"Which products have the most negative sentiment in reviews?"
+
+# Review trends
+"Show review volume and sentiment trends by month"
+
+# Unverified reviews
+"Find reviews that aren't from verified purchases"
+
+# Helpful reviews
+"Show most helpful reviews for top products"
+
+# ============================================
+# Search & Analytics
+# ============================================
+
+# Popular searches
+"What are the top 10 search terms with no results?"
+
+# Search to purchase rate
+"Calculate conversion rate from search to purchase"
+
+# Product view patterns
+"Show products with high views but low conversion"
+
+# User journey
+"Track typical user journey from search to purchase"
+
+# ============================================
+# Business Intelligence
+# ============================================
+
+# Revenue trends
+"Show daily revenue for the last 30 days"
+
+# Category performance
+"Compare category performance: revenue, orders, average order value"
+
+# Profit analysis
+"Calculate profit margins by product and category"
+
+# Customer acquisition cost
+"What's our average customer acquisition cost?"
+
+# Cohort analysis
+"Perform cohort analysis for customers acquired in Q1 2024"
+
+# ============================================
+# Operations & Maintenance
+# ============================================
+
+# Health check
+"Run health check on all databases"
+
+# Backup status
+"When was the last successful backup and how large was it?"
+
+# Replication lag
+"Check replication lag for read replicas"
+
+# Long running transactions
+"Find transactions running longer than 5 minutes"
+
+# Lock monitoring
+"Show current locks and blocking queries"
+
+# ============================================
+# Cost Optimization
+# ============================================
+
+# Storage costs
+"Calculate storage costs by database and table"
+
+# Query cost analysis
+"Which queries consume the most resources?"
+
+# Optimization opportunities
+"Suggest optimizations to reduce database costs"
+
+# Unused indexes
+"Find indexes that are never used"
+
+# Partition suggestions
+"Suggest tables that should be partitioned"
+
+# ============================================
+# Security & Compliance
+# ============================================
+
+# Failed login attempts
+"Show failed login attempts in the last 24 hours"
+
+# Suspicious activity
+"Detect suspicious ordering patterns"
+
+# PII access audit
+"Show who accessed customer PII data"
+
+# Data retention
+"Find orders older than 7 years for GDPR compliance"
+
+# ============================================
+# Advanced Federation Queries
+# ============================================
+
+# Cross-database insights
+"Join PostgreSQL orders with MongoDB reviews and Redis cache data"
+
+# Real-time dashboard
+"Create real-time dashboard with orders, inventory, and reviews"
+
+# Complete customer view
+"Show complete customer profile: orders, reviews, views, cart"
+
+# Product 360 view
+"Show complete product view: stock, orders, reviews, cache hits"
+
+# ============================================
+# Automation Examples
+# ============================================
+
+# Scheduled backups
+"Schedule daily backups at 2 AM with 7-day retention"
+
+# Auto-scaling alerts
+"Alert when connection pool exceeds 80% capacity"
+
+# Automatic index creation
+"Automatically create indexes for slow queries"
+
+# Cache warming schedule
+"Schedule cache warming every day at 6 AM"
+
+# Report generation
+"Generate weekly sales report and email to team"
+
+# ============================================
+# Black Friday Preparation
+# ============================================
+
+# Load testing
+"Simulate Black Friday traffic at 10x normal load"
+
+# Capacity planning
+"Estimate required resources for 10x traffic increase"
+
+# Performance baseline
+"Establish performance baseline for all critical queries"
+
+# Scaling recommendations
+"Suggest scaling strategy for Black Friday"
+
+# Bottleneck identification
+"Identify potential bottlenecks under high load"
+
+# ============================================
+# Migration Scenarios
+# ============================================
+
+# Schema comparison
+"Compare production and staging schemas"
+
+# Data validation
+"Validate data integrity across all tables"
+
+# Migration readiness
+"Check if database is ready for migration"
+
+# Zero-downtime migration
+"Plan zero-downtime migration strategy"
+
+# ============================================
+# Tips for Best Results
+# ============================================
+
+# 1. Be specific about what you want
+# 2. Mention timeframes (last 7 days, this month, etc.)
+# 3. Specify thresholds (> $500, < 3 stars, etc.)
+# 4. Ask for actionable insights, not just data
+# 5. Request explanations with "explain" or "why"
+# 6. Chain related queries for deeper analysis
+
+# ============================================
+# Getting Help
+# ============================================
+
+"What can you help me with for this e-commerce database?"
+"Show me example queries for customer analytics"
+"Explain the database schema"
+"What optimizations are available?"
+"How do I set up automated backups?"

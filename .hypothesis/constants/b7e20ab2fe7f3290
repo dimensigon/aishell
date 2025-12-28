@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/enterprise/tenancy/__init__.py
+# hypothesis_version: 6.140.3
+
+['ResourceQuota', 'ResourceQuotaManager', 'Tenant', 'TenantContext', 'TenantManager', 'TenantMiddleware', 'TenantSchema', 'TenantStatus']

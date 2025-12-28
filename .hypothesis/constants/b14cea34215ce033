@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/mcp_clients/postgresql_client.py
+# hypothesis_version: 6.140.3
+
+['ALTER', 'CREATE', 'DDL', 'DELETE', 'DROP', 'INSERT', 'NOT_CONFIGURED', 'NOT_CONNECTED', 'No active connection', 'OTHER', 'SELECT', 'SELECT 1', 'UPDATE', 'YES', 'autocommit', 'column_types', 'columns', 'database', 'default', 'host', 'length', 'metadata', 'name', 'nullable', 'password', 'port', 'public', 'query_type', 'rowcount', 'rows', 'schema', 'table_name', 'type', 'user']

@@ -1,0 +1,34 @@
+{
+  "name": "sample-plugin",
+  "version": "1.0.0",
+  "author": "AI-Shell Contributors",
+  "description": "Sample plugin demonstrating AI-Shell plugin development",
+  "homepage": "https://github.com/yourusername/ai-shell-sample-plugin",
+  "license": "MIT",
+  "tags": ["example", "sample", "tutorial"],
+  "dependencies": [],
+  "entry_point": "sample_plugin:SamplePlugin",
+  "config_schema": {
+    "type": "object",
+    "properties": {
+      "greeting": {
+        "type": "string",
+        "description": "Custom greeting message",
+        "default": "Hello from Sample Plugin!"
+      },
+      "max_items": {
+        "type": "integer",
+        "description": "Maximum items to process",
+        "minimum": 1,
+        "maximum": 1000,
+        "default": 10
+      },
+      "enable_logging": {
+        "type": "boolean",
+        "description": "Enable detailed logging",
+        "default": true
+      }
+    },
+    "required": []
+  }
+}

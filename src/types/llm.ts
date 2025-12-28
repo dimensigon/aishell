@@ -25,15 +25,31 @@ export interface LLMResponse {
   finish_reason?: string;
 }
 
+export type LLMProvider = 'ollama' | 'llamacpp' | 'openai' | 'anthropic' | 'deepseek';
+
 export interface LLMConfig {
-  provider: 'ollama' | 'llamacpp' | 'gpt4all' | 'localai';
+  provider: LLMProvider;
   baseUrl: string;
   model: string;
+  apiKey?: string;  // For public API providers
   temperature?: number;
   maxTokens?: number;
   topP?: number;
   stream?: boolean;
   timeout?: number;
+}
+
+export interface FunctionProviderConfig {
+  provider: LLMProvider;
+  model: string;
+  apiKey?: string;
+  baseUrl?: string;
+}
+
+export interface DualModeConfig {
+  intent?: FunctionProviderConfig;
+  completion?: FunctionProviderConfig;
+  anonymizer?: FunctionProviderConfig;
 }
 
 export interface StreamCallback {

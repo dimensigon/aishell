@@ -1,0 +1,22 @@
+[
+  [
+    "dev@test.com",
+    {
+      "email": "dev@test.com",
+      "groups": [
+        "developers"
+      ],
+      "enabled": true
+    }
+  ],
+  [
+    "ops@test.com",
+    {
+      "email": "ops@test.com",
+      "groups": [
+        "operations"
+      ],
+      "enabled": true
+    }
+  ]
+]

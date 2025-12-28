@@ -11,7 +11,13 @@ from typing import Dict, Any, List
 from src.llm.providers import (
     LocalLLMProvider,
     OllamaProvider,
-    LocalTransformersProvider
+    LocalTransformersProvider,
+    OpenAIProvider,
+    AnthropicProvider,
+    MockProvider,
+    LLMProviderFactory,
+    LLMConfig,
+    LLMResponse
 )
 
 
@@ -31,6 +37,8 @@ class TestLocalLLMProviderBase:
             def initialize(self): return True
             def generate(self, prompt, max_tokens=500, temperature=0.7): return ""
             def chat(self, messages, max_tokens=500): return ""
+            async def agenerate(self, prompt, max_tokens=500, temperature=0.7): return ""
+            async def stream_generate(self, prompt, **kwargs): yield ""
 
         provider = ConcreteProvider("test-model", "/data/models")
 
@@ -47,6 +55,8 @@ class TestLocalLLMProviderBase:
                 return True
             def generate(self, prompt, max_tokens=500, temperature=0.7): return ""
             def chat(self, messages, max_tokens=500): return ""
+            async def agenerate(self, prompt, max_tokens=500, temperature=0.7): return ""
+            async def stream_generate(self, prompt, **kwargs): yield ""
 
         provider = ConcreteProvider("test", "/path")
         provider.initialize()

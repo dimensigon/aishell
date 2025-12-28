@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/security/rate_limiter.py
+# hypothesis_version: 6.140.3
+
+[100, 'blocked_calls', 'burst_limit', 'current_burst_calls', 'current_window_calls', 'last_call_time', 'total_calls', 'window_limit']

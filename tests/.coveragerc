@@ -1,0 +1,21 @@
+# Coverage Configuration for AI-Shell Test Suite
+
+[run]
+source = ../src
+omit =
+    */tests/*
+    */node_modules/*
+    */__tests__/*
+    */dist/*
+    */.venv/*
+
+[report]
+precision = 2
+show_missing = True
+skip_covered = False
+
+[html]
+directory = coverage/html
+
+[xml]
+output = coverage/coverage.xml

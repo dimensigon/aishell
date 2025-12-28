@@ -1,0 +1,27 @@
+[
+  [
+    "033aa62d-af91-4389-b0b3-f99767d128fc",
+    {
+      "message": {
+        "id": "033aa62d-af91-4389-b0b3-f99767d128fc",
+        "to": [
+          "test@test.com"
+        ],
+        "subject": "Test",
+        "html": "<html><body>Test</body></html>",
+        "text": "Test",
+        "templateId": "custom",
+        "severity": "info",
+        "category": "custom",
+        "priority": "normal",
+        "metadata": {
+          "subject": "Test",
+          "body": "Test"
+        },
+        "createdAt": "2025-10-29T14:35:20.529Z"
+      },
+      "attempts": 0,
+      "status": "pending"
+    }
+  ]
+]

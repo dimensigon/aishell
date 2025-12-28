@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/llm/providers.py
+# hypothesis_version: 6.140.3
+
+[0.7, 500, '\nassistant:', '/data0/models', 'cache_dir', 'content', 'generated_text', 'llama2', 'message', 'models', 'num_predict', 'response', 'temperature', 'text-generation']

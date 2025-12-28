@@ -1,6 +1,6 @@
 # AI-Shell Release Notes
 
-## Version 2.0.0 (October 2025) - Major Release
+## Version 1.0.0 (October 2025) - GA Release
 
 **Status:** Production Ready
 **Python Support:** 3.9 - 3.14
@@ -8,7 +8,7 @@
 
 ### Overview
 
-Version 2.0.0 represents a major milestone in AI-Shell's evolution, introducing autonomous agent workflows, comprehensive health monitoring, and production-grade safety controls. This release includes 12 major implementation phases completed over 6 months of development.
+Version 1.0.0 is the GA release representing a major milestone in AI-Shell's evolution, introducing autonomous agent workflows, comprehensive health monitoring, and production-grade safety controls. This release includes 12 major implementation phases completed over 6 months of development.
 
 ### Breaking Changes
 

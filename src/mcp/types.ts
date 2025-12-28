@@ -127,6 +127,16 @@ export interface MCPTool {
 }
 
 /**
+ * Resource Type Enumeration
+ */
+export enum ResourceType {
+  TEXT = 'text',
+  BINARY = 'binary',
+  JSON = 'json',
+  XML = 'xml',
+}
+
+/**
  * MCP Resource Definition
  */
 export interface MCPResource {
@@ -134,6 +144,18 @@ export interface MCPResource {
   name: string;
   description?: string;
   mimeType?: string;
+  type?: ResourceType;
+  content?: any;
+  dependencies?: string[];
+}
+
+/**
+ * Context Format Enum
+ */
+export enum ContextFormat {
+  JSON = 'json',
+  BINARY = 'binary',
+  MSGPACK = 'msgpack',
 }
 
 /**
@@ -141,10 +163,12 @@ export interface MCPResource {
  */
 export interface MCPContext {
   sessionId: string;
-  workingDirectory: string;
-  environment: Record<string, string>;
+  workingDirectory?: string;
+  environment?: Record<string, string>;
   metadata: Record<string, unknown>;
-  timestamp: number;
+  timestamp?: number;
+  userId?: string;
+  [key: string]: unknown;
 }
 
 /**

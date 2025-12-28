@@ -1,0 +1,363 @@
+# AI-Shell Basic Configuration Example
+# Copy to ~/.ai-shell/config.yaml and customize
+
+# System Configuration
+system:
+  # Enable Matrix-style startup animation
+  startup_animation: true
+  matrix_style: enhanced
+
+  # UI theme
+  theme: cyberpunk  # Options: cyberpunk, terminal, minimal, custom
+
+  # Logging
+  log_level: INFO
+  log_file: ~/.ai-shell/logs/ai-shell.log
+
+# LLM Configuration
+llm:
+  # Primary provider (ollama, openai, anthropic, deepseek, local-ai)
+  provider: ollama
+
+  # Ollama (Local LLM)
+  ollama:
+    host: http://localhost:11434
+
+    # Model assignments
+    models:
+      intent: llama2:7b        # Fast intent analysis
+      completion: codellama:13b # Code completion
+      anonymizer: mistral:7b   # Data anonymization
+      general: llama2:13b      # General queries
+
+    # Model abbreviations for quick access
+    abbreviations:
+      l2: llama2:7b
+      l13: llama2:13b
+      cl: codellama:13b
+      m7: mistral:7b
+
+    # Performance settings
+    num_predict: 1024
+    temperature: 0.7
+    top_k: 40
+    top_p: 0.9
+    timeout: 30
+
+    # GPU settings
+    gpu: true
+    gpu_layers: 35
+
+    # Keep model in memory
+    keep_alive: 5m
+
+  # Fallback provider (optional)
+  fallback:
+    - provider: openai
+      condition: ollama_unavailable
+
+# MCP Client Configuration
+mcp:
+  # Oracle Database
+  oracle:
+    # Thin mode - no Oracle client required
+    thin_mode: true
+
+    # Connection pool
+    connection_pool_size: 5
+    min_pool_size: 2
+    max_pool_size: 10
+    pool_increment: 1
+
+    # Timeouts (seconds)
+    timeout: 30
+    connect_timeout: 10
+
+    # Caching
+    statement_cache_size: 20
+
+    # Encoding
+    encoding: UTF-8
+
+    # Pre-load system objects for auto-completion
+    preload_objects: true
+    preload_schemas:
+      - SYS
+      - SYSTEM
+
+  # PostgreSQL
+  postgresql:
+    # Connection pool
+    connection_pool_size: 5
+    min_pool_size: 2
+    max_pool_size: 10
+
+    # Timeouts
+    timeout: 30
+    connect_timeout: 10
+
+    # SSL settings
+    sslmode: prefer  # disable, allow, prefer, require
+    client_encoding: UTF8
+
+    # Pre-load schemas
+    preload_objects: true
+    preload_schemas:
+      - public
+      - pg_catalog
+
+# UI Settings
+ui:
+  # Framework (textual recommended)
+  framework: textual
+
+  # Panel size weights (when not auto-sizing)
+  panel_weights:
+    output: 0.5    # 50% for output
+    module: 0.3    # 30% for module info
+    prompt: 0.2    # 20% for prompt
+
+  # Panel priority modes
+  typing_priority: prompt   # Focus prompt when typing
+  idle_priority: balanced   # Balanced view when idle
+
+  # Auto-sizing
+  auto_size_panels: true
+
+  # Output formatting
+  output:
+    max_table_width: 120
+    word_wrap: true
+    syntax_highlighting: true
+    default_theme: monokai
+
+# Security Configuration
+security:
+  # Vault backend (keyring, file, custom)
+  vault_backend: keyring
+
+  # Automatic redaction
+  auto_redaction: true
+  redaction_patterns:
+    - passwords
+    - api_keys
+    - tokens
+    - ip_addresses
+    - email_addresses
+
+  # Pseudo-anonymization for external LLM calls
+  pseudo_anonymize: true
+  anonymization_storage: encrypted
+
+  # Require confirmation for dangerous operations
+  require_confirmation_for:
+    - rm
+    - DROP
+    - DELETE
+    - TRUNCATE
+    - rmdir
+
+  # Risk level confirmation methods
+  risk_levels:
+    high: confirm_text      # Type exact text
+    medium: confirm_key     # Press specific key
+    low: auto_execute       # No confirmation
+
+# Performance Settings
+performance:
+  # Async workers for background tasks
+  async_workers: 4
+
+  # Cache sizes
+  cache_size: 1000
+  command_history_size: 10000
+
+  # Vector database
+  vector_db_dimension: 384
+  vector_db_cache: true
+
+  # Lazy loading
+  lazy_loading: true
+  preload_modules:
+    - os_base
+    - ai_helper
+    - vault
+
+# Module Configuration
+modules:
+  # OS Base Module
+  os_base:
+    enabled: true
+
+    # Default editor
+    editor: vim
+
+    # History settings
+    history_file: ~/.ai-shell/history
+    history_max_size: 10000
+
+    # Session settings
+    save_sessions: true
+    session_timeout: 3600  # 1 hour
+
+  # AI Helper Module
+  ai_helper:
+    enabled: true
+
+    # Default model for queries
+    default_model: general
+
+    # Agentic features
+    enable_agents: true
+    max_agent_steps: 10
+
+    # Tool access
+    tools_enabled:
+      - file_viewer
+      - file_creation
+      - file_modification
+      - command_execution
+      - database_query
+
+  # Vault Module
+  vault:
+    enabled: true
+
+    # Vault file (if using file backend)
+    vault_file: ~/.ai-shell/vault.enc
+
+    # Auto-complete secrets
+    autocomplete_secrets: true
+
+    # Secret types
+    secret_types:
+      - standard
+      - database
+      - api_key
+      - custom
+
+  # Database Module
+  database:
+    enabled: true
+
+    # Risk analyzer
+    risk_analyzer:
+      enabled: true
+      analyze_on_execute: true
+
+    # Query optimizer
+    optimizer_enabled: true
+
+    # SQL history
+    sql_history_file: ~/.ai-shell/sql_history
+    sql_history_size: 5000
+
+    # Auto-formatting
+    auto_format_sql: true
+    format_style: standard  # standard, compact, expanded
+
+  # Web Interface Module (optional)
+  web_interface:
+    enabled: false
+    port: 5000
+    host: 127.0.0.1
+
+    # SSL/TLS
+    ssl_enabled: false
+    ssl_cert: ~/.ai-shell/ssl/cert.pem
+    ssl_key: ~/.ai-shell/ssl/key.pem
+
+# Database Connections
+# Note: Credentials should be stored in vault
+connections:
+  # Example Oracle connection
+  prod_oracle:
+    type: oracle
+    credentials: $vault.prod_oracle
+    options:
+      thick_mode: false
+      events: true
+
+  # Example PostgreSQL connection
+  prod_postgres:
+    type: postgresql
+    credentials: $vault.prod_postgres
+    options:
+      application_name: ai-shell
+      connect_timeout: 10
+
+# Keyboard Shortcuts
+shortcuts:
+  # AI analysis
+  ai_analyze: Ctrl+A
+
+  # History navigation
+  history_up: Up
+  history_down: Down
+
+  # View switching
+  switch_view: Ctrl+Arrow
+
+  # Clipboard
+  copy_selection: Ctrl+C
+  clipboard_history: Ctrl+H
+
+  # Command shortcuts
+  cancel_command: Ctrl+C
+  clear_screen: Ctrl+L
+  exit: Ctrl+D
+
+# Auto-completion Settings
+autocomplete:
+  enabled: true
+
+  # Fuzzy matching
+  fuzzy_match: true
+  min_similarity: 0.6
+
+  # Context-aware completion
+  context_aware: true
+
+  # Completion sources
+  sources:
+    - commands
+    - files
+    - database_objects
+    - vault_secrets
+    - history
+
+  # Vector-based completion
+  vector_completion: true
+  vector_top_k: 10
+
+# Feature Flags
+features:
+  # Experimental features
+  experimental:
+    neural_completion: false
+    advanced_agents: false
+
+  # Beta features
+  beta:
+    web_interface: false
+    multi_user: false
+
+# Notifications
+notifications:
+  enabled: true
+
+  # Notification types
+  types:
+    command_complete: false  # Notify on command completion
+    error: true             # Notify on errors
+    ai_response: false      # Notify on AI response
+    long_running: true      # Notify for long commands
+
+  # Long-running threshold (seconds)
+  long_running_threshold: 30
+
+# Telemetry (anonymous usage statistics)
+telemetry:
+  enabled: false
+  anonymous: true
+  endpoint: https://telemetry.ai-shell.dev

@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/security/redaction.py
+# hypothesis_version: 6.140.3
+
+['*', '://[^@\\s]+:[^@\\s]+@', '[REDACTED]', '[REDACTED_EMAIL]', 'api_key', 'apikey', 'key', 'key=[REDACTED]', 'password', 'secret', 'token', 'token=[REDACTED]']

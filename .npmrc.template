@@ -1,0 +1,19 @@
+# NPM Publishing Configuration Template
+# Copy this file to .npmrc and replace placeholders with actual values
+
+# NPM Registry Authentication
+# Get your token from: https://www.npmjs.com/settings/YOUR_USERNAME/tokens
+//registry.npmjs.org/:_authToken=${NPM_TOKEN}
+
+# Publishing Settings
+registry=https://registry.npmjs.org/
+access=public
+
+# Miscellaneous Settings
+save-exact=false
+package-lock=true
+fund=false
+audit=true
+
+# Security Settings
+ignore-scripts=false

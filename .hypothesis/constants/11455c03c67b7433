@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/agents/coordinator.py
+# hypothesis_version: 6.140.3
+
+[100, 1500, '/backups', 'Potential data loss', 'Schema modification', 'Service disruption', 'actions_count', 'add column', 'agent', 'agent_type', 'agents', 'agents_used', 'alter', 'backup', 'backup_destination', 'backup_type', 'completed', 'critical', 'delegated', 'delegation', 'delegations', 'dependencies', 'destination', 'failed', 'full', 'high', 'in_progress', 'index', 'input_data', 'low', 'medium', 'migration', 'mitigations', 'moderate', 'modify', 'optimize', 'optimizer', 'performance', 'requires_approval', 'result', 'risk_level', 'risks', 'safe', 'schema', 'slow query', 'status', 'strict', 'subtasks', 'task', 'task_description', 'total_agents', 'unknown', 'workflow_status']

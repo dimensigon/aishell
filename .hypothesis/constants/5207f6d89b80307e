@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/ui/widgets/command_preview.py
+# hypothesis_version: 6.140.3
+
+[100, 200, 1000, '#command-text', '#impact-section', '#risk-indicator', '#warnings-section', 'Unknown risk level', 'command-text', 'critical', 'high', 'impact-section', 'issue-item', 'issues', 'low', 'medium', 'risk-indicator', 'risk-section', 'risk_level', 'visible', 'warning-item', 'warnings', 'warnings-section']

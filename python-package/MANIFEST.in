@@ -1,0 +1,34 @@
+# Include documentation
+include README.md
+include LICENSE
+include CHANGELOG.md
+
+# Include package metadata
+include pyproject.toml
+include setup.py
+
+# Include configuration files
+recursive-include ai_shell_py *.yaml
+recursive-include ai_shell_py *.json
+recursive-include ai_shell_py *.sql
+recursive-include ai_shell_py py.typed
+
+# Exclude development and test files
+exclude .gitignore
+exclude .editorconfig
+exclude tox.ini
+exclude .coverage
+exclude .pytest_cache
+
+# Exclude test directories
+recursive-exclude tests *
+recursive-exclude docs *
+recursive-exclude scripts *
+recursive-exclude examples *
+
+# Exclude compiled Python files
+global-exclude __pycache__
+global-exclude *.py[cod]
+global-exclude *$py.class
+global-exclude *.so
+global-exclude .DS_Store

@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/agents/state/manager.py
+# hypothesis_version: 6.140.3
+
+[' AND event_type = ?', ' LIMIT ?', 'checkpoint_data', 'checkpoint_id', 'checkpoint_name', 'created_at', 'current_state', 'event_data', 'event_type', 'log_id', 'sequence_number', 'state_data', 'task_id', 'timestamp', 'updated_at', 'workflow_type']

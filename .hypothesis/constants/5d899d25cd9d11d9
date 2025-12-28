@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/mcp_clients/oracle_client.py
+# hypothesis_version: 6.140.3
+
+['ALTER', 'CREATE', 'DDL', 'DELETE', 'DROP', 'INSERT', 'NOT_CONFIGURED', 'NOT_CONNECTED', 'No active connection', 'OTHER', 'SELECT', 'SELECT 1 FROM DUAL', 'UPDATE', 'Y', 'column_types', 'columns', 'database', 'default', 'length', 'metadata', 'name', 'nullable', 'query_type', 'rowcount', 'rows', 'table_name', 'type']

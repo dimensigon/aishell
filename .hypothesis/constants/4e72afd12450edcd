@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/coordination/state_sync.py
+# hypothesis_version: 6.140.3
+
+[0.01, 1.0, 'data', 'deleted', 'first_write_wins', 'instance_id', 'key', 'last_write_wins', 'merge', 'message', 'metadata', 'state', 'timestamp', 'type', 'update_id', 'value', 'version', 'version_based']

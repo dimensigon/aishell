@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/enterprise/rbac/permission_engine.py
+# hypothesis_version: 6.140.3
+
+['*', '*:*', ':', 'Permission', 'action', 'admin', 'create', 'database', 'delete', 'error', 'execute', 'granted', 'implied_actions', 'is_wildcard', 'matching_permission', 'permission', 'read', 'reason', 'required_permission', 'resource', 'scope', 'system', 'tenant', 'update', 'write']

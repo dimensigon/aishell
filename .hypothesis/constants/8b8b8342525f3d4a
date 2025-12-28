@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/agents/safety/controller.py
+# hypothesis_version: 6.140.3
+
+[100, '...', '=', 'CRITICAL', 'DELETE FROM', 'DROP', 'HIGH', 'TRUNCATE', 'approval', 'approval_requirement', 'approved', 'approver', 'conditions', 'critical', 'decision_timestamp', 'delete_backup', 'drop_database', 'drop_index', 'drop_schema', 'drop_table', 'execute_migration', 'high', 'issues', 'low', 'medium', 'migration_sql', 'mitigations', 'moderate', 'multi_party', 'none', 'optional', 'params', 'query', 'reason', 'request', 'required', 'requires_approval', 'restore_backup', 'risk_level', 'risks', 'safe', 'sql', 'sql_analysis', 'step', 'strict', 'timestamp', 'tool', 'tool_definition', 'truncate_table', 'unknown', 'user', 'validation', 'warnings', 'y', 'yes']

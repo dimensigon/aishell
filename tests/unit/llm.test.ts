@@ -146,9 +146,13 @@ describe('LLM Provider Interfaces', () => {
       const { anonymized, mapping } = pseudoAnonymize(text);
 
       expect(Object.keys(mapping)).toHaveLength(4);
-      expect(mapping).toHaveProperty(expect.stringContaining('EMAIL'));
-      expect(mapping).toHaveProperty(expect.stringContaining('IP'));
-      expect(mapping).toHaveProperty(expect.stringContaining('SERVER'));
+
+      // Check that mapping has keys containing the expected types
+      const mappingKeys = Object.keys(mapping);
+      expect(mappingKeys.some(key => key.includes('EMAIL'))).toBe(true);
+      expect(mappingKeys.some(key => key.includes('IP'))).toBe(true);
+      expect(mappingKeys.some(key => key.includes('SERVER'))).toBe(true);
+      expect(mappingKeys.some(key => key.includes('PASSWORD'))).toBe(true);
     });
 
     it('should preserve anonymization mapping for de-anonymization', () => {
@@ -348,22 +352,35 @@ function cosineSimilarity(a: Float32Array, b: Float32Array): number {
 }
 
 function pseudoAnonymize(text: string): { anonymized: string; mapping: Record<string, string> } {
-  const patterns = {
-    email: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
-    ip: /\b(?:\d{1,3}\.){3}\d{1,3}\b/g,
-    server: /(?:server|host):\s*([^\s,]+)/gi,
-  };
+  const patterns: Array<{ type: string; pattern: RegExp; extractGroup?: number }> = [
+    // Email addresses
+    { type: 'email', pattern: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g },
+    // IP addresses
+    { type: 'ip', pattern: /\b(?:\d{1,3}\.){3}\d{1,3}\b/g },
+    // Server/Host with colon prefix (e.g., "Server: db.example.com")
+    { type: 'server', pattern: /(?:server|host):\s*([^\s,]+)/gi, extractGroup: 1 },
+    // Password with colon prefix (e.g., "Password: secret" or "password":"secret" in JSON)
+    { type: 'password', pattern: /(?:password|Password)(?::\s*|":\s*")([^\s,"\}]+)/g, extractGroup: 1 },
+    // Password with space prefix (e.g., "with password secret123")
+    { type: 'password', pattern: /(?:with password|password is)\s+([^\s,]+)/gi, extractGroup: 1 },
+  ];
 
   let anonymized = text;
   const mapping: Record<string, string> = {};
   let counter = 0;
 
-  for (const [type, pattern] of Object.entries(patterns)) {
-    const matches = text.matchAll(pattern);
+  for (const { type, pattern, extractGroup } of patterns) {
+    const matches = Array.from(text.matchAll(pattern));
     for (const match of matches) {
-      const token = `<${type.toUpperCase()}_${counter++}>`;
-      mapping[token] = match[0];
-      anonymized = anonymized.replace(match[0], token);
+      const valueToAnonymize = extractGroup !== undefined ? match[extractGroup] : match[0];
+
+      // Skip if already anonymized
+      if (!Object.values(mapping).includes(valueToAnonymize)) {
+        const token = `<${type.toUpperCase()}_${counter++}>`;
+        mapping[token] = valueToAnonymize;
+        // Use replaceAll to handle all occurrences
+        anonymized = anonymized.split(valueToAnonymize).join(token);
+      }
     }
   }
 

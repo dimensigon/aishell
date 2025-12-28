@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  # PostgreSQL - Multi-tenant database with schema isolation
+  postgres:
+    image: postgres:15-alpine
+    container_name: saas-postgres
+    environment:
+      POSTGRES_DB: saas_master
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: saas123
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./data/init-master.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./data/init-tenants.sql:/docker-entrypoint-initdb.d/02-tenants.sql
+    command:
+      - "postgres"
+      - "-c"
+      - "max_connections=300"
+      - "-c"
+      - "shared_buffers=512MB"
+      - "-c"
+      - "log_statement=all"
+      - "-c"
+      - "log_duration=on"
+      - "-c"
+      - "log_line_prefix=%t [%p] %u@%d: "
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d saas_master"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - saas
+
+  # MongoDB - Cross-tenant analytics and billing
+  mongodb:
+    image: mongo:7
+    container_name: saas-mongodb
+    environment:
+      MONGO_INITDB_DATABASE: saas_analytics
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./data/mongo-init.js:/docker-entrypoint-initdb.d/init.js
+    networks:
+      - saas
+
+  # Redis - Tenant-aware caching and rate limiting
+  redis:
+    image: redis:7-alpine
+    container_name: saas-redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    command:
+      - "redis-server"
+      - "--appendonly"
+      - "yes"
+      - "--maxmemory"
+      - "256mb"
+      - "--maxmemory-policy"
+      - "allkeys-lru"
+    networks:
+      - saas
+
+  # pgAdmin - Database management UI
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: saas-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@saas.local
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - saas
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  redis_data:
+  pgadmin_data:
+
+networks:
+  saas:
+    driver: bridge

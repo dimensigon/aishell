@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/ui/utils/memory_monitor.py
+# hypothesis_version: 6.140.3
+
+[0.0, 100, 150, 200, 300, 1024, 'active_widgets', 'baseline_mb', 'cache_sizes', 'cleanups_performed', 'current_mb', 'estimated_total_mb', 'event_queue_size', 'increase_mb', 'memory_usage', 'percent', 'rss_mb', 'snapshot_count', 'snapshots_taken', 'total_widgets', 'tracked_caches', 'vms_mb', 'warnings_triggered', 'widget_count', 'widgets_by_type', 'widgets_cleaned', 'widgets_tracked', 'within_target']

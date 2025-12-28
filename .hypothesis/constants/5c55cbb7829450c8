@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/database/module.py
+# hypothesis_version: 6.140.3
+
+[':memory:', 'SELECT', 'analysis', 'confirmation_message', 'conversion', 'conversion_failed', 'error', 'execution_time', 'results', 'risk_level', 'rows_affected', 'sql', 'status', 'success']

@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/enterprise/tenancy/tenant_manager.py
+# hypothesis_version: 6.140.3
+
+[100, ' AND status = ?', ' AND tier = ?', '.ai-shell', 'Tenant', 'active', 'active_tenants', 'advanced_queries', 'advanced_security', 'ai_assistance', 'api_access', 'archived', 'audit_logs', 'autocomplete', 'basic_queries', 'billing_email', 'compliance_reports', 'config', 'contact_email', 'created_at', 'custom', 'custom_domains', 'dedicated_support', 'domains', 'enterprise', 'features', 'free', 'free_tier_tenants', 'history', 'id', 'max_databases', 'max_users', 'metadata', 'name', 'owner_id', 'parent_tenant_id', 'pending', 'professional', 'rbac', 'sla_guarantee', 'slug', 'sso', 'starter', 'status', 'suspended', 'suspended_tenants', 'tenants.db', 'tier', 'total_tenants', 'trial', 'trial_ends_at', 'trial_tenants', 'updated_at', 'updated_at = ?', 'vector_search', 'webhooks']

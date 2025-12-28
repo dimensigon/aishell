@@ -1,0 +1,122 @@
+# AI-Shell Configuration File
+# This is the default configuration for AI-Shell
+
+system:
+  startup_animation: true
+  matrix_style: enhanced
+  log_level: INFO
+
+llm:
+  # DUAL FUNCTIONALITY MODE: Self-hosted (Ollama) + Public APIs (OpenAI, Claude, DeepSeek)
+  # Each function can use a different provider - mix and match as needed!
+
+  # Option 1: Use self-hosted models for all functions (default)
+  models:
+    intent: "llama2:7b"         # Model for intent classification
+    completion: "codellama:13b" # Model for code completion
+    anonymizer: "mistral:7b"    # Model for data anonymization
+
+  # Option 2: Per-function provider configuration (dual mode)
+  # Uncomment and configure to use different providers for each function
+  # function_providers:
+  #   intent:
+  #     provider: "openai"           # Options: ollama, openai, anthropic, deepseek, transformers
+  #     model: "gpt-3.5-turbo"       # Model name
+  #     api_key_env: "OPENAI_API_KEY"  # Environment variable for API key
+  #
+  #   completion:
+  #     provider: "ollama"           # Use local model for code completion
+  #     model: "codellama:13b"
+  #
+  #   anonymizer:
+  #     provider: "deepseek"         # Use DeepSeek for anonymization
+  #     model: "deepseek-chat"
+  #     api_key_env: "DEEPSEEK_API_KEY"
+
+  # Self-hosted settings
+  ollama_host: "localhost:11434"
+  model_path: "/data0/models"   # Local model storage path
+  timeout: 30                   # Seconds
+  max_retries: 3
+
+  # Public API provider examples:
+  # providers:
+  #   openai:
+  #     api_key_env: "OPENAI_API_KEY"
+  #     base_url: "https://api.openai.com/v1"  # Optional: custom endpoint
+  #     models:
+  #       - "gpt-3.5-turbo"
+  #       - "gpt-4"
+  #       - "gpt-4-turbo"
+  #
+  #   anthropic:
+  #     api_key_env: "ANTHROPIC_API_KEY"
+  #     base_url: "https://api.anthropic.com/v1"  # Optional: custom endpoint
+  #     models:
+  #       - "claude-3-5-sonnet-20241022"
+  #       - "claude-3-opus-20240229"
+  #       - "claude-3-haiku-20240307"
+  #
+  #   deepseek:
+  #     api_key_env: "DEEPSEEK_API_KEY"
+  #     base_url: "https://api.deepseek.com/v1"  # Optional: custom endpoint
+  #     models:
+  #       - "deepseek-chat"
+  #       - "deepseek-coder"
+
+mcp:
+  oracle:
+    thin_mode: true
+    connection_pool_size: 5
+    connection_timeout: 10
+    query_timeout: 30
+  postgresql:
+    connection_pool_size: 5
+    connection_timeout: 10
+    query_timeout: 30
+
+ui:
+  framework: "textual"
+  theme: "cyberpunk"
+  panel_priority:
+    typing: "prompt"
+    idle: "balanced"
+  colors:
+    output: "green"
+    module: "cyan"
+    prompt: "white"
+    error: "red"
+
+security:
+  vault_backend: "keyring"
+  auto_redaction: true
+  sensitive_commands_require_confirmation: true
+  password_complexity:
+    min_length: 12
+    require_special: true
+    require_numbers: true
+
+performance:
+  async_workers: 4
+  cache_size: 1000
+  vector_db_dimension: 384
+  max_query_cache_ttl: 300  # Seconds
+  connection_pool_timeout: 5
+
+modules:
+  os_base:
+    enabled: true
+    default_shell: "/bin/bash"
+  ai_helper:
+    enabled: true
+    default_provider: "ollama"
+  vault:
+    enabled: true
+    auto_lock_timeout: 900  # 15 minutes
+  database:
+    enabled: true
+    auto_commit: false
+  web_interface:
+    enabled: false
+    port: 5000
+    ssl: true

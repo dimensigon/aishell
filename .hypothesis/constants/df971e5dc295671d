@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/enterprise/audit/compliance_reporter.py
+# hypothesis_version: 6.140.3
+
+[10000, 'GDPR', 'HIPAA', 'SOC2', 'access', 'access_controls', 'action', 'audit_trail', 'change_management', 'complete', 'consent', 'consent_events', 'consent_management', 'data_access', 'data_deletion', 'delete', 'details', 'end', 'events', 'failed_attempts', 'failure', 'framework', 'gdpr', 'generated_at', 'hipaa', 'iso27001', 'monitored_actions', 'monitoring', 'pci_dss', 'period', 'phi', 'phi_access', 'read', 'result', 'soc2', 'start', 'total_changes', 'total_data_access', 'total_deletions', 'total_events', 'total_phi_access', 'update']

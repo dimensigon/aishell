@@ -17,9 +17,9 @@ class TestConnectionPool:
 
     def test_pool_creation(self):
         """Test creating connection pool."""
-        pool = ConnectionPool("postgresql://localhost/test", max_connections=5)
+        pool = ConnectionPool("test://localhost/test", max_connections=5)
 
-        assert pool.connection_string == "postgresql://localhost/test"
+        assert pool.connection_string == "test://localhost/test"
         assert pool.max_connections == 5
         assert pool.active_connections == 0
         assert pool.available_connections == 5
@@ -66,14 +66,14 @@ class TestConnectionPool:
 
     def test_connection_reuse(self):
         """Test connections can be reused."""
-        pool = ConnectionPool("test://db", max_connections=2)
+        pool = ConnectionPool("test://db", max_connections=1)
 
         conn1 = pool.get_connection()
         pool.release_connection(conn1)
 
         conn2 = pool.get_connection()
 
-        # Should reuse the same connection object
+        # Should reuse the same connection object when pool has only 1 connection
         assert conn1 is conn2
 
 

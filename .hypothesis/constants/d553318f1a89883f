@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/mcp_clients/cassandra_client.py
+# hypothesis_version: 6.140.3
+
+[9042, 'SimpleStrategy', 'cluster_name', 'clustering_key', 'columns', 'durable_writes', 'hosts', 'indexes', 'keyspaces', 'name', 'partition_key', 'partitioner', 'replication_factor', 'replication_strategy', 'tables', 'token_map', 'type']

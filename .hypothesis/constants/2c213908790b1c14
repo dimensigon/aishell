@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/enterprise/rbac/__init__.py
+# hypothesis_version: 6.140.3
+
+['Permission', 'PermissionEngine', 'PermissionScope', 'Policy', 'PolicyEffect', 'PolicyEvaluator', 'RBACMiddleware', 'Role', 'RoleManager', 'RoleType', 'require_permission', 'require_role']

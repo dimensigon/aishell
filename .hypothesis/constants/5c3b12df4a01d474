@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/enterprise/tenancy/resource_quota.py
+# hypothesis_version: 6.140.3
+
+[0.8, 1.2, 100.0, 100, 1000, ' AND quota_type = ?', ' AND timestamp <= ?', ' AND timestamp >= ?', '.ai-shell', 'ResourceQuota', 'allowed', 'api_requests_per_day', 'average_usage', 'current_usage', 'custom', 'daily', 'data_points', 'decreasing', 'hourly', 'increasing', 'last_reset', 'limit', 'limit_value', 'max_connections', 'max_databases', 'max_users', 'monthly', 'peak_usage', 'percentage_used', 'queries_per_day', 'queries_per_hour', 'queries_per_minute', 'quota_exceeded', 'quota_type', 'quotas.db', 'remaining', 'reset_period', 'soft_limit', 'soft_limit_exceeded', 'stable', 'storage_mb', 'tenant_id', 'total_usage', 'trend', 'unlimited', 'usage_amount', '{}']

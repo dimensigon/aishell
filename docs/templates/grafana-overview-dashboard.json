@@ -1,0 +1,354 @@
+{
+  "dashboard": {
+    "title": "AI-Shell Overview Dashboard",
+    "uid": "aishell-overview",
+    "tags": ["ai-shell", "overview", "monitoring"],
+    "timezone": "browser",
+    "schemaVersion": 27,
+    "version": 1,
+    "refresh": "30s",
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "templating": {
+      "list": [
+        {
+          "name": "instance",
+          "type": "query",
+          "datasource": "AI-Shell-Prometheus",
+          "query": "label_values(ai_shell_queries_total, instance)",
+          "refresh": 1,
+          "multi": false,
+          "includeAll": false,
+          "current": {
+            "text": "localhost",
+            "value": "localhost"
+          }
+        }
+      ]
+    },
+    "panels": [
+      {
+        "id": 1,
+        "type": "stat",
+        "title": "Total Requests",
+        "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "sum(ai_shell_queries_total{instance=~\"$instance\"})",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"]
+          },
+          "textMode": "auto",
+          "colorMode": "value",
+          "graphMode": "area"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "green" },
+                { "value": 1000, "color": "yellow" },
+                { "value": 10000, "color": "red" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "type": "stat",
+        "title": "Active Connections",
+        "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "ai_shell_active_connections{instance=~\"$instance\"}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"]
+          },
+          "textMode": "auto",
+          "colorMode": "value",
+          "graphMode": "area"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "green" },
+                { "value": 50, "color": "yellow" },
+                { "value": 100, "color": "red" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "type": "stat",
+        "title": "Avg Response Time",
+        "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "avg(rate(ai_shell_query_duration_seconds_sum{instance=~\"$instance\"}[5m]) / rate(ai_shell_query_duration_seconds_count{instance=~\"$instance\"}[5m])) * 1000",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"]
+          },
+          "textMode": "auto",
+          "colorMode": "value",
+          "graphMode": "area"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ms",
+            "decimals": 2,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "green" },
+                { "value": 500, "color": "yellow" },
+                { "value": 1000, "color": "red" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "type": "stat",
+        "title": "Cache Hit Rate",
+        "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "100 * sum(rate(ai_shell_cache_hits_total{instance=~\"$instance\"}[5m])) / (sum(rate(ai_shell_cache_hits_total{instance=~\"$instance\"}[5m])) + sum(rate(ai_shell_cache_misses_total{instance=~\"$instance\"}[5m])))",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"]
+          },
+          "textMode": "auto",
+          "colorMode": "value",
+          "graphMode": "area"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "decimals": 1,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "red" },
+                { "value": 50, "color": "yellow" },
+                { "value": 80, "color": "green" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "type": "timeseries",
+        "title": "Request Rate",
+        "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "sum(rate(ai_shell_queries_total{instance=~\"$instance\"}[5m])) by (type)",
+            "legendFormat": "{{type}}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "multi"
+          }
+        },
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "lineWidth": 2,
+              "fillOpacity": 10
+            },
+            "unit": "reqps"
+          }
+        }
+      },
+      {
+        "id": 6,
+        "type": "timeseries",
+        "title": "Error Rate",
+        "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "sum(rate(ai_shell_errors_total{instance=~\"$instance\"}[5m])) by (type)",
+            "legendFormat": "{{type}}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "multi"
+          }
+        },
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "lineWidth": 2,
+              "fillOpacity": 10
+            },
+            "unit": "errps",
+            "color": {
+              "mode": "palette-classic"
+            }
+          }
+        }
+      },
+      {
+        "id": 7,
+        "type": "gauge",
+        "title": "CPU Usage",
+        "gridPos": { "x": 0, "y": 12, "w": 6, "h": 6 },
+        "targets": [
+          {
+            "expr": "ai_shell_cpu_usage_percent{instance=~\"$instance\"}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"]
+          },
+          "showThresholdLabels": true,
+          "showThresholdMarkers": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "min": 0,
+            "max": 100,
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "green" },
+                { "value": 70, "color": "yellow" },
+                { "value": 90, "color": "red" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 8,
+        "type": "gauge",
+        "title": "Memory Usage",
+        "gridPos": { "x": 6, "y": 12, "w": 6, "h": 6 },
+        "targets": [
+          {
+            "expr": "100 * ai_shell_memory_usage_bytes{instance=~\"$instance\"} / ai_shell_memory_total_bytes{instance=~\"$instance\"}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"]
+          },
+          "showThresholdLabels": true,
+          "showThresholdMarkers": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "min": 0,
+            "max": 100,
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "green" },
+                { "value": 70, "color": "yellow" },
+                { "value": 90, "color": "red" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 9,
+        "type": "timeseries",
+        "title": "Response Time (p95)",
+        "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(ai_shell_query_duration_seconds_bucket{instance=~\"$instance\"}[5m])) by (le)) * 1000",
+            "legendFormat": "p95",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "single"
+          }
+        },
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "lineWidth": 2,
+              "fillOpacity": 10
+            },
+            "unit": "ms"
+          }
+        }
+      }
+    ],
+    "annotations": {
+      "list": [
+        {
+          "datasource": "AI-Shell-Prometheus",
+          "enable": true,
+          "expr": "ALERTS{alertstate=\"firing\",instance=~\"$instance\"}",
+          "iconColor": "red",
+          "name": "Alerts",
+          "tagKeys": "alertname",
+          "textFormat": "{{alertname}}: {{instance}}",
+          "titleFormat": "Alert"
+        }
+      ]
+    }
+  },
+  "folderId": 0,
+  "overwrite": true
+}

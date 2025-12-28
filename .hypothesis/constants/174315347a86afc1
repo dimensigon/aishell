@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/agents/agent_chain.py
+# hypothesis_version: 6.140.3
+
+[0.0, 120, '   └─ Transform: yes', '=', 'AgentChain', 'agent_chain', 'agent_type', 'chain_id', 'chain_name', 'completed', 'duration', 'error', 'failed', 'links', 'name', 'success', 'total_duration', 'total_links', '→', '→ [END]']

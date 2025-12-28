@@ -1,0 +1,4 @@
+# file: /home/claude/AIShell/src/main.py
+# hypothesis_version: 6.140.3
+
+['\n\nShutting down...', '\nComponent Checks:', '\nai-shell> ', '-', '--config', '--db-path', '--execute', '--health-check', '--log-file', '--log-level', '--no-interactive', '--version', '/data0/models', '=', 'COMMAND', 'Commands:', 'Core initialized', 'DEBUG', 'ERROR', 'INFO', 'Monitoring started', 'PATH', 'Performance Metrics:', 'Vault initialized', 'WARNING', '__main__', 'ask ', 'avg_execution_time', 'cache', 'checks', 'database.path', 'details', 'execution_time', 'exit', 'health', 'healthy', 'intent', 'llama2', 'llm.model_path', 'llm.models.intent', 'llm.provider', 'mcp.max_connections', 'metrics', 'ollama', 'optimizer', 'query ', 'query_count', 'security.vault_key', 'slow_queries', 'status', 'store_true', 'system', 'version', '✓', '✗']
