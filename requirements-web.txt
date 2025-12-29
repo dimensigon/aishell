@@ -1,34 +1,34 @@
 # AI-Shell Web UI Backend Requirements
 
 # FastAPI Framework
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
+fastapi==0.128.0
+uvicorn[standard]==0.39.0
 
 # Data Validation
-pydantic==2.5.3
-pydantic[email]==2.5.3
+pydantic==2.12.5
+pydantic[email]==2.12.5
 
 # Authentication
-python-jose[cryptography]==3.4.0  # Security: Updated from 3.3.0 to fix critical CVE
+python-jose[cryptography]==3.5.0  # Security: Updated from 3.3.0 to fix critical CVE
 passlib[bcrypt]==1.7.4
-python-multipart==0.0.18  # Security: Updated from 0.0.6 to fix high severity CVE
-pyjwt==2.8.0
+python-multipart==0.0.20  # Security: Updated from 0.0.6 to fix high severity CVE
+pyjwt==2.10.1
 
 # WebSocket
-websockets==12.0
-python-socketio==5.14.0  # Security: Updated from 5.11.0 to fix medium severity CVE
+websockets==15.0.1
+python-socketio==5.16.0  # Security: Updated from 5.11.0 to fix medium severity CVE
 
 # Database Drivers (Optional - for actual database connections)
-psycopg2-binary==2.9.9
-pymongo==4.6.3  # Security: Updated from 4.6.1 to fix medium severity CVE
-redis==5.0.1
-mysql-connector-python==9.1.0  # Security: Updated from 8.2.0 to fix high severity CVE
+psycopg2-binary==2.9.11
+pymongo==4.15.5  # Security: Updated from 4.6.1 to fix medium severity CVE
+redis==7.0.1
+mysql-connector-python==9.4.0  # Security: Updated from 8.2.0 to fix high severity CVE
 
 # Utilities
-python-dotenv==1.0.0
-email-validator==2.1.0
+python-dotenv==1.2.1
+email-validator==2.3.0
 
 # Development
 pytest==7.4.4
 pytest-asyncio==0.23.3
-httpx==0.26.0
+httpx==0.28.1
